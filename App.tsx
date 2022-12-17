@@ -19,6 +19,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  WithSpringConfig,
   withTiming,
 } from 'react-native-reanimated';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -27,10 +28,21 @@ import tailwind from 'twrnc';
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
-const SPRING_CONFIG = {
+const SHARE_SPRING_CONFIG: WithSpringConfig = {
   mass: 1,
-  damping: 45,
+  damping: 17,
   stiffness: 300,
+  velocity: 1,
+  overshootClamping: false,
+  restSpeedThreshold: 0.001,
+  restDisplacementThreshold: 0.001,
+};
+
+const CLOSE_SPRING_CONFIG: WithSpringConfig = {
+  mass: 1,
+  damping: 25,
+  stiffness: 300,
+  velocity: 1,
   overshootClamping: false,
   restSpeedThreshold: 0.001,
   restDisplacementThreshold: 0.001,
@@ -166,9 +178,7 @@ const App = () => {
   const rippleEffect = useAnimatedStyle(() => {
     return {
       opacity: interpolate(rippleStateOpacity.value, [1, 0], [1, 0]),
-      transform: [
-        {scale: interpolate(rippleStateScale.value, [0, 1], [1, 2.5])},
-      ],
+      transform: [{scale: interpolate(rippleStateScale.value, [0, 1], [1, 2])}],
     };
   });
 
@@ -176,7 +186,7 @@ const App = () => {
     .maxDistance(1)
     .onStart(() => {
       'worklet';
-      iconState.value = withSpring(0, SPRING_CONFIG);
+      iconState.value = withSpring(0, SHARE_SPRING_CONFIG);
     })
     .onTouchesDown(() => {
       rippleStateScale.value = withTiming(1, {
@@ -197,6 +207,10 @@ const App = () => {
 
   const closeTapHandler = Gesture.Tap()
     .maxDistance(1)
+    .onStart(() => {
+      'worklet';
+      iconState.value = withSpring(1, CLOSE_SPRING_CONFIG);
+    })
     .onTouchesDown(() => {
       rippleStateScale.value = withTiming(1, {
         duration: 300,
@@ -212,10 +226,6 @@ const App = () => {
           rippleStateScale.value = 0;
         },
       );
-    })
-    .onStart(() => {
-      'worklet';
-      iconState.value = withSpring(1, SPRING_CONFIG);
     });
 
   return (
