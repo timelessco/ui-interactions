@@ -19,22 +19,20 @@ const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 const SHARE_SPRING_CONFIG: WithSpringConfig = {
   mass: 1,
-  damping: 17,
+  damping: 20,
   stiffness: 300,
-  velocity: 1,
   overshootClamping: false,
-  restSpeedThreshold: 0.001,
-  restDisplacementThreshold: 0.001,
+  restSpeedThreshold: 0.01,
+  restDisplacementThreshold: 0.01,
 };
 
 const CLOSE_SPRING_CONFIG: WithSpringConfig = {
   mass: 1,
-  damping: 25,
-  stiffness: 300,
-  velocity: 1,
+  damping: 20,
+  stiffness: 150,
   overshootClamping: false,
-  restSpeedThreshold: 0.001,
-  restDisplacementThreshold: 0.001,
+  restSpeedThreshold: 0.01,
+  restDisplacementThreshold: 0.01,
 };
 
 type IconStackProps = {av: SharedValue<number>};
@@ -177,7 +175,7 @@ export const ShareAnimationConceptScreen = () => {
       'worklet';
       iconState.value = withSpring(0, SHARE_SPRING_CONFIG);
     })
-    .onTouchesDown(() => {
+    .onTouchesUp(() => {
       rippleStateScale.value = withTiming(1, {
         duration: 300,
         easing: Easing.out(Easing.ease),
@@ -200,7 +198,7 @@ export const ShareAnimationConceptScreen = () => {
       'worklet';
       iconState.value = withSpring(1, CLOSE_SPRING_CONFIG);
     })
-    .onTouchesDown(() => {
+    .onTouchesUp(() => {
       rippleStateScale.value = withTiming(1, {
         duration: 300,
         easing: Easing.out(Easing.ease),
@@ -227,7 +225,6 @@ export const ShareAnimationConceptScreen = () => {
             rippleEffect,
           ]}
         />
-
         <Animated.View
           style={[
             tailwind.style(
@@ -256,8 +253,10 @@ export const ShareAnimationConceptScreen = () => {
         angle={65}
         useAngle={true}
         colors={[
-          tailwind.color('text-violet-400') as string,
+          tailwind.color('text-violet-700') as string,
+          tailwind.color('text-violet-500') as string,
           tailwind.color('text-violet-600') as string,
+          tailwind.color('text-violet-500') as string,
           tailwind.color('text-violet-700') as string,
         ]}>
         <Animated.Text style={tailwind.style('text-white')}>
@@ -269,7 +268,7 @@ export const ShareAnimationConceptScreen = () => {
         <Animated.View
           style={tailwind.style('flex flex-row items-center pt-2')}>
           <Animated.View
-            style={tailwind.style('px-1 py-0.5 bg-violet-600 rounded-md')}>
+            style={tailwind.style('px-1 py-0.5 bg-violet-800 rounded-md')}>
             <Animated.Text
               style={tailwind.style('text-white text-sm tracking-wider')}>
               +1.5%
