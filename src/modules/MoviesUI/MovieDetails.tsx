@@ -1,37 +1,91 @@
-import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet';
-import React, {useCallback, useMemo, useRef} from 'react';
-import {StyleSheet} from 'react-native';
-import {Text, View} from 'react-native';
+import {StackScreenProps} from '@react-navigation/stack';
+import React from 'react';
+import {Image, Pressable, StyleSheet, Text, View} from 'react-native';
+import Animated, {
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {
+  SharedElement,
+  SharedElementCompatRoute,
+} from 'react-navigation-shared-element';
 import tailwind from 'twrnc';
+import {RootStackParamList} from '../../../App';
 
-const MovieDetails = () => {
-  // ref
-  const bottomSheetRef = useRef<BottomSheet>(null);
+type MoviesDetailsProps = StackScreenProps<RootStackParamList, 'Details'>;
 
-  // variables
-  const snapPoints = useMemo(() => ['25%', '50%'], []);
-
-  // callbacks
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log('handleSheetChanges', index);
-  }, []);
+const MovieDetails = (props: MoviesDetailsProps) => {
+  const {item} = props.route.params;
 
   return (
-    <View>
-      <BottomSheet
-        detached
-        handleIndicatorStyle={[
-          tailwind.style('w-8 h-[6px] rounded-[21px]]'),
-          styles.handleStyle,
-        ]}
-        ref={bottomSheetRef}
-        index={1}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}>
-        <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
-          <Text>Awesome 🎉</Text>
-        </BottomSheetScrollView>
-      </BottomSheet>
+    <View style={tailwind.style('flex flex-col items-center')}>
+      <Animated.View style={[tailwind.style('w-full')]}>
+        <Animated.ScrollView
+          showsVerticalScrollIndicator={false}
+          style={[
+            tailwind.style('flex flex-col rounded-2xl shadow-xl bg-red-100'),
+          ]}
+          contentContainerStyle={tailwind.style('flex items-center')}>
+          <View
+            style={[
+              tailwind.style('w-8 h-[6px] rounded-[21px] mt-2'),
+              styles.handleStyle,
+            ]}
+          />
+          <View style={tailwind.style('mt-8')}>
+            <SharedElement id={`item.${item.id}.bg`}>
+              <View style={[StyleSheet.absoluteFillObject]} />
+            </SharedElement>
+            <SharedElement id={`item.${item.id}.image`}>
+              <Image
+                style={[
+                  tailwind.style('rounded-xl h-[430px] w-[287px]'),
+                  styles.imageStyle,
+                ]}
+                source={{uri: item.url}}
+              />
+            </SharedElement>
+          </View>
+          <View style={tailwind.style('flex mt-10')}>
+            <Text style={tailwind.style('text-3xl font-extrabold text-center')}>
+              {item.title}
+            </Text>
+            <Text
+              style={tailwind.style(
+                'text-xs font-medium text-[#7C7C7C] mt-2 text-center',
+              )}>
+              Drama · Comedy · 2021
+            </Text>
+          </View>
+          <View style={tailwind.style('flex mt-4 px-4')}>
+            <Text style={tailwind.style('text-base font-normal')}>
+              Lorem Ipsum is simply dummy text of the printing and typesetting
+              industry. Lorem Ipsum has been the industry's standard dummy text
+              ever since the 1500s, when an unknown printer took a galley of
+              type and scrambled it to make a type specimen book. It has
+              survived not only five centuries, but also the leap into
+              electronic typesetting, remaining essentially unchanged. It was
+              popularised in the 1960s with the release of Letraset sheets
+              containing Lorem Ipsum passages, and more recently with desktop
+              publishing software like Aldus PageMaker including versions of
+              Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and
+              typesetting industry. Lorem Ipsum has been the industry's standard
+              dummy text ever since the 1500s, when an unknown printer took a
+              galley of type and scrambled it to make a type specimen book. It
+              has survived not only five centuries, but also the leap into
+              electronic typesetting, remaining essentially unchanged. It was
+              popularised in the 1960s with the release of Letraset sheets
+              containing Lorem Ipsum passages, and more recently with desktop
+              publishing software like Aldus PageMaker including versions of
+              Lorem Ipsum.
+            </Text>
+          </View>
+        </Animated.ScrollView>
+      </Animated.View>
     </View>
   );
 };
@@ -44,6 +98,21 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  imageStyle: {
+    aspectRatio: 0.67,
+  },
 });
+
+MovieDetails.sharedElements = (route: SharedElementCompatRoute) => {
+  const {item} = route.params;
+  return [
+    {
+      id: `item.${item.id}.image`,
+    },
+    {
+      id: `item.${item.id}.bg`,
+    },
+  ];
+};
 
 export default MovieDetails;

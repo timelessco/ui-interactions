@@ -1,12 +1,16 @@
+import {StackScreenProps} from '@react-navigation/stack';
 import React from 'react';
 import {Image, StyleSheet, Text, View} from 'react-native';
 import Animated from 'react-native-reanimated';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import tailwind from 'twrnc';
+import {RootStackParamList} from '../../../App';
 import {continueWatching, trending} from './data';
 import MoviesSlider from './MoviesSlider';
 
-const MoviesUI = () => {
+export type MoviesUIProps = StackScreenProps<RootStackParamList, 'List'>;
+
+const MoviesUI = ({navigation}: MoviesUIProps) => {
   const {top} = useSafeAreaInsets();
   return (
     <View style={tailwind.style(`flex-1 pt-[${top}px]`)}>
@@ -30,13 +34,13 @@ const MoviesUI = () => {
           <Text style={tailwind.style('pl-5 font-600 text-lg pb-2')}>
             Trending Now
           </Text>
-          <MoviesSlider listData={trending} />
+          <MoviesSlider navigation={navigation} listData={trending} />
         </View>
         <View style={tailwind.style('mt-8')}>
           <Text style={tailwind.style('pl-5 font-600 text-lg pb-2')}>
             Continue Watching
           </Text>
-          <MoviesSlider listData={continueWatching} />
+          <MoviesSlider navigation={navigation} listData={continueWatching} />
         </View>
       </Animated.ScrollView>
     </View>
