@@ -75,10 +75,12 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       onScroll={scrollHandler}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
-      style={[tailwind.style('flex flex-col rounded-2xl shadow-xl')]}>
+      style={[tailwind.style('flex flex-col rounded-2xl ')]}>
       <Animated.View
         style={[
-          tailwind.style('flex items-center pb-10 rounded-2xl'),
+          tailwind.style(
+            'flex items-center pb-10 rounded-2xl shadow-sm bg-white',
+          ),
           containerStyle,
         ]}>
         <View
