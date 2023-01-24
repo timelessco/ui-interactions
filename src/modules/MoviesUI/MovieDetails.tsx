@@ -18,6 +18,7 @@ import {
 } from 'react-navigation-shared-element';
 import tailwind from 'twrnc';
 import {RootStackParamList} from '../../../App';
+import {dummyContent} from '../../constants';
 
 type MoviesDetailsProps = StackScreenProps<RootStackParamList, 'Details'>;
 
@@ -116,24 +117,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         </View>
         <View style={tailwind.style('flex mt-4 px-4')}>
           <Text style={tailwind.style('text-base font-normal')}>
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s, when an unknown printer took a galley of type
-            and scrambled it to make a type specimen book. It has survived not
-            only five centuries, but also the leap into electronic typesetting,
-            remaining essentially unchanged. It was popularised in the 1960s
-            with the release of Letraset sheets containing Lorem Ipsum passages,
-            and more recently with desktop publishing software like Aldus
-            PageMaker including versions of Lorem Ipsum. Lorem Ipsum is simply
-            dummy text of the printing and typesetting industry. Lorem Ipsum has
-            been the industry's standard dummy text ever since the 1500s, when
-            an unknown printer took a galley of type and scrambled it to make a
-            type specimen book. It has survived not only five centuries, but
-            also the leap into electronic typesetting, remaining essentially
-            unchanged. It was popularised in the 1960s with the release of
-            Letraset sheets containing Lorem Ipsum passages, and more recently
-            with desktop publishing software like Aldus PageMaker including
-            versions of Lorem Ipsum.
+            {dummyContent}
           </Text>
         </View>
       </Animated.View>

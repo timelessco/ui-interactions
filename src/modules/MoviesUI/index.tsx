@@ -13,10 +13,10 @@ export type MoviesUIProps = StackScreenProps<RootStackParamList, 'List'>;
 const MoviesUI = ({navigation}: MoviesUIProps) => {
   const {top} = useSafeAreaInsets();
   return (
-    <View style={tailwind.style(`flex-1 pt-[${top}px]`)}>
+    <View style={tailwind.style('flex-1')}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={tailwind.style('pb-12')}>
+        contentContainerStyle={tailwind.style(`pb-12 pt-[${top}px]`)}>
         <View style={tailwind.style('flex justify-center items-center')}>
           <View style={tailwind.style('h-[430px] w-[287px]')}>
             <Image
