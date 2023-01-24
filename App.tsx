@@ -13,6 +13,7 @@ import {StatusBar} from 'react-native';
 
 import {NavigationContainer} from '@react-navigation/native';
 import {TransitionSpecs} from '@react-navigation/stack';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {enableScreens} from 'react-native-screens';
 import {createSharedElementStackNavigator} from 'react-navigation-shared-element';
@@ -28,36 +29,35 @@ export type RootStackParamList = {
   Details: {item: MoviesList};
 };
 
-const Stack = createSharedElementStackNavigator<RootStackParamList>();
+const Stack = createSharedElementStackNavigator<RootStackParamList>({});
 
 const App = () => {
   return (
-    <SafeAreaProvider style={tailwind.style('flex-1')}>
-      <NavigationContainer>
-        <StatusBar barStyle={'dark-content'} />
-        <Stack.Navigator headerMode={'none'}>
-          <Stack.Screen name="List" component={MoviesUI} />
-          <Stack.Screen
-            name="Details"
-            component={MovieDetails}
-            options={() => ({
-              gestureEnabled: false,
-              transitionSpec: {
-                open: TransitionSpecs.TransitionIOSSpec,
-                close: TransitionSpecs.TransitionIOSSpec,
-              },
-              cardOverlayEnabled: true,
-              cardStyleInterpolator: ({current: {progress}}) => {
-                return {
-                  cardStyle: {
-                    opacity: progress,
-                  },
-                };
-              },
-            })}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={tailwind.style('flex-1')}>
+        <NavigationContainer>
+          <StatusBar barStyle={'dark-content'} />
+          <Stack.Navigator mode="modal" headerMode={'none'}>
+            <Stack.Screen name="List" component={MoviesUI} />
+            <Stack.Screen
+              name="Details"
+              component={MovieDetails}
+              options={() => ({
+                gestureEnabled: false,
+                transitionSpec: {
+                  open: TransitionSpecs.TransitionIOSSpec,
+                  close: TransitionSpecs.TransitionIOSSpec,
+                },
+                cardOverlayEnabled: true,
+                cardStyleInterpolator: ({current: {progress: opacity}}) => {
+                  return {cardStyle: {opacity}};
+                },
+                cardShadowEnabled: true,
+              })}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 };
