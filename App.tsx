@@ -29,6 +29,15 @@ export type RootStackParamList = {
   Details: {item: MoviesList};
 };
 
+const sharedElementTransition: typeof TransitionSpecs.TransitionIOSSpec = {
+  animation: 'spring',
+  config: {
+    mass: 1,
+    damping: 23,
+    stiffness: 189,
+  },
+};
+
 const Stack = createSharedElementStackNavigator<RootStackParamList>({});
 
 const App = () => {
@@ -45,14 +54,17 @@ const App = () => {
               options={() => ({
                 gestureEnabled: false,
                 transitionSpec: {
-                  open: TransitionSpecs.TransitionIOSSpec,
-                  close: TransitionSpecs.TransitionIOSSpec,
+                  open: sharedElementTransition,
+                  close: sharedElementTransition,
                 },
                 cardOverlayEnabled: true,
+                cardShadowEnabled: false,
                 cardStyleInterpolator: ({current: {progress: opacity}}) => {
                   return {cardStyle: {opacity}};
                 },
-                cardShadowEnabled: true,
+                cardStyle: {
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                },
               })}
             />
           </Stack.Navigator>

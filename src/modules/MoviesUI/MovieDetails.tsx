@@ -1,9 +1,11 @@
 import {StackScreenProps} from '@react-navigation/stack';
-import React, {useRef} from 'react';
-import {Image, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {Image, InteractionManager, StyleSheet, Text, View} from 'react-native';
 import Animated, {
   Extrapolation,
+  FadeInDown,
   interpolate,
+  interpolateColor,
   runOnJS,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -11,7 +13,6 @@ import Animated, {
   withSpring,
   WithSpringConfig,
 } from 'react-native-reanimated';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   SharedElement,
   SharedElementCompatRoute,
@@ -19,6 +20,7 @@ import {
 import tailwind from 'twrnc';
 import {RootStackParamList} from '../../../App';
 import {dummyContent} from '../../constants';
+import {useHaptic} from '../../utils/useHaptic';
 
 type MoviesDetailsProps = StackScreenProps<RootStackParamList, 'Details'>;
 
@@ -33,23 +35,34 @@ const DefaultSpringConfig: WithSpringConfig = {
 
 const MovieDetails = (props: MoviesDetailsProps) => {
   const {item} = props.route.params;
-  const {top} = useSafeAreaInsets();
-
+  const hapticSelection = useHaptic();
+  const exitAnim = useSharedValue(1);
+  const [opacity, setOpacity] = useState(1);
+  const [backgroundColor, setBackgroundColor] = useState('white');
+  const [handleBgColor, setHandleBgColor] = useState('rgba(0,0,0,0.22)');
+  const [interactionsFinished, setInteractionsFinished] = useState(false);
   const sv = useSharedValue(0);
-
   const scrollViewRef = useRef<Animated.ScrollView>(null);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
-      sv.value = event.contentOffset.y;
+      if (exitAnim.value) {
+        sv.value = event.contentOffset.y;
+      }
     },
     onEndDrag: event => {
-      if (event.contentOffset.y > 50) {
-        sv.value = withSpring(top, DefaultSpringConfig);
+      if (sv.value > 50) {
+        sv.value = withSpring(event.contentOffset.y, DefaultSpringConfig);
       } else {
         sv.value = withSpring(0, DefaultSpringConfig);
       }
-      if (event.contentOffset.y < -50) {
+      if (event.contentOffset.y < -70) {
+        sv.value = event.contentOffset.y;
+        exitAnim.value = 0;
+        runOnJS(setOpacity)(0);
+        runOnJS(setBackgroundColor)('rgba(255,255,255,0)');
+        runOnJS(setHandleBgColor)('rgba(0,0,0,0)');
+        hapticSelection && runOnJS(hapticSelection)();
         runOnJS(props.navigation.pop)();
       }
     },
@@ -61,14 +74,31 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         {
           scale: interpolate(
             sv.value,
-            [-30, 0, 50],
+            [-50, 0, 50],
             [0.85, 0.9, 1],
             Extrapolation.CLAMP,
           ),
         },
       ],
+      backgroundColor,
     };
   });
+
+  const handleStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor: interpolateColor(
+        sv.value,
+        [-70, -50],
+        ['rgba(0,0,0,0)', handleBgColor],
+      ),
+    };
+  });
+
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(() => {
+      setInteractionsFinished(true);
+    });
+  }, []);
 
   return (
     <Animated.ScrollView
@@ -76,24 +106,20 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       onScroll={scrollHandler}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
-      style={[tailwind.style('flex flex-col rounded-2xl ')]}>
+      scrollEnabled={interactionsFinished}
+      style={tailwind.style('flex flex-col rounded-2xl')}>
       <Animated.View
         style={[
-          tailwind.style(
-            'flex items-center pb-10 rounded-2xl shadow-sm bg-white',
-          ),
+          tailwind.style('flex items-center pb-10 rounded-2xl shadow-md'),
           containerStyle,
         ]}>
-        <View
+        <Animated.View
           style={[
             tailwind.style('w-8 h-[6px] rounded-[21px] mt-2'),
-            styles.handleStyle,
+            handleStyle,
           ]}
         />
         <View style={tailwind.style('mt-8')}>
-          <SharedElement id={`item.${item.id}.bg`}>
-            <View style={[StyleSheet.absoluteFillObject]} />
-          </SharedElement>
           <SharedElement id={`item.${item.id}.image`}>
             <Image
               style={[
@@ -104,31 +130,36 @@ const MovieDetails = (props: MoviesDetailsProps) => {
             />
           </SharedElement>
         </View>
-        <View style={tailwind.style('flex mt-10')}>
-          <Text style={tailwind.style('text-3xl font-extrabold text-center')}>
-            {item.title}
-          </Text>
-          <Text
-            style={tailwind.style(
-              'text-xs font-medium text-[#7C7C7C] mt-2 text-center',
-            )}>
-            Drama · Comedy · 2021
-          </Text>
-        </View>
-        <View style={tailwind.style('flex mt-4 px-4')}>
-          <Text style={tailwind.style('text-base font-normal')}>
-            {dummyContent}
-          </Text>
-        </View>
+        <Animated.View
+          style={{opacity}}
+          entering={FadeInDown.springify()
+            .mass(1)
+            .damping(22)
+            .stiffness(189)
+            .delay(300)}>
+          <View style={tailwind.style('flex mt-10')}>
+            <Text style={tailwind.style('text-3xl font-extrabold text-center')}>
+              {item.title}
+            </Text>
+            <Text
+              style={tailwind.style(
+                'text-xs font-medium text-[#7C7C7C] mt-2 text-center',
+              )}>
+              Drama · Comedy · 2021
+            </Text>
+          </View>
+          <View style={tailwind.style('flex mt-4 px-4')}>
+            <Text style={tailwind.style('text-base font-normal')}>
+              {dummyContent}
+            </Text>
+          </View>
+        </Animated.View>
       </Animated.View>
     </Animated.ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  handleStyle: {
-    backgroundColor: 'rgba(0,0,0,0.22)',
-  },
   contentContainer: {
     flex: 1,
     alignItems: 'center',
