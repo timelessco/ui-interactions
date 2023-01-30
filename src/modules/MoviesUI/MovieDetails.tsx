@@ -1,6 +1,13 @@
 import {StackScreenProps} from '@react-navigation/stack';
 import React, {useEffect, useRef, useState} from 'react';
-import {Image, InteractionManager, StyleSheet, Text, View} from 'react-native';
+import {
+  Image,
+  InteractionManager,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, {
   Extrapolation,
   FadeInDown,
@@ -21,6 +28,7 @@ import tailwind from 'twrnc';
 import {RootStackParamList} from '../../../App';
 import {dummyContent} from '../../constants';
 import {useHaptic} from '../../utils/useHaptic';
+import {useScaleAnimation} from '../../utils/useScaleAnimation';
 
 type MoviesDetailsProps = StackScreenProps<RootStackParamList, 'Details'>;
 
@@ -43,7 +51,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   const [interactionsFinished, setInteractionsFinished] = useState(false);
   const sv = useSharedValue(0);
   const scrollViewRef = useRef<Animated.ScrollView>(null);
-
+  const {handlers, animatedStyle} = useScaleAnimation();
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
       if (exitAnim.value) {
@@ -143,13 +151,32 @@ const MovieDetails = (props: MoviesDetailsProps) => {
             </Text>
             <Text
               style={tailwind.style(
-                'text-xs font-medium text-[#7C7C7C] mt-2 text-center',
+                'text-xs font-medium text-[#7C7C7C] mt-2 text-center uppercase',
               )}>
               Drama · Comedy · 2021
             </Text>
           </View>
-          <View style={tailwind.style('flex mt-4 px-4')}>
+          <View style={tailwind.style('mt-6')}>
+            <Animated.View style={animatedStyle}>
+              <Pressable
+                {...handlers}
+                style={tailwind.style(
+                  'bg-[#171717] min-h-[47px] shadow-sm rounded-[14px] flex items-center justify-center mx-6',
+                )}>
+                <Text
+                  style={tailwind.style(
+                    'text-[13px] font-semibold text-white uppercase',
+                  )}>
+                  Watch now
+                </Text>
+              </Pressable>
+            </Animated.View>
+          </View>
+          <View style={tailwind.style('flex mt-6 px-6')}>
             <Text style={tailwind.style('text-base font-normal')}>
+              Four stylish and ambitious best girlfriends in Harlem, New York
+              City: a rising star professor struggling to make space for her
+              love life.
               {dummyContent}
             </Text>
           </View>
