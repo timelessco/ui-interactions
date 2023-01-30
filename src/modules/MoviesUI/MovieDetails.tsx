@@ -25,8 +25,8 @@ import {
   SharedElementCompatRoute,
 } from 'react-navigation-shared-element';
 import tailwind from 'twrnc';
-import {RootStackParamList} from '../../../App';
 import {dummyContent} from '../../constants';
+import {RootStackParamList} from '../../screens/SharedElementConceptOne';
 import {useHaptic} from '../../utils/useHaptic';
 import {useScaleAnimation} from '../../utils/useScaleAnimation';
 
