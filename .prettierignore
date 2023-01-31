@@ -55,3 +55,5 @@ yarn.lock
 CHANGELOG.md
 lib/
 docs/
+android/
+ios/

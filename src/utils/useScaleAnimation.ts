@@ -1,4 +1,4 @@
-import {useCallback, useMemo} from 'react';
+import { useCallback, useMemo } from "react";
 import {
   useAnimatedStyle,
   useSharedValue,
@@ -6,7 +6,7 @@ import {
   WithSpringConfig,
   withTiming,
   WithTimingConfig,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
 type AnimationValue = {
   /**
@@ -21,7 +21,7 @@ type SpringAnimation = AnimationValue & {
    * The animation type
    * @default "spring"
    */
-  type: 'spring';
+  type: "spring";
   config: WithSpringConfig;
 };
 
@@ -30,7 +30,7 @@ type TimingAnimation = AnimationValue & {
    * The animation type
    * @default "spring"
    */
-  type: 'timing';
+  type: "timing";
   config: WithTimingConfig;
 };
 
@@ -46,7 +46,7 @@ const DefaultSpringConfig: WithSpringConfig = {
 };
 
 const DefaultAnimationType: AnimationTypes = {
-  type: 'spring',
+  type: "spring",
   config: DefaultSpringConfig,
   value: 0.96,
 };
@@ -55,10 +55,10 @@ export const useScaleAnimation = (
   scaleAnimationConfig: AnimationTypes = DefaultAnimationType,
 ) => {
   const scale = useSharedValue(1);
-  const {type, config, value} = scaleAnimationConfig;
+  const { type, config, value } = scaleAnimationConfig;
 
   const getAnimation = useCallback((animationValue: number) => {
-    if (type === 'spring') {
+    if (type === "spring") {
       return withSpring(animationValue, config);
     } else {
       return withTiming(animationValue, config);
@@ -77,12 +77,12 @@ export const useScaleAnimation = (
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{scale: scale.value}],
+    transform: [{ scale: scale.value }],
   }));
 
   const scaleAnimationHandler = useMemo(() => {
     return {
-      handlers: {onPressIn, onPressOut},
+      handlers: { onPressIn, onPressOut },
       animatedStyle,
     };
   }, [animatedStyle, onPressIn, onPressOut]);

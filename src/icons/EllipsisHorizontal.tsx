@@ -1,5 +1,5 @@
-import Svg, {Path} from 'react-native-svg';
-import React from 'react';
+import React from "react";
+import Svg, { Path } from "react-native-svg";
 
 export const EllipsisHorizontal = () => {
   return (
@@ -9,7 +9,8 @@ export const EllipsisHorizontal = () => {
       strokeWidth="1.5"
       stroke="white"
       width={24}
-      height={24}>
+      height={24}
+    >
       <Path
         strokeLinecap="round"
         strokeLinejoin="round"

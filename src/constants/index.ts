@@ -1,7 +1,7 @@
-import {Dimensions} from 'react-native';
+import { Dimensions } from "react-native";
 
-export const width = Dimensions.get('screen').width;
-export const height = Dimensions.get('screen').height;
+export const width = Dimensions.get("screen").width;
+export const height = Dimensions.get("screen").height;
 
 export const dummyContent = `Lorem Ipsum is simply dummy text of the printing and typesetting
 industry. Lorem Ipsum has been the industry's standard dummy text

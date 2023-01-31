@@ -1,2 +1,2 @@
-export * from './SpotifyScreen';
-export * from './ShareAnimationConceptScreen';
+export * from "./ShareAnimationConceptScreen";
+export * from "./SpotifyScreen";

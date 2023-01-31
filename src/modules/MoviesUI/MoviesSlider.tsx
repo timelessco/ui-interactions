@@ -1,34 +1,36 @@
-import {StackNavigationProp} from '@react-navigation/stack';
-import React, {useCallback} from 'react';
-import {FlatList, Image, Pressable, StyleSheet} from 'react-native';
-import Animated from 'react-native-reanimated';
-import {SharedElement} from 'react-navigation-shared-element';
-import tailwind from 'twrnc';
-import {RootStackParamList} from '../../../App';
-import {useHaptic} from '../../utils/useHaptic';
-import {useScaleAnimation} from '../../utils/useScaleAnimation';
-import {MoviesList} from './data';
+import React, { useCallback } from "react";
+import { SharedElement } from "react-navigation-shared-element";
+import { FlatList, Image, Pressable, StyleSheet } from "react-native";
+import Animated from "react-native-reanimated";
+import { StackNavigationProp } from "@react-navigation/stack";
+import tailwind from "twrnc";
+
+import { RootStackParamList } from "../../../App";
+import { useHaptic } from "../../utils/useHaptic";
+import { useScaleAnimation } from "../../utils/useScaleAnimation";
+
+import { MoviesList } from "./data";
 
 const ItemWidth = 145;
 const Spacing = 20;
 
 type MoviesSliderProps = {
   listData: MoviesList[];
-  navigation: StackNavigationProp<RootStackParamList, 'List'>;
+  navigation: StackNavigationProp<RootStackParamList, "List">;
 };
 
 type MovieCardProps = {
   item: MoviesList;
   index: number;
-  navigation: StackNavigationProp<RootStackParamList, 'List'>;
+  navigation: StackNavigationProp<RootStackParamList, "List">;
 };
 
-const MovieCard = ({item, index, navigation}: MovieCardProps) => {
-  const {handlers, animatedStyle} = useScaleAnimation();
+const MovieCard = ({ item, index, navigation }: MovieCardProps) => {
+  const { handlers, animatedStyle } = useScaleAnimation();
   const hapticSelection = useHaptic();
 
   const handlePress = useCallback(() => {
-    navigation.push('Details', {item});
+    navigation.push("Details", { item });
     hapticSelection?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id]);
@@ -39,11 +41,11 @@ const MovieCard = ({item, index, navigation}: MovieCardProps) => {
           <Image
             style={[
               tailwind.style(
-                `w-[145px] h-[216px] rounded-md ${index !== 0 ? 'ml-5' : ''}`,
+                `w-[145px] h-[216px] rounded-md ${index !== 0 ? "ml-5" : ""}`,
               ),
               styles.imageStyle,
             ]}
-            source={{uri: item.url}}
+            source={{ uri: item.url }}
           />
         </SharedElement>
       </Pressable>
@@ -51,10 +53,10 @@ const MovieCard = ({item, index, navigation}: MovieCardProps) => {
   );
 };
 
-const MoviesSlider = ({listData, navigation}: MoviesSliderProps) => {
+const MoviesSlider = ({ listData, navigation }: MoviesSliderProps) => {
   return (
     <FlatList
-      contentContainerStyle={tailwind.style('px-5')}
+      contentContainerStyle={tailwind.style("px-5")}
       snapToInterval={ItemWidth + Spacing}
       decelerationRate="fast"
       renderItem={props => <MovieCard {...props} navigation={navigation} />}
