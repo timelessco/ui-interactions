@@ -3,11 +3,11 @@ import {
   Dimensions,
   LayoutChangeEvent,
   Pressable,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import LinearGradient from "react-native-linear-gradient";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -17,6 +17,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import tailwind from "twrnc";
 
 import { playlist, PlaylistType } from "../constants/playlist";
@@ -145,6 +146,7 @@ const PosterImage: React.FC<AnimationProps> = ({ sv }) => {
   });
   return (
     <Animated.View style={[styles.imageContainer, opacityAnim]}>
+      <StatusBar barStyle={"light-content"} />
       <Animated.Image
         style={[styles.imageStyle, scaleAnim]}
         source={require("../assets/artist.jpeg")}

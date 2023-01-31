@@ -27,7 +27,7 @@ const springConfig: WithSpringConfig = {
   damping: 45,
 };
 
-const MenuInteraction = () => {
+export const MenuInteraction = () => {
   const toggleAnim = useSharedValue(0);
   const dotTransform = useAnimatedStyle(() => {
     return {
@@ -88,55 +88,55 @@ const MenuInteraction = () => {
   };
 
   return (
-    <TouchableWithoutFeedback
-      onPress={handlePress}
-      style={tailwind.style(
-        "relative w-20 bg-white h-20 rounded-xl flex justify-center items-center",
-      )}
-    >
-      <View style={tailwind.style("flex flex-col")}>
-        <Animated.View
-          style={[
-            tailwind.style(
-              "absolute right-0 bottom-0 top-0 left-0 justify-center items-center",
-            ),
-            dotTransform,
-          ]}
-        >
-          <View
-            style={tailwind.style("h-2.5 w-2.5 bg-blue-700 rounded-full")}
-          />
-        </Animated.View>
-        <Animated.View
-          style={[
-            tailwind.style("flex flex-row justify-start"),
-            topLineTransform,
-          ]}
-        >
-          <View
-            style={tailwind.style("h-1.5 w-5 rounded-md bg-blue-700 mb-1.5")}
-          />
-        </Animated.View>
+    <View style={tailwind.style("flex-1 items-center justify-center")}>
+      <TouchableWithoutFeedback
+        onPress={handlePress}
+        style={tailwind.style(
+          "relative w-20 bg-white h-20 rounded-xl flex justify-center items-center",
+        )}
+      >
+        <View style={tailwind.style("flex flex-col")}>
+          <Animated.View
+            style={[
+              tailwind.style(
+                "absolute right-0 bottom-0 top-0 left-0 justify-center items-center",
+              ),
+              dotTransform,
+            ]}
+          >
+            <View
+              style={tailwind.style("h-2.5 w-2.5 bg-blue-700 rounded-full")}
+            />
+          </Animated.View>
+          <Animated.View
+            style={[
+              tailwind.style("flex flex-row justify-start"),
+              topLineTransform,
+            ]}
+          >
+            <View
+              style={tailwind.style("h-1.5 w-5 rounded-md bg-blue-700 mb-1.5")}
+            />
+          </Animated.View>
 
-        <Animated.View
-          style={[
-            tailwind.style("h-1.5 w-10 rounded-md bg-blue-700"),
-            centerLineTransform,
-          ]}
-        />
-        <Animated.View
-          style={[
-            tailwind.style("flex flex-row justify-end"),
-            bottomLineTransform,
-          ]}
-        >
-          <View
-            style={tailwind.style("h-1.5 w-5 rounded-md bg-blue-700 mt-1.5")}
+          <Animated.View
+            style={[
+              tailwind.style("h-1.5 w-10 rounded-md bg-blue-700"),
+              centerLineTransform,
+            ]}
           />
-        </Animated.View>
-      </View>
-    </TouchableWithoutFeedback>
+          <Animated.View
+            style={[
+              tailwind.style("flex flex-row justify-end"),
+              bottomLineTransform,
+            ]}
+          >
+            <View
+              style={tailwind.style("h-1.5 w-5 rounded-md bg-blue-700 mt-1.5")}
+            />
+          </Animated.View>
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
   );
 };
-
-export default MenuInteraction;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, Text } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -86,7 +86,7 @@ export const ImageUpload = () => {
     };
   });
   return (
-    <>
+    <View style={tailwind.style("flex-1 items-center justify-center")}>
       <Animated.View style={tailwind.style("rounded-lg")}>
         <Animated.View
           style={tailwind.style(
@@ -147,7 +147,7 @@ export const ImageUpload = () => {
             : "Uploading..."}
         </Text>
       </Pressable>
-    </>
+    </View>
   );
 };
 
@@ -155,5 +155,3 @@ const stlyes = StyleSheet.create({
   imageAspect: { aspectRatio: 0.44, resizeMode: "cover" },
   textLineHeight: { lineHeight: 70 },
 });
-
-export default ImageUpload;

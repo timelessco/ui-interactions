@@ -1,7 +1,6 @@
 import React from "react";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import LinearGradient from "react-native-linear-gradient";
 import Animated, {
   Easing,
   interpolate,
@@ -13,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
 import tailwind from "twrnc";
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
@@ -217,78 +217,78 @@ export const ShareAnimationConceptScreen = () => {
       );
     });
   return (
-    <Pressable style={tailwind.style("w-full px-5")}>
-      <Animated.View style={tailwind.style("relative z-10")}>
-        <Animated.View
-          style={[
-            tailwind.style(
-              "absolute -top-5 -right-5 bg-violet-600 rounded-full h-10 w-10 z-1 shadow-lg",
-            ),
-            rippleEffect,
-          ]}
-        />
-        <Animated.View
-          style={[
-            tailwind.style(
-              "absolute -top-5 -right-5 bg-violet-900 flex-row items-center justify-end rounded-full h-10 z-10 shadow-lg",
-            ),
-            containerStyle,
-          ]}
-        >
-          <GestureDetector gesture={shareTapHandler}>
-            <Animated.View
-              style={[tailwind.style("absolute right-2"), shareIconStyle]}
-            >
-              <ShareIcon />
-            </Animated.View>
-          </GestureDetector>
-          <ShareIconStack av={iconState} />
-          <GestureDetector gesture={closeTapHandler}>
-            <Animated.View style={[tailwind.style("pr-2"), closeIconStyle]}>
-              <CloseIcon />
-            </Animated.View>
-          </GestureDetector>
-        </Animated.View>
-      </Animated.View>
-      <AnimatedLinearGradient
-        style={tailwind.style("p-5 rounded-lg")}
-        start={{ x: 0.0, y: 0.25 }}
-        end={{ x: 0.5, y: 1.0 }}
-        angle={65}
-        useAngle={true}
-        colors={[
-          tailwind.color("text-violet-700") as string,
-          tailwind.color("text-violet-500") as string,
-          tailwind.color("text-violet-600") as string,
-          tailwind.color("text-violet-500") as string,
-          tailwind.color("text-violet-700") as string,
-        ]}
-      >
-        <Animated.Text style={tailwind.style("text-white")}>
-          Earnings today
-        </Animated.Text>
-        <Animated.Text style={tailwind.style("text-white text-5xl pt-6")}>
-          ₹10,421.56
-        </Animated.Text>
-        <Animated.View
-          style={tailwind.style("flex flex-row items-center pt-2")}
-        >
+    <View style={tailwind.style("flex-1 items-center justify-center px-10")}>
+      <Pressable style={tailwind.style("w-full px-5")}>
+        <Animated.View style={tailwind.style("relative z-10")}>
           <Animated.View
-            style={tailwind.style("px-1 py-0.5 bg-violet-800 rounded-md")}
+            style={[
+              tailwind.style(
+                "absolute -top-5 -right-5 bg-violet-600 rounded-full h-10 w-10 z-1 shadow-lg",
+              ),
+              rippleEffect,
+            ]}
+          />
+          <Animated.View
+            style={[
+              tailwind.style(
+                "absolute -top-5 -right-5 bg-violet-900 flex-row items-center justify-end rounded-full h-10 z-10 shadow-lg",
+              ),
+              containerStyle,
+            ]}
           >
-            <Animated.Text
-              style={tailwind.style("text-white text-sm tracking-wider")}
+            <GestureDetector gesture={shareTapHandler}>
+              <Animated.View
+                style={[tailwind.style("absolute right-2"), shareIconStyle]}
+              >
+                <ShareIcon />
+              </Animated.View>
+            </GestureDetector>
+            <ShareIconStack av={iconState} />
+            <GestureDetector gesture={closeTapHandler}>
+              <Animated.View style={[tailwind.style("pr-2"), closeIconStyle]}>
+                <CloseIcon />
+              </Animated.View>
+            </GestureDetector>
+          </Animated.View>
+        </Animated.View>
+        <AnimatedLinearGradient
+          style={tailwind.style("p-5 rounded-lg")}
+          start={{ x: 0.0, y: 0.25 }}
+          end={{ x: 0.5, y: 1.0 }}
+          colors={[
+            tailwind.color("text-violet-700") as string,
+            tailwind.color("text-violet-500") as string,
+            tailwind.color("text-violet-600") as string,
+            tailwind.color("text-violet-500") as string,
+            tailwind.color("text-violet-700") as string,
+          ]}
+        >
+          <Animated.Text style={tailwind.style("text-white")}>
+            Earnings today
+          </Animated.Text>
+          <Animated.Text style={tailwind.style("text-white text-5xl pt-6")}>
+            ₹10,421.56
+          </Animated.Text>
+          <Animated.View
+            style={tailwind.style("flex flex-row items-center pt-2")}
+          >
+            <Animated.View
+              style={tailwind.style("px-1 py-0.5 bg-violet-800 rounded-md")}
             >
-              +1.5%
+              <Animated.Text
+                style={tailwind.style("text-white text-sm tracking-wider")}
+              >
+                +1.5%
+              </Animated.Text>
+            </Animated.View>
+            <Animated.Text
+              style={tailwind.style("text-white text-sm tracking-wide pl-1")}
+            >
+              Higher earnings than usual
             </Animated.Text>
           </Animated.View>
-          <Animated.Text
-            style={tailwind.style("text-white text-sm tracking-wide pl-1")}
-          >
-            Higher earnings than usual
-          </Animated.Text>
-        </Animated.View>
-      </AnimatedLinearGradient>
-    </Pressable>
+        </AnimatedLinearGradient>
+      </Pressable>
+    </View>
   );
 };

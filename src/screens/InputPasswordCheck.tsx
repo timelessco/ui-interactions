@@ -23,7 +23,7 @@ const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 export const InputPasswordCheck = () => {
   const [focused, setFocused] = useState(false);
-  const [passwordState, setPasswordState] = useState<
+  const [_passwordState, setPasswordState] = useState<
     "low" | "medium" | "strong" | null
   >(null);
   const lowV = useSharedValue(0);

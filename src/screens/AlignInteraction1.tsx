@@ -30,7 +30,7 @@ const ScaleSpringConfig: WithSpringConfig = {
   damping: 30,
 };
 
-const AlignInteraction1 = () => {
+export const AlignInteraction1 = () => {
   const verticalLine = useSharedValue(20);
   const horizontalLine = useSharedValue(28);
   const scaleAnim = useSharedValue(1);
@@ -165,5 +165,3 @@ const AlignInteraction1 = () => {
     </View>
   );
 };
-
-export default AlignInteraction1;

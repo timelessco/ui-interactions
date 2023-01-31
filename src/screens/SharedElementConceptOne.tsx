@@ -26,7 +26,7 @@ const Stack = createSharedElementStackNavigator<RootStackParamList>({});
 
 export const SharedElementConceptOne = () => {
   return (
-    <NavigationContainer>
+    <NavigationContainer independent>
       <StatusBar barStyle={"dark-content"} />
       <Stack.Navigator mode="modal" headerMode={"none"}>
         <Stack.Screen name="List" component={MoviesUI} />
