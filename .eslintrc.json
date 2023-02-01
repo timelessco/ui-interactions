@@ -1,6 +1,9 @@
 {
   "extends": ["@react-native"],
   "plugins": ["import", "simple-import-sort", "react"],
+  "env": {
+    "jest/globals": true
+  },
   "rules": {
     "no-console": "off",
     "simple-import-sort/imports": [
