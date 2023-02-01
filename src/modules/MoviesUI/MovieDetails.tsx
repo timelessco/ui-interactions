@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SharedElement,
   SharedElementCompatRoute,
@@ -15,15 +15,17 @@ import Animated, {
   Extrapolation,
   FadeInDown,
   interpolate,
-  interpolateColor,
   runOnJS,
+  scrollTo,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
-  withSpring,
-  WithSpringConfig,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
+import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
 
 import { dummyContent } from "../../constants";
@@ -33,41 +35,42 @@ import { useScaleAnimation } from "../../utils/useScaleAnimation";
 
 type MoviesDetailsProps = StackScreenProps<RootStackParamList, "Details">;
 
-const DefaultSpringConfig: WithSpringConfig = {
-  mass: 1,
-  damping: 25,
-  stiffness: 200,
-  overshootClamping: false,
-  restSpeedThreshold: 0.001,
-  restDisplacementThreshold: 0.001,
-};
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 const MovieDetails = (props: MoviesDetailsProps) => {
+  const { top } = useSafeAreaInsets();
   const { item } = props.route.params;
   const hapticSelection = useHaptic();
-  const exitAnim = useSharedValue(1);
   const [opacity, setOpacity] = useState(1);
   const [backgroundColor, setBackgroundColor] = useState("white");
   const [handleBgColor, setHandleBgColor] = useState("rgba(0,0,0,0.22)");
   const [interactionsFinished, setInteractionsFinished] = useState(false);
   const sv = useSharedValue(0);
-  const scrollViewRef = useRef<Animated.ScrollView>(null);
+  const resetScroll = useSharedValue(0);
   const { handlers, animatedStyle } = useScaleAnimation();
+  const svRef = useAnimatedRef();
+
+  const SNAP_POINT = 23 + top;
+
+  useDerivedValue(() => {
+    if (resetScroll.value === 0) {
+      scrollTo(svRef, 0, resetScroll.value, true);
+    }
+  }, []);
+
   const scrollHandler = useAnimatedScrollHandler({
+    onBeginDrag: () => {
+      resetScroll.value = 1;
+    },
     onScroll: event => {
-      if (exitAnim.value) {
-        sv.value = event.contentOffset.y;
-      }
+      sv.value = event.contentOffset.y;
     },
     onEndDrag: event => {
-      if (sv.value > 50) {
-        sv.value = withSpring(event.contentOffset.y, DefaultSpringConfig);
-      } else {
-        sv.value = withSpring(0, DefaultSpringConfig);
+      if (sv.value > 0 && sv.value < SNAP_POINT) {
+        resetScroll.value = 0;
       }
       if (event.contentOffset.y < -70) {
         sv.value = event.contentOffset.y;
-        exitAnim.value = 0;
         runOnJS(setOpacity)(0);
         runOnJS(setBackgroundColor)("rgba(255,255,255,0)");
         runOnJS(setHandleBgColor)("rgba(0,0,0,0)");
@@ -83,8 +86,8 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         {
           scale: interpolate(
             sv.value,
-            [-50, 0, 50],
-            [0.85, 0.9, 1],
+            [-SNAP_POINT, 0, SNAP_POINT],
+            [0.85, 0.95, 1],
             Extrapolation.CLAMP,
           ),
         },
@@ -93,12 +96,13 @@ const MovieDetails = (props: MoviesDetailsProps) => {
     };
   });
 
-  const handleStyle = useAnimatedStyle(() => {
+  const blurViewStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: interpolateColor(
+      opacity: interpolate(
         sv.value,
-        [-70, -50],
-        ["rgba(0,0,0,0)", handleBgColor],
+        [0, SNAP_POINT],
+        [0, 0.9],
+        Extrapolation.CLAMP,
       ),
     };
   });
@@ -110,86 +114,132 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   }, []);
 
   return (
-    <Animated.ScrollView
-      ref={scrollViewRef}
-      onScroll={scrollHandler}
-      scrollEventThrottle={16}
-      showsVerticalScrollIndicator={false}
-      scrollEnabled={interactionsFinished}
-      style={tailwind.style("flex flex-col rounded-2xl")}
-    >
-      <Animated.View
+    <Animated.View style={tailwind.style("relative")}>
+      <AnimatedBlurView
+        intensity={100}
+        tint="light"
         style={[
-          tailwind.style("flex items-center pb-10 rounded-2xl shadow-md"),
-          containerStyle,
+          tailwind.style(`absolute top-0 z-10 w-full h-[${top}px]`),
+          blurViewStyle,
         ]}
+      />
+      <Animated.ScrollView
+        // @ts-expect-error: Should check Animated Library
+        ref={svRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={interactionsFinished}
+        style={tailwind.style("flex flex-col rounded-2xl")}
       >
         <Animated.View
           style={[
-            tailwind.style("w-8 h-[6px] rounded-[21px] mt-2"),
-            handleStyle,
+            tailwind.style("flex items-center pb-10 rounded-2xl shadow-md"),
+            containerStyle,
           ]}
-        />
-        <View style={tailwind.style("mt-8")}>
-          <SharedElement id={`item.${item.id}.image`}>
-            <Image
-              style={[
-                tailwind.style("rounded-xl h-[430px] w-[287px]"),
-                styles.imageStyle,
-              ]}
-              source={{ uri: item.url }}
-            />
-          </SharedElement>
-        </View>
-        <Animated.View
-          style={{ opacity }}
-          entering={FadeInDown.springify()
-            .mass(1)
-            .damping(22)
-            .stiffness(189)
-            .delay(300)}
         >
-          <View style={tailwind.style("flex mt-10")}>
-            <Text style={tailwind.style("text-3xl font-extrabold text-center")}>
-              {item.title}
-            </Text>
-            <Text
-              style={tailwind.style(
-                "text-xs font-medium text-[#7C7C7C] mt-2 text-center uppercase",
-              )}
-            >
-              Drama · Comedy · 2021
-            </Text>
+          <Animated.View
+            style={[
+              tailwind.style("w-8 h-[6px] rounded-[21px] mt-2"),
+              { backgroundColor: handleBgColor },
+            ]}
+          />
+          <View style={tailwind.style("mt-8")}>
+            <SharedElement id={`item.${item.id}.image`}>
+              <Image
+                style={[
+                  tailwind.style("rounded-xl h-[430px] w-[287px]"),
+                  styles.imageStyle,
+                ]}
+                source={{ uri: item.url }}
+              />
+            </SharedElement>
           </View>
-          <View style={tailwind.style("mt-6")}>
-            <Animated.View style={animatedStyle}>
-              <Pressable
-                {...handlers}
+          <Animated.View
+            style={{ opacity }}
+            entering={FadeInDown.springify()
+              .mass(1)
+              .damping(22)
+              .stiffness(189)
+              .delay(300)}
+          >
+            <View style={tailwind.style("flex mt-10")}>
+              <Text
+                style={tailwind.style("text-3xl font-extrabold text-center")}
+              >
+                {item.title}
+              </Text>
+              <Text
                 style={tailwind.style(
-                  "bg-[#171717] min-h-[47px] shadow-sm rounded-[14px] flex items-center justify-center mx-6",
+                  "text-xs font-medium text-[#7C7C7C] mt-2 text-center uppercase",
                 )}
               >
-                <Text
+                Drama · Comedy · 2021
+              </Text>
+            </View>
+            <View style={tailwind.style("mt-6")}>
+              <Animated.View style={animatedStyle}>
+                <Pressable
+                  {...handlers}
                   style={tailwind.style(
-                    "text-[13px] font-semibold text-white uppercase",
+                    "bg-[#171717] min-h-[47px] shadow-sm rounded-[14px] flex items-center justify-center mx-6",
                   )}
                 >
-                  Watch now
-                </Text>
-              </Pressable>
-            </Animated.View>
-          </View>
-          <View style={tailwind.style("flex mt-6 px-6")}>
-            <Text style={tailwind.style("text-base font-normal")}>
-              Four stylish and ambitious best girlfriends in Harlem, New York
-              City: a rising star professor struggling to make space for her
-              love life.
-              {dummyContent}
-            </Text>
-          </View>
+                  <Text
+                    style={tailwind.style(
+                      "text-[13px] font-semibold text-white uppercase",
+                    )}
+                  >
+                    Watch now
+                  </Text>
+                </Pressable>
+              </Animated.View>
+            </View>
+            <View style={tailwind.style("flex mt-6 px-6")}>
+              <Text style={tailwind.style("text-base font-normal")}>
+                Four stylish and ambitious best girlfriends in Harlem, New York
+                City: a rising star professor struggling to make space for her
+                love life.
+              </Text>
+            </View>
+            <View style={tailwind.style("flex mt-6 px-6")}>
+              <Text
+                style={tailwind.style(
+                  "text-xs font-medium uppercase text-[#7C7C7C]",
+                )}
+              >
+                Cast & Crew
+              </Text>
+              <Text
+                style={tailwind.style(
+                  "mt-2 text-base font-normal text-[#171717]",
+                )}
+              >
+                Matthew McConaughey, Anne Hathaway, Michael Caine, Jessica
+                Chastain
+              </Text>
+            </View>
+            <View style={tailwind.style("flex mt-6 px-6")}>
+              <Text
+                style={tailwind.style(
+                  "text-xs font-medium uppercase text-[#7C7C7C]",
+                )}
+              >
+                Plot
+              </Text>
+              <Text
+                style={tailwind.style(
+                  "mt-2 text-base font-normal text-[#171717]",
+                )}
+              >
+                {dummyContent}
+              </Text>
+            </View>
+            <View />
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
-    </Animated.ScrollView>
+      </Animated.ScrollView>
+    </Animated.View>
   );
 };
 
