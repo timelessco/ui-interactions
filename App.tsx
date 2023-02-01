@@ -19,6 +19,7 @@ import {
 } from "@react-navigation/stack";
 import tailwind from "twrnc";
 
+import { ChevronRight } from "./src/icons/ChevronRight";
 import {
   AlignInteraction1,
   ImageUpload,
@@ -51,19 +52,30 @@ type RootStackProps = StackScreenProps<
 
 const RootStack = (props: RootStackProps) => {
   return (
-    <SafeAreaView>
-      <View style={tailwind.style("bg-gray-100 px-4")}>
-        {rootStackScreens.map(item => {
+    <SafeAreaView style={tailwind.style("flex-1 bg-[#F4F2F1]")}>
+      <View
+        style={tailwind.style("bg-white mx-3 rounded-[14px] overflow-hidden")}
+      >
+        {rootStackScreens.map((item, index) => {
           return (
             <Pressable
+              style={({ pressed }) => [
+                tailwind.style(
+                  `flex-row justify-between items-center px-4 min-h-13 border-[#EBEAEA] ${
+                    index === 0 ? "" : "border-t-[1px]"
+                  }`,
+                ),
+                pressed ? tailwind.style("bg-gray-100") : {},
+              ]}
               onPress={() => props.navigation.push(item.name)}
               key={item.name}
             >
               <Text
-                style={tailwind.style("text-base text-[#171717 font-medium")}
+                style={tailwind.style("text-base text-[#151414] font-medium")}
               >
                 {item.name}
               </Text>
+              <ChevronRight />
             </Pressable>
           );
         })}
