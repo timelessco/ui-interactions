@@ -1,4 +1,5 @@
 export * from "./AlignInteraction1";
+export * from "./DragSelect";
 export * from "./ImageUpload";
 export * from "./InputPasswordCheck";
 export * from "./MenuInteraction";

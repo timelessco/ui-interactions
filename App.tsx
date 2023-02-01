@@ -21,6 +21,7 @@ import tailwind from "twrnc";
 
 import {
   AlignInteraction1,
+  DragSelect,
   ImageUpload,
   InputPasswordCheck,
   MenuInteraction,
@@ -42,6 +43,7 @@ export type UIInteractionParamList = {
   "Share Animation Concept": undefined;
   "Spotify Interaction": undefined;
   "UI Interactions": undefined;
+  "Drag Select": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -106,6 +108,10 @@ const rootStackScreens: screenType[] = [
     name: "Spotify Interaction",
     component: SpotifyScreen,
   },
+  {
+    name: "Drag Select",
+    component: DragSelect,
+  },
 ];
 
 const App = () => {
@@ -115,7 +121,7 @@ const App = () => {
         style={tailwind.style("flex-1 justify-center bg-gray-100")}
       >
         <NavigationContainer>
-          <Stack.Navigator headerMode="none">
+          <Stack.Navigator headerMode="none" initialRouteName="Drag Select">
             <Stack.Screen name="UI Interactions" component={RootStack} />
             <Stack.Screen
               name="Shared Element Concept"
@@ -139,6 +145,7 @@ const App = () => {
               name="Spotify Interaction"
               component={SpotifyScreen}
             />
+            <Stack.Screen name="Drag Select" component={DragSelect} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
