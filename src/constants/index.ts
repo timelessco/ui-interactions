@@ -3,22 +3,18 @@ import { Dimensions } from "react-native";
 export const width = Dimensions.get("screen").width;
 export const height = Dimensions.get("screen").height;
 
-export const dummyContent = `Lorem Ipsum is simply dummy text of the printing and typesetting
-industry. Lorem Ipsum has been the industry's standard dummy text
-ever since the 1500s, when an unknown printer took a galley of
-type and scrambled it to make a type specimen book. It has
-survived not only five centuries, but also the leap into
-electronic typesetting, remaining essentially unchanged. It was
-popularised in the 1960s with the release of Letraset sheets
-containing Lorem Ipsum passages, and more recently with desktop
-publishing software like Aldus PageMaker including versions of
-Lorem Ipsum. Lorem Ipsum is simply dummy text of the printing and
-typesetting industry. Lorem Ipsum has been the industry's standard
-dummy text ever since the 1500s, when an unknown printer took a
-galley of type and scrambled it to make a type specimen book. It
-has survived not only five centuries, but also the leap into
-electronic typesetting, remaining essentially unchanged. It was
-popularised in the 1960s with the release of Letraset sheets
-containing Lorem Ipsum passages, and more recently with desktop
-publishing software like Aldus PageMaker including versions of
-Lorem Ipsum.`;
+export const dummyContent = `In 2067, a global famine caused by blight has had major effects on human society, including the abandonment of scientific pursuits such as space exploration. The world's food problem has forced Joseph Cooper, an ex-NASA pilot, to work as a farmer. One day, Cooper experiences a gravitational "anomaly" in his daughter Murph's bedroom. He deduces it to be a pattern of GPS coordinates, and following it, arrives at a secret NASA facility, headed by Professor Brand.
+
+Brand explains to Cooper that, while NASA was publicly shut down, it continued to operate with the secret mission of discovering an extra-terrestrial planet capable of supporting human life, in the probable aftermath of extinction of earthly life due to blight. Brand claims to be working on a gravity-equation and enlists Cooper's help to pilot an exploratory spacecraft for the second part of the mission. Cooper agrees, leaving behind his children to whom he promises to return. He commands a shuttle carrying three other scientists - Romilly, Doyle, and Brand’s daughter Amelia. They dock with a larger spaceship called the Endurance, and using a mysterious wormhole near Saturn, pass through to another galaxy. Their mission is to investigate three planets, orbiting a supermassive black hole called Gargantua, each of which was previously explored by a NASA scientist-explorer.
+
+The first planet turns out to be an aqua planet. The NASA explorer there is found dead, and one of their crew - Doyle - drowns after being caught in a massive tidal wave. The same tide also causes the probe's engines to be filled with water, forcing Cooper and Amelia to wait significantly longer than required for them to dry out. They return to the Endurance in an hour, finding that 23 years have passed aboard due to the time dilation caused by the planet's proximity to Gargantua. Romilly, who stayed aboard, has aged significantly, as has everyone on Earth.
+
+Murph has become a scientist, and now works with Brand at NASA. She learns from a dying Professor Brand that he gave up on solving his gravity-equation years ago, knowing that information is needed from inside a black hole, which is impossible to achieve. Instead, he doomed humanity to their extinction, putting their mission's hopes on Cooper's team succeeding to establish a space colony using pre-fertilized eggs, on a new habitable planet. Brand dies and Murph relays the information back to the Endurance, but the crew has already departed to the second planet.
+
+At this planet, the crew find its explorer, Mann, to be alive. They awaken him from cryostasis and ask about his planet's potential for habitation. Mann is optimistic at first, but secretly reveals to Cooper that he lied, falsifying data in the hope that NASA sends a mission to rescue him. Romilly dies in an explosion when he attempts to access the system's logs, and Mann tries to kill Cooper. He attempts to hijack the Endurance spacecraft. He is killed when his craft fails to dock properly, and Cooper manages to regain command of the Endurance. He realizes that the Endurance only has enough resources for one person to safely complete their mission. Cooper initiates a slingshot move around Gargantua, setting it to use gravity and be propelled to the final planet. At the last minute, he sacrifices himself by detaching from the spaceship, so that Amelia might safely complete the mission.
+
+Back on Earth, Murph attempts to solve Professor Brand's equation. Hoping to look for clues in her bedroom, she revisits her family house. Cooper survives falling into the black hole and finds himself inside a five-dimensional tesseract, out of view from beyond the event horizon. The tesseract is composed of moments (in time) from inside Murph's bedroom. Frustrated, Cooper discovers that he can move the books on the bookshelf in Murph’s room and uses them to convey a message in morse code: “STAY”. Deducing that this construct has been created by future humans with the ability to time-travel, Cooper understands his mission is to communicate with Murph. From inside this higher dimension, he sends messages to her using gravity. Murph finds her father's old wristwatch on the bookshelf and picks it up. She notices the seconds-hand moving irregularly and realises that the movement is a message in morse code.
+
+Realizing "the ghost" is her father, she decodes the information that Cooper is feeding her about the black hole's singularity. This allows her to solve Brand's gravity-equation. His mission/purpose now completed, Cooper is ejected from the tesseract by the future beings, who place him back near the wormhole outside Saturn. Cooper is picked up by a ranger and is taken to a (cylindrical) space station to reunite with Murph. Using the gravity-equation, Murph orchestrated humanity's exodus from Earth, and is now nearing the end of her life. Due to the extreme time dilation around Gargantua, Cooper has aged only a few years when he sees Murph again. Older than him and nearing death, she advises him to seek out Amelia. Cooper agrees and sets off on a journey again.
+
+Meanwhile, on the mission's final planet, Amelia is setting up a new colony for future humans to inhabit. She removes her helmet and breathes in the air, showing that the planet is capable of supporting human life.`;
