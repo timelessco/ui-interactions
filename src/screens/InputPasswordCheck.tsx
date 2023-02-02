@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import Animated, {
-  FadeInDown,
+  FadeInUp,
+  Layout,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -100,7 +101,10 @@ export const InputPasswordCheck = () => {
   });
   return (
     <View style={tailwind.style("flex-1 justify-center bg-gray-100")}>
-      <View style={tailwind.style("bg-white mx-3 rounded-xl px-4 py-[14px]")}>
+      <Animated.View
+        layout={Layout.springify().stiffness(100).damping(20)}
+        style={tailwind.style("bg-white mx-3 rounded-xl px-4 py-[14px]")}
+      >
         <TextInput
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
@@ -112,7 +116,8 @@ export const InputPasswordCheck = () => {
         />
         {focused && (
           <Animated.View
-            entering={FadeInDown}
+            entering={FadeInUp.springify().stiffness(100).damping(20)}
+            layout={Layout.springify().stiffness(100).damping(20)}
             style={tailwind.style("flex flex-row w-full mt-3")}
           >
             <Animated.View
@@ -166,13 +171,19 @@ export const InputPasswordCheck = () => {
             </Animated.View>
           </Animated.View>
         )}
-      </View>
-      <Animated.Text
-        style={tailwind.style("mt-3 px-5 text-base font-normal text-[#63605F]")}
-      >
-        Include atleast <Text>8 characters</Text>, <Text>numbers</Text>,{" "}
-        <Text>letters</Text>, <Text>special characters</Text>.
-      </Animated.Text>
+      </Animated.View>
+      {focused && (
+        <Animated.Text
+          entering={FadeInUp.springify().stiffness(100).damping(20)}
+          layout={Layout.springify()}
+          style={tailwind.style(
+            "mt-3 px-5 text-base font-normal text-[#63605F]",
+          )}
+        >
+          Include atleast <Text>8 characters</Text>, <Text>numbers</Text>,{" "}
+          <Text>letters</Text>, <Text>special characters</Text>.
+        </Animated.Text>
+      )}
     </View>
   );
 };
