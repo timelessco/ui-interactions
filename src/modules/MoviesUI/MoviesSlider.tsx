@@ -5,7 +5,7 @@ import Animated from "react-native-reanimated";
 import { StackNavigationProp } from "@react-navigation/stack";
 import tailwind from "twrnc";
 
-import { RootStackParamList } from "../../../App";
+import { RootStackParamList } from "../../screens/SharedElementConceptOne";
 import { useHaptic } from "../../utils/useHaptic";
 import { useScaleAnimation } from "../../utils/useScaleAnimation";
 
