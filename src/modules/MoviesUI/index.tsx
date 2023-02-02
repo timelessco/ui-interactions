@@ -60,7 +60,7 @@ const MoviesUI = ({ navigation }: MoviesUIProps) => {
         contentContainerStyle={tailwind.style(`pb-12 pt-[${top}px]`)}
       >
         <View style={tailwind.style("flex justify-center items-center")}>
-          <View style={tailwind.style("h-[430px] w-[287px]")}>
+          <View style={tailwind.style("h-[580px]")}>
             <Image
               style={[
                 tailwind.style("h-full w-full rounded-xl"),
