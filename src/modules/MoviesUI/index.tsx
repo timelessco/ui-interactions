@@ -30,23 +30,13 @@ const MoviesUI = ({ navigation }: MoviesUIProps) => {
   const { top } = useSafeAreaInsets();
   const blurViewStyle = useAnimatedStyle(() => {
     return {
-      opacity: interpolate(sv.value, [0, top], [1, 0.9], Extrapolation.CLAMP),
-      transform: [
-        {
-          translateY: interpolate(
-            sv.value,
-            [0, top],
-            [-top, 0],
-            Extrapolation.CLAMP,
-          ),
-        },
-      ],
+      opacity: interpolate(sv.value, [0, top], [0, 1], Extrapolation.CLAMP),
     };
   });
   return (
     <Animated.View style={tailwind.style("relative")}>
       <AnimatedBlurView
-        intensity={100}
+        intensity={80}
         tint="light"
         style={[
           tailwind.style(`absolute top-0 z-10 w-full h-[${top}px]`),
