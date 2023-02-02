@@ -81,6 +81,11 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         runOnJS(props.navigation.pop)();
       }
     },
+    onMomentumEnd: () => {
+      if (sv.value > 0 && sv.value < SNAP_POINT) {
+        resetScroll.value = 0;
+      }
+    },
   });
 
   const containerStyle = useAnimatedStyle(() => {
@@ -89,8 +94,8 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         {
           scale: interpolate(
             sv.value,
-            [-SNAP_POINT, 0, SNAP_POINT],
-            [0.9, 0.96, 1],
+            [-SNAP_POINT, -1, 0, SNAP_POINT],
+            [0.9, 0.96, 0.96, 1],
             Extrapolation.CLAMP,
           ),
         },
