@@ -50,7 +50,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   const { handlers, animatedStyle } = useScaleAnimation();
   const svRef = useAnimatedRef();
 
-  const SNAP_POINT = 23 + top;
+  const SNAP_POINT = 16 + top;
 
   useDerivedValue(() => {
     if (resetScroll.value === 0) {
@@ -66,11 +66,10 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       sv.value = event.contentOffset.y;
     },
     onEndDrag: event => {
-      if (sv.value > 0 && sv.value < SNAP_POINT) {
+      if (sv.value > 0 && sv.value < SNAP_POINT && event.velocity?.y === 0) {
         resetScroll.value = 0;
       }
       if (event.contentOffset.y < -70) {
-        sv.value = event.contentOffset.y;
         runOnJS(setOpacity)(0);
         runOnJS(setBackgroundColor)("rgba(255,255,255,0)");
         runOnJS(setHandleBgColor)("rgba(0,0,0,0)");
@@ -87,7 +86,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
           scale: interpolate(
             sv.value,
             [-SNAP_POINT, 0, SNAP_POINT],
-            [0.85, 0.95, 1],
+            [0.85, 0.96, 1],
             Extrapolation.CLAMP,
           ),
         },
@@ -101,9 +100,19 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       opacity: interpolate(
         sv.value,
         [0, SNAP_POINT],
-        [0, 0.9],
+        [1, 0.9],
         Extrapolation.CLAMP,
       ),
+      transform: [
+        {
+          translateY: interpolate(
+            sv.value,
+            [0, SNAP_POINT],
+            [-SNAP_POINT / 2, 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
 
