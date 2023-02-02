@@ -37,7 +37,7 @@ export const SharedElementConceptOne = () => {
             gestureEnabled: false,
             transitionSpec: {
               open: sharedElementTransition,
-              close: sharedElementTransition,
+              close: { animation: "timing", config: { duration: 300 } },
             },
             cardOverlayEnabled: true,
             cardShadowEnabled: false,
