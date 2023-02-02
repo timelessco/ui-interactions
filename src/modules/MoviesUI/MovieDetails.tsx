@@ -94,7 +94,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         {
           scale: interpolate(
             sv.value,
-            [-SNAP_POINT, -10, 0, SNAP_POINT],
+            [-SNAP_POINT, -1, 0, SNAP_POINT],
             [0.9, 0.96, 0.96, 1],
             Extrapolation.CLAMP,
           ),
