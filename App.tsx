@@ -8,7 +8,7 @@
  * @format
  */
 
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StatusBar, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { enableScreens } from "react-native-screens";
@@ -123,6 +123,7 @@ const rootStackScreens: screenType[] = [
 const App = () => {
   return (
     <SafeAreaProvider>
+      <StatusBar barStyle={"dark-content"} />
       <GestureHandlerRootView
         style={tailwind.style("flex-1 justify-center bg-gray-100")}
       >

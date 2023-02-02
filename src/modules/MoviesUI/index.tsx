@@ -1,22 +1,61 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import Animated from "react-native-reanimated";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
+import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
 
-import { RootStackParamList } from "../../../App";
+import { RootStackParamList } from "../../screens/SharedElementConceptOne";
 
 import { continueWatching, trending } from "./data";
 import MoviesSlider from "./MoviesSlider";
 
 export type MoviesUIProps = StackScreenProps<RootStackParamList, "List">;
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 const MoviesUI = ({ navigation }: MoviesUIProps) => {
+  const sv = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: event => {
+      sv.value = event.contentOffset.y;
+    },
+  });
   const { top } = useSafeAreaInsets();
+  const blurViewStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(sv.value, [0, top], [1, 0.9], Extrapolation.CLAMP),
+      transform: [
+        {
+          translateY: interpolate(
+            sv.value,
+            [0, top],
+            [-top, 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    };
+  });
   return (
-    <View style={tailwind.style("flex-1")}>
+    <Animated.View style={tailwind.style("relative")}>
+      <AnimatedBlurView
+        intensity={100}
+        tint="light"
+        style={[
+          tailwind.style(`absolute top-0 z-10 w-full h-[${top}px]`),
+          blurViewStyle,
+        ]}
+      />
       <Animated.ScrollView
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={tailwind.style(`pb-12 pt-[${top}px]`)}
       >
@@ -46,7 +85,7 @@ const MoviesUI = ({ navigation }: MoviesUIProps) => {
           <MoviesSlider navigation={navigation} listData={continueWatching} />
         </View>
       </Animated.ScrollView>
-    </View>
+    </Animated.View>
   );
 };
 

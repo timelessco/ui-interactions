@@ -45,7 +45,7 @@ export const SharedElementConceptOne = () => {
               return { cardStyle: { opacity } };
             },
             cardStyle: {
-              backgroundColor: "rgba(255,255,255,0.9)",
+              backgroundColor: "rgba(255,255,255,0)",
             },
           })}
         />

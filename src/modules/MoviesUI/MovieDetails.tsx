@@ -40,6 +40,7 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 const MovieDetails = (props: MoviesDetailsProps) => {
   const { top } = useSafeAreaInsets();
   const { item } = props.route.params;
+  const exitAnim = useSharedValue(1);
   const hapticSelection = useHaptic();
   const [opacity, setOpacity] = useState(1);
   const [backgroundColor, setBackgroundColor] = useState("white");
@@ -63,7 +64,9 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       resetScroll.value = 1;
     },
     onScroll: event => {
-      sv.value = event.contentOffset.y;
+      if (exitAnim.value) {
+        sv.value = event.contentOffset.y;
+      }
     },
     onEndDrag: event => {
       if (sv.value > 0 && sv.value < SNAP_POINT && event.velocity?.y === 0) {
@@ -71,6 +74,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       }
       if (event.contentOffset.y < -70) {
         runOnJS(setOpacity)(0);
+        exitAnim.value = 0;
         runOnJS(setBackgroundColor)("rgba(255,255,255,0)");
         runOnJS(setHandleBgColor)("rgba(0,0,0,0)");
         hapticSelection && runOnJS(hapticSelection)();
@@ -86,7 +90,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
           scale: interpolate(
             sv.value,
             [-SNAP_POINT, 0, SNAP_POINT],
-            [0.85, 0.96, 1],
+            [0.9, 0.96, 1],
             Extrapolation.CLAMP,
           ),
         },
@@ -108,7 +112,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
           translateY: interpolate(
             sv.value,
             [0, SNAP_POINT],
-            [-SNAP_POINT / 2, 0],
+            [-SNAP_POINT, 0],
             Extrapolation.CLAMP,
           ),
         },
@@ -124,6 +128,10 @@ const MovieDetails = (props: MoviesDetailsProps) => {
 
   return (
     <Animated.View style={tailwind.style("relative")}>
+      <AnimatedBlurView
+        intensity={100}
+        style={[tailwind.style("absolute inset-0")]}
+      />
       <AnimatedBlurView
         intensity={100}
         tint="light"
