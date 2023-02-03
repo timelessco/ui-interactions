@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Text, TextInput, View } from "react-native";
+import { Text, TextInput } from "react-native";
 import Animated, {
-  FadeInUp,
   Layout,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   WithSpringConfig,
+  withTiming,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import tailwind from "twrnc";
 
@@ -32,6 +33,36 @@ export const InputPasswordCheck = () => {
   const strongV = useSharedValue(0);
   const [password, setPassword] = useState("");
 
+  const entering = () => {
+    "worklet";
+    const animations = {
+      backgroundColor: withTiming("#E4E3E2", { duration: 400 }),
+    };
+    const initialValues = {
+      backgroundColor: "white",
+    };
+    return {
+      initialValues,
+      animations,
+    };
+  };
+  const enteringText = () => {
+    "worklet";
+    const animations = {
+      opacity: withSpring(1, { stiffness: 100, damping: 20 }),
+      transform: [
+        { translateY: withSpring(0, { stiffness: 100, damping: 20 }) },
+      ],
+    };
+    const initialValues = {
+      opacity: 0,
+      transform: [{ translateY: -5 }],
+    };
+    return {
+      initialValues,
+      animations,
+    };
+  };
   useEffect(() => {
     const validatePassword = (pass: string) => {
       let strength = 0;
@@ -99,10 +130,11 @@ export const InputPasswordCheck = () => {
       width: `${strongV.value}%`,
     };
   });
+
   return (
-    <View style={tailwind.style("flex-1 justify-center bg-gray-100")}>
+    <SafeAreaView style={tailwind.style("flex-1 bg-gray-100")}>
       <Animated.View
-        layout={Layout.springify().stiffness(100).damping(20)}
+        layout={Layout.springify().stiffness(200).damping(50)}
         style={tailwind.style("bg-white mx-3 rounded-xl px-4 py-[14px]")}
       >
         <TextInput
@@ -116,14 +148,12 @@ export const InputPasswordCheck = () => {
         />
         {focused && (
           <Animated.View
-            entering={FadeInUp.springify().stiffness(100).damping(20)}
             layout={Layout.springify().stiffness(100).damping(20)}
             style={tailwind.style("flex flex-row w-full mt-3")}
           >
             <Animated.View
-              style={tailwind.style(
-                "relative h-[3px] flex-1 bg-[#E4E3E2] overflow-hidden",
-              )}
+              entering={entering}
+              style={tailwind.style("relative h-[3px] flex-1 overflow-hidden")}
             >
               <AnimatedLinearGradient
                 start={{ x: -1, y: 0 }}
@@ -137,8 +167,9 @@ export const InputPasswordCheck = () => {
               />
             </Animated.View>
             <Animated.View
+              entering={entering}
               style={tailwind.style(
-                "mx-1 relative h-[3px] flex-1 bg-[#E4E3E2] overflow-hidden",
+                "mx-1 relative h-[3px] flex-1 overflow-hidden",
               )}
             >
               <AnimatedLinearGradient
@@ -154,9 +185,8 @@ export const InputPasswordCheck = () => {
             </Animated.View>
 
             <Animated.View
-              style={tailwind.style(
-                "relative h-[3px] flex-1 bg-[#E4E3E2] overflow-hidden",
-              )}
+              entering={entering}
+              style={tailwind.style("relative h-[3px] flex-1 overflow-hidden")}
             >
               <AnimatedLinearGradient
                 start={{ x: -1, y: 0 }}
@@ -174,7 +204,7 @@ export const InputPasswordCheck = () => {
       </Animated.View>
       {focused && (
         <Animated.Text
-          entering={FadeInUp.springify().stiffness(100).damping(20)}
+          entering={enteringText}
           layout={Layout.springify()}
           style={tailwind.style(
             "mt-3 px-5 text-base font-normal text-[#63605F]",
@@ -184,6 +214,6 @@ export const InputPasswordCheck = () => {
           <Text>letters</Text>, <Text>special characters</Text>.
         </Animated.Text>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
