@@ -6,23 +6,28 @@ import {
 import {
   Image,
   InteractionManager,
+  LayoutChangeEvent,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import Animated, {
+  Easing,
   Extrapolation,
   FadeInDown,
   interpolate,
   runOnJS,
   scrollTo,
+  SharedValue,
+  useAnimatedReaction,
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -30,6 +35,7 @@ import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
 
 import { dummyContent } from "../../constants";
+import { CloseIcon } from "../../icons";
 import { RootStackParamList } from "../../screens/SharedElementConceptOne";
 import { useHaptic } from "../../utils/useHaptic";
 import { useScaleAnimation } from "../../utils/useScaleAnimation";
@@ -37,6 +43,68 @@ import { useScaleAnimation } from "../../utils/useScaleAnimation";
 type MoviesDetailsProps = StackScreenProps<RootStackParamList, "Details">;
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
+type StickyCloseIconProps = {
+  scrollY: SharedValue<number>;
+  handleOnPress: () => void;
+};
+
+const StickyCloseIcon = (props: StickyCloseIconProps) => {
+  const layoutY = useSharedValue(0);
+  const { top } = useSafeAreaInsets();
+  const handleLayout = (event: LayoutChangeEvent) => {
+    layoutY.value = event.nativeEvent.layout.y;
+  };
+  const closeIcon = useSharedValue(1);
+  useAnimatedReaction(
+    () => props.scrollY.value,
+    (prev, _next) => {
+      if (prev < 0) {
+        closeIcon.value = withTiming(0, {
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+        });
+      } else {
+        closeIcon.value = withTiming(1, {
+          duration: 300,
+          easing: Easing.out(Easing.ease),
+        });
+      }
+    },
+  );
+
+  const style = useAnimatedStyle(() => {
+    return {
+      opacity: closeIcon.value,
+      transform: [
+        {
+          translateY: interpolate(
+            props.scrollY.value,
+            [0, 84, 460],
+            [top + 16 + 16, top + 4, top],
+            {
+              extrapolateLeft: Extrapolation.EXTEND,
+              extrapolateRight: Extrapolation.CLAMP,
+            },
+          ),
+        },
+        {
+          scale: interpolate(closeIcon.value, [0, 1], [0.9, 1]),
+        },
+      ],
+    };
+  });
+  return (
+    <Animated.View
+      onLayout={handleLayout}
+      style={[tailwind.style("absolute right-4 z-40"), style]}
+    >
+      <Pressable onPress={props.handleOnPress}>
+        <CloseIcon fill={"rgba(0,0,0,0.22)"} />
+      </Pressable>
+    </Animated.View>
+  );
+};
 
 const MovieDetails = (props: MoviesDetailsProps) => {
   const { top } = useSafeAreaInsets();
@@ -54,6 +122,11 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   const svRef = useAnimatedRef();
 
   const SNAP_POINT = top;
+
+  const handleOnPressClose = () => {
+    resetScroll.value = 0;
+    props.navigation.pop();
+  };
 
   useDerivedValue(() => {
     if (resetScroll.value === 0) {
@@ -186,8 +259,16 @@ const MovieDetails = (props: MoviesDetailsProps) => {
           >
             {item.title}
           </Animated.Text>
+          {/* <Pressable
+            onPress={handleOnPressClose}
+            style={[tailwind.style("absolute right-4")]}
+          >
+            <CloseIcon fill={"rgba(0,0,0,0.22)"} />
+          </Pressable> */}
         </Animated.View>
       </AnimatedBlurView>
+      <StickyCloseIcon scrollY={sv} handleOnPress={handleOnPressClose} />
+
       <Animated.ScrollView
         // @ts-expect-error: Should check Animated Library
         ref={svRef}
