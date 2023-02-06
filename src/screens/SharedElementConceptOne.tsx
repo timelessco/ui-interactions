@@ -1,8 +1,7 @@
 import React from "react";
 import { createSharedElementStackNavigator } from "react-navigation-shared-element";
-import { StatusBar } from "react-native";
+import { Easing, StatusBar } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
-import { TransitionSpecs } from "@react-navigation/stack";
 
 import MoviesUI from "../modules/MoviesUI";
 import { MoviesList } from "../modules/MoviesUI/data";
@@ -11,15 +10,6 @@ import MovieDetails from "../modules/MoviesUI/MovieDetails";
 export type RootStackParamList = {
   List: undefined;
   Details: { item: MoviesList };
-};
-
-const sharedElementTransition: typeof TransitionSpecs.TransitionIOSSpec = {
-  animation: "spring",
-  config: {
-    mass: 1,
-    damping: 23,
-    stiffness: 189,
-  },
 };
 
 const Stack = createSharedElementStackNavigator<RootStackParamList>({});
@@ -36,8 +26,20 @@ export const SharedElementConceptOne = () => {
           options={() => ({
             gestureEnabled: false,
             transitionSpec: {
-              open: sharedElementTransition,
-              close: { animation: "timing", config: { duration: 300 } },
+              open: {
+                animation: "timing",
+                config: {
+                  duration: 400,
+                  easing: Easing.bezier(0.38, 0.35, 0, 1.17),
+                },
+              },
+              close: {
+                animation: "timing",
+                config: {
+                  duration: 400,
+                  easing: Easing.bezier(0.38, 0.35, 0, 1.17),
+                },
+              },
             },
             cardOverlayEnabled: true,
             cardShadowEnabled: false,
