@@ -53,7 +53,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   const { handlers, animatedStyle } = useScaleAnimation();
   const svRef = useAnimatedRef();
 
-  const SNAP_POINT = 16 + top;
+  const SNAP_POINT = top;
 
   useDerivedValue(() => {
     if (resetScroll.value === 0) {
@@ -113,30 +113,29 @@ const MovieDetails = (props: MoviesDetailsProps) => {
 
   const blurViewStyle = useAnimatedStyle(() => {
     return {
+      height: top,
       opacity: interpolate(
         sv.value,
         [0, SNAP_POINT],
         [0, 1],
         Extrapolation.CLAMP,
       ),
-      height: interpolate(
-        sv.value,
-        [0, SNAP_POINT],
-        [0, top],
-        Extrapolation.CLAMP,
-      ),
+      transform: [
+        {
+          translateY: interpolate(
+            sv.value,
+            [0, SNAP_POINT],
+            [-top, 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
 
   const titleHeaderStyle = useAnimatedStyle(() => {
     return {
       height: top + 44,
-      zIndex: interpolate(
-        titleHeader.value,
-        [0, 1],
-        [0, 20],
-        Extrapolation.CLAMP,
-      ),
       opacity: interpolate(
         titleHeader.value,
         [0, 1],
@@ -171,16 +170,13 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       <AnimatedBlurView
         intensity={100}
         tint="light"
-        style={[
-          tailwind.style("absolute top-0 z-10 w-full justify-end"),
-          blurViewStyle,
-        ]}
+        style={[tailwind.style("absolute top-0 z-10 w-full"), blurViewStyle]}
       />
       <AnimatedBlurView
         intensity={100}
         tint="light"
         style={[
-          tailwind.style("absolute top-0 w-full justify-end"),
+          tailwind.style("absolute top-0 w-full z-20 justify-end"),
           titleHeaderStyle,
         ]}
       >
