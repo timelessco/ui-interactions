@@ -22,6 +22,7 @@ import Animated, {
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -41,6 +42,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   const { top } = useSafeAreaInsets();
   const { item } = props.route.params;
   const exitAnim = useSharedValue(1);
+  const titleHeader = useSharedValue(0);
   const hapticSelection = useHaptic();
   const [opacity, setOpacity] = useState(1);
   const [backgroundColor, setBackgroundColor] = useState("white");
@@ -64,6 +66,11 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       resetScroll.value = 1;
     },
     onScroll: event => {
+      if (event.contentOffset.y > 460) {
+        titleHeader.value = withSpring(1);
+      } else {
+        titleHeader.value = withSpring(0);
+      }
       if (exitAnim.value) {
         sv.value = event.contentOffset.y;
       }
@@ -112,6 +119,40 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         [0, 1],
         Extrapolation.CLAMP,
       ),
+      height: interpolate(
+        sv.value,
+        [0, SNAP_POINT],
+        [0, top],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+
+  const titleHeaderStyle = useAnimatedStyle(() => {
+    return {
+      height: top + 44,
+      zIndex: interpolate(
+        titleHeader.value,
+        [0, 1],
+        [0, 20],
+        Extrapolation.CLAMP,
+      ),
+      opacity: interpolate(
+        titleHeader.value,
+        [0, 1],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
+      transform: [
+        {
+          translateY: interpolate(
+            titleHeader.value,
+            [0, 1],
+            [-(top + 44), 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
 
@@ -131,10 +172,26 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         intensity={100}
         tint="light"
         style={[
-          tailwind.style(`absolute top-0 z-10 w-full h-[${top}px]`),
+          tailwind.style("absolute top-0 z-10 w-full justify-end"),
           blurViewStyle,
         ]}
       />
+      <AnimatedBlurView
+        intensity={100}
+        tint="light"
+        style={[
+          tailwind.style("absolute top-0 w-full justify-end"),
+          titleHeaderStyle,
+        ]}
+      >
+        <Animated.View style={[tailwind.style("h-11")]}>
+          <Animated.Text
+            style={tailwind.style("text-xl font-semibold text-center")}
+          >
+            {item.title}
+          </Animated.Text>
+        </Animated.View>
+      </AnimatedBlurView>
       <Animated.ScrollView
         // @ts-expect-error: Should check Animated Library
         ref={svRef}
