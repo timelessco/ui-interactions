@@ -35,6 +35,7 @@
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/native": "^5.x",
     "@react-navigation/stack": "^5.x",
+    "dayjs": "^1.11.7",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "expo": "^47.0.0",
