@@ -6,6 +6,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -22,15 +23,30 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 const MoviesUI = ({ navigation }: MoviesUIProps) => {
   const sv = useSharedValue(0);
+  const { top } = useSafeAreaInsets();
+
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
-      sv.value = event.contentOffset.y;
+      if (event.contentOffset.y > 0) {
+        sv.value = withSpring(1);
+      } else {
+        sv.value = withSpring(0);
+      }
     },
   });
-  const { top } = useSafeAreaInsets();
   const blurViewStyle = useAnimatedStyle(() => {
     return {
-      opacity: interpolate(sv.value, [0, top], [0, 1], Extrapolation.CLAMP),
+      opacity: sv.value,
+      transform: [
+        {
+          translateY: interpolate(
+            sv.value,
+            [0, 1],
+            [-top, 0],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
   return (
@@ -57,7 +73,7 @@ const MoviesUI = ({ navigation }: MoviesUIProps) => {
                 styles.imageStyle,
               ]}
               source={{
-                uri: "https://media-cache.cinematerial.com/p/500x/nza9lluu/top-gun-maverick-movie-poster.jpg",
+                uri: "https://www.themoviedb.org/t/p/original/qyEtuIIEpUHNMhmdvcvID7oQGYu.jpg",
               }}
             />
           </View>
