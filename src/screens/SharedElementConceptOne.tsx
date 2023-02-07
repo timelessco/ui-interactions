@@ -30,14 +30,14 @@ export const SharedElementConceptOne = () => {
                 animation: "timing",
                 config: {
                   duration: 400,
-                  easing: Easing.bezier(0.38, 0.35, 0, 1.17),
+                  easing: Easing.bezier(0.27, 0.37, 0.01, 1.03),
                 },
               },
               close: {
                 animation: "timing",
                 config: {
                   duration: 400,
-                  easing: Easing.bezier(0.38, 0.35, 0, 1.17),
+                  easing: Easing.bezier(0.27, 0.37, 0.01, 1.03),
                 },
               },
             },
