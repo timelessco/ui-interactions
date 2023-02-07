@@ -15,7 +15,7 @@ import tailwind from "twrnc";
 
 import { RootStackParamList } from "../../screens/SharedElementConceptOne";
 
-import { continueWatching, trending } from "./data";
+import { continueWatching, relatedMovies, trending } from "./data";
 import MoviesSlider from "./MoviesSlider";
 
 export type MoviesUIProps = StackScreenProps<RootStackParamList, "List">;
@@ -89,6 +89,12 @@ const MoviesUI = ({ navigation }: MoviesUIProps) => {
             Continue Watching
           </Text>
           <MoviesSlider navigation={navigation} listData={continueWatching} />
+        </View>
+        <View style={tailwind.style("mt-8")}>
+          <Text style={tailwind.style("pl-5 font-600 text-lg pb-2")}>
+            Top Searches
+          </Text>
+          <MoviesSlider navigation={navigation} listData={relatedMovies} />
         </View>
       </Animated.ScrollView>
     </Animated.View>
