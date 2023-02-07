@@ -259,12 +259,6 @@ const MovieDetails = (props: MoviesDetailsProps) => {
           >
             {item.title}
           </Animated.Text>
-          {/* <Pressable
-            onPress={handleOnPressClose}
-            style={[tailwind.style("absolute right-4")]}
-          >
-            <CloseIcon fill={"rgba(0,0,0,0.22)"} />
-          </Pressable> */}
         </Animated.View>
       </AnimatedBlurView>
       <StickyCloseIcon scrollY={sv} handleOnPress={handleOnPressClose} />
