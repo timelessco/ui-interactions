@@ -153,9 +153,9 @@ const MovieDetails = (props: MoviesDetailsProps) => {
         resetScroll.value = 0;
       }
       if (event.contentOffset.y < -70) {
-        runOnJS(setOpacity)(0);
         exitAnim.value = 0;
-        runOnJS(setBackgroundColor)("rgba(255,255,255,0)");
+        runOnJS(setOpacity)(0);
+        runOnJS(setBackgroundColor)("transparent");
         runOnJS(setHandleBgColor)("rgba(0,0,0,0)");
         hapticSelection && runOnJS(hapticSelection)();
         runOnJS(props.navigation.pop)();
