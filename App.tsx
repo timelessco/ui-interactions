@@ -22,6 +22,7 @@ import tailwind from "twrnc";
 import { ChevronRight } from "./src/icons/ChevronRight";
 import {
   AlignInteraction1,
+  EventCreation,
   ImageUpload,
   InputPasswordCheck,
   MenuInteraction,
@@ -43,6 +44,7 @@ export type UIInteractionParamList = {
   "Share Animation Concept": undefined;
   "Spotify Interaction": undefined;
   "UI Interactions": undefined;
+  "Event Creation": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -118,6 +120,10 @@ const rootStackScreens: screenType[] = [
     name: "Spotify Interaction",
     component: SpotifyScreen,
   },
+  {
+    name: "Event Creation",
+    component: EventCreation,
+  },
 ];
 
 const App = () => {
@@ -152,6 +158,7 @@ const App = () => {
               name="Spotify Interaction"
               component={SpotifyScreen}
             />
+            <Stack.Screen name="Event Creation" component={EventCreation} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
