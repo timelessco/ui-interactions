@@ -133,7 +133,7 @@ export const EventCreation = () => {
     () => [startIndex.value, endIndex.value],
     (prev, _next) => {
       const getTimeFromMins = (minutes: number) => {
-        const hours = Math.floor(minutes / 60);
+        const hours = Math.floor(minutes / 60) % 24;
         const remainingMinutes = minutes % 60;
         const time =
           (hours < 10 ? "0" + hours : hours) +
