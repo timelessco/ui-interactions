@@ -98,7 +98,6 @@ const TimeSegmentRender = (props: TimeSegementRenderProps) => {
         )}
       >
         {item}
-        {segementContext.value.y1}
       </Text>
       <View
         key={index}
@@ -126,12 +125,18 @@ export const EventCreation = () => {
   const endIndex = useSharedValue(0);
   const currentPoint = useSharedValue(0);
   const marginTop = useSharedValue(0);
+  const textScale = useSharedValue(0);
   const selectionHeight = useSharedValue(INIT_POINTER_HEIGHT);
   // Pan handling State
 
   useAnimatedReaction(
     () => [startIndex.value, endIndex.value],
     (prev, _next) => {
+      textScale.value = withSpring(Math.abs(prev[0] - prev[1]), {
+        mass: 1,
+        damping: 20,
+        stiffness: 180,
+      });
       const getTimeFromMins = (minutes: number) => {
         const hours = Math.floor(minutes / 60) % 24;
         const remainingMinutes = minutes % 60;
@@ -231,6 +236,53 @@ export const EventCreation = () => {
       marginTop: marginTop.value,
     };
   });
+
+  const segmentTextStyle = useAnimatedStyle(() => {
+    return {
+      fontSize: interpolate(
+        textScale.value,
+        [0, 45],
+        [8, 12],
+        Extrapolation.CLAMP,
+      ),
+      paddingTop: interpolate(
+        textScale.value,
+        [0, 45],
+        [0, 4],
+        Extrapolation.CLAMP,
+      ),
+      paddingLeft: interpolate(
+        textScale.value,
+        [0, 45],
+        [2, 4],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+
+  const newEventTextStyle = useAnimatedStyle(() => {
+    return {
+      fontSize: interpolate(
+        textScale.value,
+        [0, 45],
+        [8, 12],
+        Extrapolation.CLAMP,
+      ),
+      paddingTop: interpolate(
+        textScale.value,
+        [0, 45],
+        [0, 2],
+        Extrapolation.CLAMP,
+      ),
+      paddingLeft: interpolate(
+        textScale.value,
+        [0, 45],
+        [2, 4],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+
   return (
     <SafeAreaView style={tailwind.style("flex-1 bg-[#141414] pb-5")}>
       <StatusBar barStyle={"light-content"} />
@@ -270,9 +322,20 @@ export const EventCreation = () => {
             ]}
           >
             <Animated.Text
-              style={tailwind.style("text-xs font-medium text-white p-1")}
+              style={[
+                tailwind.style("font-medium text-white"),
+                segmentTextStyle,
+              ]}
             >
               {startTime}-{endTime}
+            </Animated.Text>
+            <Animated.Text
+              style={[
+                tailwind.style("font-medium text-white"),
+                newEventTextStyle,
+              ]}
+            >
+              {"New Event"}
             </Animated.Text>
           </Animated.View>
         </Animated.ScrollView>
