@@ -93,8 +93,8 @@ const getSectionMeasurements = (startTime: string, endTime: string) => {
   let endTimeInMinutes = 60 * endHour + endMinute;
 
   return {
-    height: endTimeInMinutes - startTimeInMinutes,
-    transform: [{ translateY: startTimeInMinutes }],
+    heightValue: endTimeInMinutes - startTimeInMinutes,
+    translateYValue: startTimeInMinutes,
   };
 };
 
@@ -130,20 +130,19 @@ type EventComponentProps = {
 };
 const EventComponent = (props: EventComponentProps) => {
   const { event } = props;
-  const sectionMeasurement = getSectionMeasurements(
-    event.startTime,
-    event.endTime,
-  );
 
   return (
     <Animated.View
-      key={event.date + event.title + event.top + event.startTime}
+      key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
           `absolute pt-1 pl-2 w-full rounded-md w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
         ),
-        { backgroundColor: event.color.bg },
-        sectionMeasurement,
+        {
+          backgroundColor: event.color.bg,
+          height: event.height,
+          transform: [{ translateY: event.translateY }],
+        },
       ]}
     >
       <Animated.Text
@@ -266,7 +265,8 @@ export const EventCreation = () => {
           startTime,
           endTime,
           title: "",
-          top: 0,
+          translateY: 0,
+          height: 0,
         });
       } else {
         runOnJS(setCurrentEvent)({
@@ -380,7 +380,15 @@ export const EventCreation = () => {
 
   const handleAddEventPress = useCallback(() => {
     if (currentEvent) {
-      eventStore.addEvent(currentEvent);
+      const sectionMeasurement = getSectionMeasurements(
+        currentEvent.startTime,
+        currentEvent.endTime,
+      );
+      eventStore.addEvent({
+        ...currentEvent,
+        translateY: sectionMeasurement.translateYValue,
+        height: sectionMeasurement.heightValue,
+      });
       setCurrentEvent(null);
       sheetRef.current?.close();
     }

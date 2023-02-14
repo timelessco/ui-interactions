@@ -35,7 +35,8 @@ export interface CalendarEvent {
   startTime: string;
   endTime: string;
   color: ColorComboType;
-  top: number;
+  translateY: number;
+  height: number;
 }
 
 interface CalendarEventsStore {
