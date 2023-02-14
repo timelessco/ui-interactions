@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
-  LayoutChangeEvent,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -18,7 +18,21 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import dayjs from "dayjs";
+import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
+
+import {
+  CalendarEvent,
+  COLORS,
+  COLORS_COMBO,
+  useEventStore,
+} from "../utils/useEventState";
 
 type TimeSegementRenderProps = {
   item: string;
@@ -53,43 +67,41 @@ const timeline = [
   "00:00",
 ];
 
+const week = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const days = [
+  "2023-10-06",
+  "2023-10-07",
+  "2023-10-08",
+  "2023-10-09",
+  "2023-10-10",
+  "2023-10-11",
+  "2023-10-12",
+];
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SEGMENT_HEIGHT = 60;
 const SEGMENT_WIDTH = Dimensions.get("screen").width - (16 + 16 + 44);
 const MINS_MULTIPLIER = 15;
 
 const INIT_POINTER_HEIGHT = 15;
 
-const TimeSegmentRender = (props: TimeSegementRenderProps) => {
-  const { item, index } = props;
-  const segementContext = useSharedValue({
-    x1: 0,
-    y1: 0,
-    x2: 0,
-    y2: 0,
-    x3: 0,
-    y3: 0,
-    x4: 0,
-    y4: 0,
-  });
+const getSectionMeasurements = (startTime: string, endTime: string) => {
+  let [startHour, startMinute] = startTime.split(":").map(Number);
+  let [endHour, endMinute] = endTime.split(":").map(Number);
 
-  const handleOnLayout = (event: LayoutChangeEvent) => {
-    event.target.measure((x, y) => {
-      segementContext.value = {
-        x1: x,
-        y1: y,
-        x2: x + SEGMENT_WIDTH,
-        y2: y,
-        x3: x,
-        y3: y + SEGMENT_HEIGHT,
-        x4: x + SEGMENT_WIDTH,
-        y4: y + SEGMENT_HEIGHT,
-      };
-    });
+  let startTimeInMinutes = 60 * startHour + startMinute;
+  let endTimeInMinutes = 60 * endHour + endMinute;
+
+  return {
+    height: endTimeInMinutes - startTimeInMinutes,
+    transform: [{ translateY: startTimeInMinutes }],
   };
+};
 
+const TimeSegmentRender = memo((props: TimeSegementRenderProps) => {
+  const { item, index } = props;
   return (
     <Animated.View
-      onLayout={handleOnLayout}
       style={tailwind.style("relative flex flex-row items-start px-4")}
     >
       <Text
@@ -112,9 +124,46 @@ const TimeSegmentRender = (props: TimeSegementRenderProps) => {
       />
     </Animated.View>
   );
+});
+type EventComponentProps = {
+  event: CalendarEvent;
+};
+const EventComponent = (props: EventComponentProps) => {
+  const { event } = props;
+  const sectionMeasurement = getSectionMeasurements(
+    event.startTime,
+    event.endTime,
+  );
+
+  return (
+    <Animated.View
+      key={event.date + event.title + event.top + event.startTime}
+      style={[
+        tailwind.style(
+          `absolute pt-1 pl-2 w-full rounded-md w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
+        ),
+        { backgroundColor: event.color.bg },
+        sectionMeasurement,
+      ]}
+    >
+      <Animated.Text
+        style={[
+          tailwind.style("text-base font-normal"),
+          { color: event.color.text },
+        ]}
+      >
+        {event.title}
+      </Animated.Text>
+    </Animated.View>
+  );
 };
 
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
 export const EventCreation = () => {
+  const [selectedDate, setSelectedDate] = useState("2023-10-08");
+  const eventStore = useEventStore();
+  const [currentEvent, setCurrentEvent] = useState<CalendarEvent | null>(null);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   // Pan handling State
@@ -153,7 +202,7 @@ export const EventCreation = () => {
 
   const panGesture = Gesture.Pan()
     .shouldCancelWhenOutside(true)
-    .activateAfterLongPress(300)
+    .activateAfterLongPress(400)
     .onStart(event => {
       if (event.y <= 0 || event.y >= 1440) {
         return;
@@ -207,8 +256,25 @@ export const EventCreation = () => {
         marginTop.value = INIT_POINTER_HEIGHT - selectionHeight.value;
       }
     })
-    .onFinalize(event => {
+    .onEnd(event => {
       runOnJS(setGestureState)(event.state);
+      if (currentEvent === null) {
+        runOnJS(setCurrentEvent)({
+          id: new Date().getTime(),
+          color: COLORS_COMBO.slate,
+          date: selectedDate,
+          startTime,
+          endTime,
+          title: "",
+          top: 0,
+        });
+      } else {
+        runOnJS(setCurrentEvent)({
+          ...currentEvent,
+          startTime,
+          endTime,
+        });
+      }
       panActive.value = 0;
       selectionHeight.value = INIT_POINTER_HEIGHT;
       startPoint.value = 0;
@@ -217,6 +283,7 @@ export const EventCreation = () => {
       startIndex.value = 0;
       marginTop.value = 0;
     });
+
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
       top: startPoint.value,
@@ -234,6 +301,7 @@ export const EventCreation = () => {
         Extrapolation.CLAMP,
       ),
       marginTop: marginTop.value,
+      zIndex: 99999,
     };
   });
 
@@ -283,19 +351,118 @@ export const EventCreation = () => {
     };
   });
 
+  useEffect(() => {
+    if (currentEvent !== null) {
+      sheetRef?.current?.snapToIndex(0);
+    }
+  }, [currentEvent]);
+
+  // Bottomsheet related props
+  // hooks
+  const sheetRef = useRef<BottomSheet>(null);
+
+  // variables
+  const snapPoints = useMemo(() => ["35%"], []);
+
+  const handleOnChangeText = useCallback(
+    (text: string) => {
+      if (currentEvent) {
+        setCurrentEvent({ ...currentEvent, title: text });
+      }
+    },
+    [currentEvent],
+  );
+
+  const handleCancelEventPress = useCallback(() => {
+    sheetRef.current?.close();
+    setCurrentEvent(null);
+  }, []);
+
+  const handleAddEventPress = useCallback(() => {
+    if (currentEvent) {
+      eventStore.addEvent(currentEvent);
+      setCurrentEvent(null);
+      sheetRef.current?.close();
+    }
+  }, [currentEvent, eventStore]);
+
+  // renders
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        opacity={0.75}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+      />
+    ),
+    [],
+  );
+
   return (
     <SafeAreaView style={tailwind.style("flex-1 bg-[#141414] pb-5")}>
       <StatusBar barStyle={"light-content"} />
-      <View style={tailwind.style("px-4 shadow")}>
-        <Text style={tailwind.style("text-lg font-medium text-[#EDEDED]")}>
+      <View style={tailwind.style("px-4 py-1 border-b-[1px] border-[#1C1C1C]")}>
+        <Text
+          style={tailwind.style(
+            "text-lg font-medium text-[#EDEDED] text-center",
+          )}
+        >
           October{" "}
           <Text style={tailwind.style("font-normal text-[#7E7E7E]")}>2023</Text>
         </Text>
+        <Animated.View style={tailwind.style("py-2")}>
+          <View
+            style={tailwind.style(
+              "flex flex-row w-full justify-between items-center",
+            )}
+          >
+            {week.map(day => {
+              return (
+                <View
+                  style={tailwind.style("flex flex-row flex-1 justify-center")}
+                  key={day}
+                >
+                  <Text style={tailwind.style("text-[#A0A0A0]")}>{day}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <View
+            style={tailwind.style(
+              "flex flex-row w-full justify-between items-center mt-1",
+            )}
+          >
+            {days.map(day => {
+              const isSelected = dayjs(selectedDate).isSame(dayjs(day), "day");
+              return (
+                <Pressable
+                  key={day}
+                  onPress={() => setSelectedDate(day)}
+                  style={tailwind.style(
+                    "flex flex-row flex-1 justify-center items-center",
+                  )}
+                >
+                  <View
+                    style={tailwind.style(
+                      "flex items-center justify-center p-2.5 rounded-md",
+                      isSelected ? "bg-[#1C1C1C]" : "",
+                    )}
+                  >
+                    <Text style={tailwind.style("text-center text-[#A0A0A0]")}>
+                      {dayjs(day).date()}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Animated.View>
       </View>
-      <Animated.View style={tailwind.style("")}>
+      <Animated.View style={tailwind.style("relative")}>
         <Animated.ScrollView
           showsVerticalScrollIndicator={false}
-          style={tailwind.style("pt-4")}
+          style={tailwind.style("py-4")}
         >
           <GestureDetector gesture={panGesture}>
             <View style={tailwind.style("")}>
@@ -313,11 +480,22 @@ export const EventCreation = () => {
               })}
             </View>
           </GestureDetector>
-          <Animated.View
+          <Animated.View style={tailwind.style("h-25")} />
+          {eventStore.events.map(event => {
+            return event.date === selectedDate ? (
+              <EventComponent
+                key={event.date + event.startTime + event.endTime}
+                event={event}
+              />
+            ) : null;
+          })}
+
+          <AnimatedBlurView
+            intensity={panActive.value * 10}
+            tint="dark"
             style={[
-              tailwind.style(
-                "absolute flex rounded bg-blue-700 left-15 z-30 overflow-hidden",
-              ),
+              StyleSheet.absoluteFill,
+              tailwind.style("left-15 rounded-md overflow-hidden bg-blue-700"),
               movingSegmentStyle,
             ]}
           >
@@ -337,9 +515,186 @@ export const EventCreation = () => {
             >
               {"New Event"}
             </Animated.Text>
-          </Animated.View>
+          </AnimatedBlurView>
         </Animated.ScrollView>
       </Animated.View>
+      <BottomSheet
+        index={-1}
+        enablePanDownToClose
+        backdropComponent={renderBackdrop}
+        ref={sheetRef}
+        snapPoints={snapPoints}
+        handleStyle={tailwind.style("bg-[#141414]")}
+        handleIndicatorStyle={styles.handleIndicatorStyle}
+      >
+        <BottomSheetView style={tailwind.style("flex-1 bg-[#141414] px-4")}>
+          <View
+            style={tailwind.style(
+              "flex w-full flex-row items-center justify-between py-2",
+            )}
+          >
+            <Pressable
+              onPress={handleCancelEventPress}
+              style={tailwind.style("flex-1 items-start")}
+            >
+              <Text
+                style={tailwind.style(
+                  "flex text-base font-medium text-[#DC3D43]",
+                )}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+            <View style={tailwind.style("flex-1 items-center")}>
+              <Text
+                style={tailwind.style("flex text-base font-medium text-white")}
+              >
+                New Event
+              </Text>
+            </View>
+            <Pressable
+              onPress={handleAddEventPress}
+              style={tailwind.style("flex-1 items-end")}
+            >
+              <Text
+                style={tailwind.style(
+                  "flex text-base font-medium",
+                  currentEvent
+                    ? currentEvent.title.length > 2
+                      ? "text-[#2563eb]"
+                      : "text-[#6b7280]"
+                    : "text-[#6b7280]",
+                )}
+              >
+                Add
+              </Text>
+            </Pressable>
+          </View>
+          <View
+            style={tailwind.style(
+              "flex flex-row justify-between items-center py-4 px-4",
+            )}
+          >
+            {Object.keys(COLORS_COMBO).map(color => {
+              const isSelected =
+                JSON.stringify(currentEvent?.color) ===
+                JSON.stringify(COLORS_COMBO[color as COLORS]);
+              const handleColorPress = () => {
+                if (currentEvent !== null) {
+                  setCurrentEvent({
+                    ...currentEvent,
+                    color: COLORS_COMBO[color as COLORS],
+                  });
+                }
+              };
+              return (
+                <Pressable
+                  onPress={handleColorPress}
+                  style={[
+                    tailwind.style(
+                      "h-7 w-7 flex items-center justify-center rounded-full",
+                    ),
+                    isSelected
+                      ? {
+                          ...tailwind.style("border-[2px]"),
+                          ...{
+                            borderColor: COLORS_COMBO[color as COLORS].bg,
+                          },
+                        }
+                      : {},
+                  ]}
+                  key={color}
+                >
+                  <View
+                    style={[
+                      tailwind.style("h-5 w-5 rounded-full"),
+                      { backgroundColor: COLORS_COMBO[color as COLORS].bg },
+                    ]}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+          <BottomSheetTextInput
+            onChangeText={handleOnChangeText}
+            placeholder="Title"
+            placeholderTextColor={"#7a7a7a"}
+            style={tailwind.style(
+              "flex flex-row items-center bg-[#252525] h-9 text-sm rounded-[10px] leading-4 px-3 text-white",
+            )}
+            onBlur={() => sheetRef?.current?.snapToIndex(0)}
+            value={currentEvent?.title}
+          />
+          <View style={tailwind.style("mt-6 bg-[#252525] rounded-2.5")}>
+            <View
+              style={tailwind.style(
+                "flex-row justify-between items-center px-4 min-h-10 border-[#EBEAEA]",
+              )}
+            >
+              <Text style={tailwind.style("text-white text-sm leading-4")}>
+                Starts
+              </Text>
+              <View style={tailwind.style("flex flex-row items-center")}>
+                <View
+                  style={tailwind.style(
+                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-25",
+                  )}
+                >
+                  <Text style={tailwind.style("text-white text-sm leading-4")}>
+                    {selectedDate}
+                  </Text>
+                </View>
+                <View
+                  style={tailwind.style(
+                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-15",
+                  )}
+                >
+                  <Text style={tailwind.style("text-white text-sm leading-4")}>
+                    {currentEvent?.startTime}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              style={tailwind.style(
+                "flex-row justify-between items-center mx-4 min-h-10 border-[#363636] border-t-[1px]",
+              )}
+            >
+              <Text style={tailwind.style("text-white text-sm leading-4")}>
+                Ends
+              </Text>
+              <View style={tailwind.style("flex flex-row items-center")}>
+                <View
+                  style={tailwind.style(
+                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-25",
+                  )}
+                >
+                  <Text style={tailwind.style("text-white text-sm leading-4")}>
+                    {selectedDate}
+                  </Text>
+                </View>
+                <View
+                  style={tailwind.style(
+                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-15",
+                  )}
+                >
+                  <Text style={tailwind.style("text-white text-sm leading-4")}>
+                    {currentEvent?.endTime}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  handleIndicatorStyle: {
+    width: 32,
+    height: 4,
+    backgroundColor: "#ccc",
+  },
+});
