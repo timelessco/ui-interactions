@@ -176,7 +176,6 @@ export const EventCreation = () => {
   const textScale = useSharedValue(0);
   const selectionHeight = useSharedValue(INIT_POINTER_HEIGHT);
   // Pan handling State
-
   useAnimatedReaction(
     () => [startIndex.value, endIndex.value],
     (prev, _next) => {
@@ -352,10 +351,11 @@ export const EventCreation = () => {
   });
 
   useEffect(() => {
-    if (currentEvent !== null) {
+    if (currentEvent !== null && state === State.END) {
+      setGestureState(State.UNDETERMINED);
       sheetRef?.current?.snapToIndex(0);
     }
-  }, [currentEvent]);
+  }, [currentEvent, state]);
 
   // Bottomsheet related props
   // hooks
@@ -630,7 +630,10 @@ export const EventCreation = () => {
             style={tailwind.style(
               "flex flex-row items-center bg-[#252525] h-9 text-sm rounded-[10px] leading-4 px-3 text-white",
             )}
-            onBlur={() => sheetRef?.current?.snapToIndex(0)}
+            onBlur={() => sheetRef?.current?.snapToIndex(-1)}
+            enablesReturnKeyAutomatically
+            returnKeyType="done"
+            onSubmitEditing={handleAddEventPress}
             value={currentEvent?.title}
           />
           <View style={tailwind.style("mt-6 bg-[#252525] rounded-2.5")}>
