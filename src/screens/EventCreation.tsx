@@ -80,6 +80,14 @@ const days = [
   "2023-10-12",
 ];
 
+/**
+ * "If you pass a string to this function, it will return a string."
+ *
+ * The type annotation for the date parameter of the formatDate function describes the type of the date
+ * parameter as a string
+ * @param {string} dateString - The date string to format.
+ * @returns A string that is the date in the format of "Month Day, Year"
+ */
 function formatDate(dateString: string) {
   const date = new Date(dateString);
   const options = {
@@ -90,6 +98,12 @@ function formatDate(dateString: string) {
   return date.toLocaleDateString("en-US", options);
 }
 
+/**
+ * It takes a time string in the format "HH:MM" and returns a formatted time string in the format
+ * "HH:MM AM/PM"
+ * @param {string} timeString - a string representing a time in the format "HH:MM"
+ * @returns a string that is formatted to be in 12 hour time.
+ */
 function formatTime(timeString: string) {
   const [hours, minutes] = timeString.split(":");
   const isPM = parseInt(hours, 10) >= 12;
@@ -106,6 +120,14 @@ const MINS_MULTIPLIER = 15;
 
 const INIT_POINTER_HEIGHT = 15;
 
+/**
+ * It takes in a start time and an end time, and returns the height and translateY values for a section
+ * Where every minute takes up 1px
+ * A Time between 00:15 - 00:30 is of height 15px
+ * @param {string} startTime - The start time of the section.
+ * @param {string} endTime - The end time of the section.
+ * @returns An object with two properties: heightValue and translateYValue.
+ */
 const getSectionMeasurements = (startTime: string, endTime: string) => {
   let [startHour, startMinute] = startTime.split(":").map(Number);
   let [endHour, endMinute] = endTime.split(":").map(Number);
@@ -267,12 +289,17 @@ export const EventCreation = () => {
       hapticSelection && runOnJS(hapticSelection)();
     })
     .onChange(event => {
+      /*
+       ** Checking if the event.y is less than or equal to 0 or greater than or equal to 1440.
+       ** If it is, it will not perform any gesture related changes.
+       */
       if (event.y <= 0 || event.y >= 1440) {
         return;
       }
       runOnJS(setGestureState)(event.state);
 
       if (event.translationY > 0) {
+        // Gesture has started, and translation is happening downwards
         // Write a case on translating the PanGesture into height change snaps
         const computedHeight =
           Math.ceil(event.translationY / MINS_MULTIPLIER) * MINS_MULTIPLIER;
