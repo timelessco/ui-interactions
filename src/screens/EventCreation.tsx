@@ -5,6 +5,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Gesture, GestureDetector, State } from "react-native-gesture-handler";
@@ -33,6 +34,7 @@ import {
   COLORS_COMBO,
   useEventStore,
 } from "../utils/useEventState";
+import { useHaptic } from "../utils/useHaptic";
 
 type TimeSegementRenderProps = {
   item: string;
@@ -77,6 +79,25 @@ const days = [
   "2023-10-11",
   "2023-10-12",
 ];
+
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  const options = {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  } as Intl.DateTimeFormatOptions;
+  return date.toLocaleDateString("en-US", options);
+}
+
+function formatTime(timeString: string) {
+  const [hours, minutes] = timeString.split(":");
+  const isPM = parseInt(hours, 10) >= 12;
+  const formattedHours = isPM ? parseInt(hours, 10) - 12 : hours;
+  const period = isPM ? "PM" : "AM";
+  const formattedTime = `${formattedHours}:${minutes} ${period}`;
+  return formattedTime;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SEGMENT_HEIGHT = 60;
@@ -130,13 +151,18 @@ type EventComponentProps = {
 };
 const EventComponent = (props: EventComponentProps) => {
   const { event } = props;
+  const isSmallSection = event.height === 15 || event.height === 30;
 
   return (
     <Animated.View
       key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
-          `absolute pt-1 pl-2 w-full rounded-md w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
+          `absolute flex ${
+            isSmallSection ? "flex-row" : "flex-col"
+          } w-full pl-2 ${
+            isSmallSection ? "justify-start items-center" : "pt-1"
+          } rounded-md w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
         ),
         {
           backgroundColor: event.color.bg,
@@ -147,11 +173,21 @@ const EventComponent = (props: EventComponentProps) => {
     >
       <Animated.Text
         style={[
-          tailwind.style("text-base font-normal"),
+          tailwind.style(`text-${isSmallSection ? "xs" : "sm"} font-normal`),
           { color: event.color.text },
         ]}
       >
         {event.title}
+      </Animated.Text>
+      <Animated.Text
+        style={[
+          tailwind.style(
+            `text-${isSmallSection ? "xs pl-2" : "sm"} font-normal`,
+          ),
+          { color: event.color.text },
+        ]}
+      >
+        {formatTime(event.startTime)} — {formatTime(event.endTime)}
       </Animated.Text>
     </Animated.View>
   );
@@ -160,6 +196,7 @@ const EventComponent = (props: EventComponentProps) => {
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 export const EventCreation = () => {
+  const hapticSelection = useHaptic();
   const [selectedDate, setSelectedDate] = useState("2023-10-08");
   const eventStore = useEventStore();
   const [currentEvent, setCurrentEvent] = useState<CalendarEvent | null>(null);
@@ -175,6 +212,8 @@ export const EventCreation = () => {
   const marginTop = useSharedValue(0);
   const textScale = useSharedValue(0);
   const selectionHeight = useSharedValue(INIT_POINTER_HEIGHT);
+
+  const inputRef = useRef<TextInput>(null);
   // Pan handling State
   useAnimatedReaction(
     () => [startIndex.value, endIndex.value],
@@ -215,6 +254,7 @@ export const EventCreation = () => {
       currentPoint.value = startPoint.value;
       startIndex.value = startPoint.value;
       endIndex.value = startPoint.value + INIT_POINTER_HEIGHT;
+      hapticSelection && runOnJS(hapticSelection)();
     })
     .onChange(event => {
       if (event.y <= 0 || event.y >= 1440) {
@@ -274,6 +314,7 @@ export const EventCreation = () => {
           endTime,
         });
       }
+      hapticSelection && runOnJS(hapticSelection)();
       panActive.value = 0;
       selectionHeight.value = INIT_POINTER_HEIGHT;
       startPoint.value = 0;
@@ -291,6 +332,12 @@ export const EventCreation = () => {
         panActive.value,
         [0, 1],
         [0, 1],
+        Extrapolation.CLAMP,
+      ),
+      borderRadius: interpolate(
+        selectionHeight.value,
+        [0, 15, 30, 45],
+        [0, 4, 6, 8],
         Extrapolation.CLAMP,
       ),
       width: interpolate(
@@ -353,6 +400,7 @@ export const EventCreation = () => {
   useEffect(() => {
     if (currentEvent !== null && state === State.END) {
       setGestureState(State.UNDETERMINED);
+      inputRef.current?.focus();
       sheetRef?.current?.snapToIndex(0);
     }
   }, [currentEvent, state]);
@@ -375,6 +423,7 @@ export const EventCreation = () => {
 
   const handleCancelEventPress = useCallback(() => {
     sheetRef.current?.close();
+    inputRef.current?.blur();
     setCurrentEvent(null);
   }, []);
 
@@ -391,6 +440,7 @@ export const EventCreation = () => {
       });
       setCurrentEvent(null);
       sheetRef.current?.close();
+      inputRef.current?.blur();
     }
   }, [currentEvent, eventStore]);
 
@@ -503,7 +553,7 @@ export const EventCreation = () => {
             tint="dark"
             style={[
               StyleSheet.absoluteFill,
-              tailwind.style("left-15 rounded-md overflow-hidden bg-blue-700"),
+              tailwind.style("left-15 overflow-hidden bg-blue-700"),
               movingSegmentStyle,
             ]}
           >
@@ -534,6 +584,7 @@ export const EventCreation = () => {
         snapPoints={snapPoints}
         handleStyle={tailwind.style("bg-[#141414]")}
         handleIndicatorStyle={styles.handleIndicatorStyle}
+        backgroundStyle={tailwind.style("bg-[#141414]")}
       >
         <BottomSheetView style={tailwind.style("flex-1 bg-[#141414] px-4")}>
           <View
@@ -635,6 +686,8 @@ export const EventCreation = () => {
             returnKeyType="done"
             onSubmitEditing={handleAddEventPress}
             value={currentEvent?.title}
+            // @ts-ignore Avoid textinput props
+            ref={inputRef}
           />
           <View style={tailwind.style("mt-6 bg-[#252525] rounded-2.5")}>
             <View
@@ -648,20 +701,22 @@ export const EventCreation = () => {
               <View style={tailwind.style("flex flex-row items-center")}>
                 <View
                   style={tailwind.style(
-                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-25",
+                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-30",
                   )}
                 >
                   <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {selectedDate}
+                    {formatDate(selectedDate)}
                   </Text>
                 </View>
                 <View
                   style={tailwind.style(
-                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-15",
+                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-20",
                   )}
                 >
                   <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {currentEvent?.startTime}
+                    {currentEvent?.startTime
+                      ? formatTime(currentEvent?.startTime)
+                      : ""}
                   </Text>
                 </View>
               </View>
@@ -677,20 +732,22 @@ export const EventCreation = () => {
               <View style={tailwind.style("flex flex-row items-center")}>
                 <View
                   style={tailwind.style(
-                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-25",
+                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-30",
                   )}
                 >
                   <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {selectedDate}
+                    {formatDate(selectedDate)}
                   </Text>
                 </View>
                 <View
                   style={tailwind.style(
-                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-15",
+                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-20",
                   )}
                 >
                   <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {currentEvent?.endTime}
+                    {currentEvent?.endTime
+                      ? formatTime(currentEvent?.endTime)
+                      : ""}
                   </Text>
                 </View>
               </View>
