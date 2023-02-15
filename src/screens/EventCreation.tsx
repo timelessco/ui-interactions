@@ -165,7 +165,9 @@ const EventComponent = (props: EventComponentProps) => {
             isSmallSection || isMediumSection
               ? "justify-start items-center"
               : "pt-1"
-          } rounded-md w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
+          } ${
+            isSmallSection ? "rounded-[4px]" : "rounded-md"
+          } w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
         ),
         {
           backgroundColor: event.color.bg,
@@ -185,16 +187,18 @@ const EventComponent = (props: EventComponentProps) => {
       >
         {event.title}
       </Animated.Text>
-      <Animated.Text
-        style={[
-          isSmallSection ? styles.smallSubtitleStyle : styles.subtitleStyle,
-          tailwind.style(
-            `${isSmallSection || isMediumSection ? "pl-[6px]" : ""}`,
-          ),
-        ]}
-      >
-        {formatTime(event.startTime)} — {formatTime(event.endTime)}
-      </Animated.Text>
+      {!isSmallSection ? (
+        <Animated.Text
+          style={[
+            styles.subtitleStyle,
+            tailwind.style(
+              `${isSmallSection || isMediumSection ? "pl-[6px]" : ""}`,
+            ),
+          ]}
+        >
+          {formatTime(event.startTime)} — {formatTime(event.endTime)}
+        </Animated.Text>
+      ) : null}
     </Animated.View>
   );
 };
@@ -450,6 +454,11 @@ export const EventCreation = () => {
     }
   }, [currentEvent, eventStore]);
 
+  const handleOnCloseSheet = useCallback(() => {
+    inputRef.current?.blur();
+    setCurrentEvent(null);
+  }, []);
+
   // renders
   const renderBackdrop = useCallback(
     (props: any) => (
@@ -591,7 +600,7 @@ export const EventCreation = () => {
         handleStyle={tailwind.style("bg-[#141414]")}
         handleIndicatorStyle={styles.handleIndicatorStyle}
         backgroundStyle={tailwind.style("bg-[#141414]")}
-        onClose={() => inputRef.current?.blur()}
+        onClose={handleOnCloseSheet}
       >
         <BottomSheetView style={tailwind.style("flex-1 bg-[#141414] px-4")}>
           <View
@@ -619,6 +628,13 @@ export const EventCreation = () => {
               </Text>
             </View>
             <Pressable
+              disabled={
+                currentEvent
+                  ? currentEvent.title.length > 2
+                    ? false
+                    : true
+                  : true
+              }
               onPress={handleAddEventPress}
               style={tailwind.style("flex-1 items-end")}
             >
@@ -774,10 +790,6 @@ const styles = StyleSheet.create({
   },
   subtitleStyle: {
     fontSize: 11,
-    color: "rgba(255,255,255,0.8)",
-  },
-  smallSubtitleStyle: {
-    fontSize: 10,
     color: "rgba(255,255,255,0.8)",
   },
   smallTitleStyle: {
