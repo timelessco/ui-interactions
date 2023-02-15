@@ -110,9 +110,10 @@ const MovieDetails = (props: MoviesDetailsProps) => {
   const { top } = useSafeAreaInsets();
   const { item } = props.route.params;
   const exitAnim = useSharedValue(1);
+  const bgBlur = useSharedValue(0);
   const titleHeader = useSharedValue(0);
   const hapticSelection = useHaptic();
-  const [opacity, setOpacity] = useState(1);
+  const contentOpacity = useSharedValue(1);
   const [backgroundColor, setBackgroundColor] = useState("white");
   const [handleBgColor, setHandleBgColor] = useState("rgba(0,0,0,0.22)");
   const [interactionsFinished, setInteractionsFinished] = useState(false);
@@ -140,9 +141,17 @@ const MovieDetails = (props: MoviesDetailsProps) => {
     },
     onScroll: event => {
       if (event.contentOffset.y > 460) {
-        titleHeader.value = withSpring(1);
+        titleHeader.value = withSpring(1, {
+          stiffness: 190,
+          damping: 30,
+          mass: 1,
+        });
       } else {
-        titleHeader.value = withSpring(0);
+        titleHeader.value = withSpring(0, {
+          stiffness: 190,
+          damping: 30,
+          mass: 1,
+        });
       }
       if (exitAnim.value) {
         sv.value = event.contentOffset.y;
@@ -154,7 +163,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
       }
       if (event.contentOffset.y < -70) {
         exitAnim.value = 0;
-        runOnJS(setOpacity)(0);
+        contentOpacity.value = 0;
         runOnJS(setBackgroundColor)("transparent");
         runOnJS(setHandleBgColor)("rgba(0,0,0,0)");
         hapticSelection && runOnJS(hapticSelection)();
@@ -230,15 +239,22 @@ const MovieDetails = (props: MoviesDetailsProps) => {
 
   useEffect(() => {
     InteractionManager.runAfterInteractions(() => {
+      bgBlur.value = withTiming(100, { duration: 200 });
       setInteractionsFinished(true);
     });
-  }, []);
+  });
+
+  const bgBlurStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(bgBlur.value, [0, 100], [0, 1], Extrapolation.CLAMP),
+    };
+  });
 
   return (
     <Animated.View style={tailwind.style("relative")}>
       <AnimatedBlurView
         intensity={100}
-        style={[tailwind.style("absolute inset-0")]}
+        style={[tailwind.style("absolute inset-0"), bgBlurStyle]}
       />
       <AnimatedBlurView
         intensity={100}
@@ -296,7 +312,7 @@ const MovieDetails = (props: MoviesDetailsProps) => {
             </SharedElement>
           </View>
           <Animated.View
-            style={{ opacity }}
+            style={{ opacity: contentOpacity.value }}
             entering={FadeInDown.springify()
               .mass(1)
               .damping(22)
