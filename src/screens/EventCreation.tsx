@@ -151,29 +151,35 @@ type EventComponentProps = {
 };
 const EventComponent = (props: EventComponentProps) => {
   const { event } = props;
-  const isSmallSection = event.height === 15 || event.height === 30;
+  const isSmallSection = event.height === 15;
+  const isMediumSection = event.height === 30 || event.height === 45;
 
   return (
     <Animated.View
       key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
-          `absolute flex ${
-            isSmallSection ? "flex-row" : "flex-col"
+          `absolute flex my-[1px] ${
+            isSmallSection || isMediumSection ? "flex-row" : "flex-col"
           } w-full pl-2 ${
-            isSmallSection ? "justify-start items-center" : "pt-1"
+            isSmallSection || isMediumSection
+              ? "justify-start items-center"
+              : "pt-1"
           } rounded-md w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
         ),
         {
           backgroundColor: event.color.bg,
-          height: event.height,
+          height: event.height - 2,
           transform: [{ translateY: event.translateY }],
         },
       ]}
     >
       <Animated.Text
         style={[
-          tailwind.style(`text-${isSmallSection ? "xs" : "sm"} font-normal`),
+          tailwind.style(
+            `text-${isMediumSection ? "sm" : "base"} text-white font-medium`,
+          ),
+          isSmallSection ? styles.smallTitleStyle : {},
           { color: event.color.text },
         ]}
       >
@@ -181,10 +187,10 @@ const EventComponent = (props: EventComponentProps) => {
       </Animated.Text>
       <Animated.Text
         style={[
+          isSmallSection ? styles.smallSubtitleStyle : styles.subtitleStyle,
           tailwind.style(
-            `text-${isSmallSection ? "xs pl-2" : "sm"} font-normal`,
+            `${isSmallSection || isMediumSection ? "pl-[6px]" : ""}`,
           ),
-          { color: event.color.text },
         ]}
       >
         {formatTime(event.startTime)} — {formatTime(event.endTime)}
@@ -585,6 +591,7 @@ export const EventCreation = () => {
         handleStyle={tailwind.style("bg-[#141414]")}
         handleIndicatorStyle={styles.handleIndicatorStyle}
         backgroundStyle={tailwind.style("bg-[#141414]")}
+        onClose={() => inputRef.current?.blur()}
       >
         <BottomSheetView style={tailwind.style("flex-1 bg-[#141414] px-4")}>
           <View
@@ -764,5 +771,17 @@ const styles = StyleSheet.create({
     width: 32,
     height: 4,
     backgroundColor: "#ccc",
+  },
+  subtitleStyle: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.8)",
+  },
+  smallSubtitleStyle: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.8)",
+  },
+  smallTitleStyle: {
+    fontSize: 12,
+    lineHeight: 13.7,
   },
 });
