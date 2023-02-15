@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
   handleIndicatorStyle: {
     width: 32,
     height: 4,
-    backgroundColor: "#ccc",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
   subtitleStyle: {
     fontSize: 11,
