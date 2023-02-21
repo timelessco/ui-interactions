@@ -132,6 +132,7 @@ export const SharedGestureConcept = () => {
   const selectedContainerTranslate = useSharedValue(0);
   const currentTarget = useSharedValue(-1);
   const hapticSelection = useHaptic();
+  const containerStretch = useSharedValue(0);
 
   const tapGesture = Gesture.Tap()
     .onStart(() => {
@@ -144,6 +145,7 @@ export const SharedGestureConcept = () => {
 
   const panGesture = Gesture.Pan()
     .activateAfterLongPress(350)
+    .activeOffsetY(10)
     .onBegin(() => {
       tapScale.value = withSpring(1, DEFAULT_SPRING_CONFIG);
       hapticSelection && runOnJS(hapticSelection)();
@@ -151,6 +153,7 @@ export const SharedGestureConcept = () => {
     .onStart(() => {
       runOnJS(setShareSheetOpen)(true);
     })
+    .maxPointers(1)
     .onChange(event => {
       if (event.y < -22) {
         // The Gesture is in bound of the Share Sheet
@@ -158,7 +161,9 @@ export const SharedGestureConcept = () => {
         // Translate to the initial position
 
         if (event.y > -250) {
-          // Allowing +20px extra on moving upwards because the selected state closes too soon
+          containerStretch.value = 0;
+          // Allowing +20px extra on moving upwards because the selected state gets
+          // deselected too soon
           tapScale.value = withSpring(0, DEFAULT_SPRING_CONFIG);
           // Find the pan gesture translation with respect to the Segment Height
           const translationDiff = Math.abs(event.y) % SEGMENT_HEIGHT;
@@ -188,20 +193,28 @@ export const SharedGestureConcept = () => {
           }
         } else {
           // Write code to stretch the whole container upwards - the selection is enabled
-          // The event.y moves from -221 to -260
+          // The event.translationY moves from -250 and beyond
+          // so get the translation beyond 250 using %
           // Disable selection and reset current target
+          containerStretch.value = Math.floor(Math.abs(event.y) % 250);
           enableSelection.value = withSpring(0, DEFAULT_SPRING_CONFIG);
           currentTarget.value = -1;
         }
       } else {
         // Write code to stretch the whole container downwards - the selection is enabled
-        // The event.y moves from -21 to -260 and beyond
         // Disable selection and reset current target
+
+        if (event.y > 0) {
+          if (event.translationY > 0) {
+            containerStretch.value = Math.round(event.translationY);
+          }
+        }
         enableSelection.value = withSpring(0, DEFAULT_SPRING_CONFIG);
         currentTarget.value = -1;
       }
     })
     .onEnd(event => {
+      containerStretch.value = withSpring(0);
       if (currentTarget.value >= 0 && currentTarget.value < people.length) {
         runOnJS(setCurrentShareTarget)(
           // Reversing the array simplify the complication of mapping the diff factor to array index
@@ -268,6 +281,16 @@ export const SharedGestureConcept = () => {
   const containerOutOfBoundStyle = useAnimatedStyle(() => {
     return {
       backgroundColor: "rgba(255,255,255,0.9)",
+      transform: [
+        {
+          scale: interpolate(
+            containerStretch.value,
+            [0, 50],
+            [1, 0.9],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
 
@@ -294,7 +317,7 @@ export const SharedGestureConcept = () => {
               exiting={FadeOutDown}
               style={[
                 tailwind.style(
-                  "absolute items-center px-2 py-2 rounded-[11px] -top-[260px] bg-white",
+                  "absolute items-center px-2 py-2 rounded-[11px] -top-[248px] bg-white",
                 ),
                 containerOutOfBoundStyle,
               ]}
