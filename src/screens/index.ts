@@ -5,5 +5,6 @@ export * from "./InputPasswordCheck";
 export * from "./MenuInteraction";
 export * from "./ShareAnimationConceptScreen";
 export * from "./SharedElementConceptOne";
+export * from "./ShareGestureConcept";
 export * from "./SpotifyScreen";
 export * from "./SpotifyScreen";

@@ -28,6 +28,7 @@ import {
   MenuInteraction,
   ShareAnimationConceptScreen,
   SharedElementConceptOne,
+  SharedGestureConcept,
   SpotifyScreen,
 } from "./src/screens";
 
@@ -45,6 +46,7 @@ export type UIInteractionParamList = {
   "Spotify Interaction": undefined;
   "UI Interactions": undefined;
   "Event Creation": undefined;
+  "Share Gesture": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -124,6 +126,10 @@ const rootStackScreens: screenType[] = [
     name: "Event Creation",
     component: EventCreation,
   },
+  {
+    name: "Share Gesture",
+    component: SharedGestureConcept,
+  },
 ];
 
 const App = () => {
@@ -159,6 +165,10 @@ const App = () => {
               component={SpotifyScreen}
             />
             <Stack.Screen name="Event Creation" component={EventCreation} />
+            <Stack.Screen
+              name="Share Gesture"
+              component={SharedGestureConcept}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
