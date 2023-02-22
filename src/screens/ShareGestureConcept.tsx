@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Image, Pressable, StatusBar } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -62,12 +62,14 @@ const PersonComponent = ({
   const hapticSelection = useHaptic();
   useAnimatedReaction(
     () => currentTarget.value,
-    (next, _prev) => {
-      if (next === people.length - index - 1) {
-        sv.value = withSpring(1, DEFAULT_SPRING_CONFIG);
-        hapticSelection && runOnJS(hapticSelection)();
-      } else {
-        sv.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+    (next, prev) => {
+      if (next !== prev) {
+        if (next === people.length - index - 1) {
+          sv.value = withSpring(1, DEFAULT_SPRING_CONFIG);
+          hapticSelection && runOnJS(hapticSelection)();
+        } else {
+          sv.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+        }
       }
     },
   );
@@ -134,6 +136,8 @@ export const SharedGestureConcept = () => {
   const hapticSelection = useHaptic();
   const containerStretch = useSharedValue(0);
 
+  const activatedFromTap = useSharedValue(0);
+
   const tapGesture = Gesture.Tap()
     .onStart(() => {
       tapScale.value = withSpring(1, DEFAULT_SPRING_CONFIG);
@@ -146,9 +150,35 @@ export const SharedGestureConcept = () => {
   const panGesture = Gesture.Pan()
     .activateAfterLongPress(350)
     .activeOffsetY(10)
-    .onBegin(() => {
+    .onBegin(event => {
       tapScale.value = withSpring(1, DEFAULT_SPRING_CONFIG);
       hapticSelection && runOnJS(hapticSelection)();
+
+      selectedContainerTranslate.value = 0;
+      if (event.y < -22 && activatedFromTap.value === 0) {
+        if (event.y > -250) {
+          activatedFromTap.value = 1;
+          const translationDiffFactor = Math.floor(
+            Math.abs(event.y) / SEGMENT_HEIGHT,
+          );
+
+          if (translationDiffFactor === people.length) {
+            selectedContainerTranslate.value = withSpring(
+              -(SEGMENT_HEIGHT * translationDiffFactor - 1),
+              DEFAULT_SPRING_CONFIG,
+            );
+          }
+          if (
+            translationDiffFactor >= 0 &&
+            translationDiffFactor < people.length
+          ) {
+            selectedContainerTranslate.value = withSpring(
+              -(SEGMENT_HEIGHT * translationDiffFactor - 1),
+              DEFAULT_SPRING_CONFIG,
+            );
+          }
+        }
+      }
     })
     .onStart(() => {
       runOnJS(setShareSheetOpen)(true);
@@ -159,9 +189,8 @@ export const SharedGestureConcept = () => {
         // The Gesture is in bound of the Share Sheet
         // Enable the Selection Mode which brings the Moving Segment
         // Translate to the initial position
-
         if (event.y > -250) {
-          containerStretch.value = 0;
+          containerStretch.value = withSpring(0, DEFAULT_SPRING_CONFIG);
           // Allowing +20px extra on moving upwards because the selected state gets
           // deselected too soon
           tapScale.value = withSpring(0, DEFAULT_SPRING_CONFIG);
@@ -181,14 +210,14 @@ export const SharedGestureConcept = () => {
               translationDiffFactor >= 0 &&
               translationDiffFactor < people.length
             ) {
-              currentTarget.value = translationDiffFactor;
-              enableSelection.value = withSpring(1, DEFAULT_SPRING_CONFIG);
               // Translate Up the moving segment up by the height of the segment
 
               selectedContainerTranslate.value = withSpring(
                 -(SEGMENT_HEIGHT * translationDiffFactor),
                 DEFAULT_SPRING_CONFIG,
               );
+              currentTarget.value = translationDiffFactor;
+              enableSelection.value = withSpring(1, DEFAULT_SPRING_CONFIG);
             }
           }
         } else {
@@ -203,10 +232,13 @@ export const SharedGestureConcept = () => {
       } else {
         // Write code to stretch the whole container downwards - the selection is enabled
         // Disable selection and reset current target
-
         if (event.y > 0) {
           if (event.translationY > 0) {
-            containerStretch.value = Math.round(event.translationY);
+            if (activatedFromTap.value) {
+              containerStretch.value = Math.round(event.y);
+            } else {
+              containerStretch.value = Math.round(event.translationY);
+            }
           }
         }
         enableSelection.value = withSpring(0, DEFAULT_SPRING_CONFIG);
@@ -231,6 +263,7 @@ export const SharedGestureConcept = () => {
       }
       tapScale.value = withSpring(0, DEFAULT_SPRING_CONFIG);
       enableSelection.value = withSpring(0);
+      activatedFromTap.value = 0;
     })
     .onFinalize(() => {
       tapScale.value = withSpring(0, DEFAULT_SPRING_CONFIG);
@@ -294,6 +327,16 @@ export const SharedGestureConcept = () => {
     };
   });
 
+  useEffect(() => {
+    const resetCurrentShareTarget = setTimeout(() => {
+      setCurrentShareTarget("");
+    }, 3000);
+
+    // Clear the timeout if the component unmounts or if myState changes
+    return () => {
+      clearTimeout(resetCurrentShareTarget);
+    };
+  }, [currentShareTarget]);
   return (
     <SafeAreaView style={tailwind.style("flex-1 items-center justify-center")}>
       <StatusBar barStyle={"dark-content"} />
@@ -359,11 +402,16 @@ export const SharedGestureConcept = () => {
       {currentShareTarget.length > 0 ? (
         <Animated.View
           style={tailwind.style(
-            `absolute bottom-${bottom} h-10 rounded-md justify-center items-center px-2 bg-gray-900`,
+            `absolute bottom-${
+              bottom - 20
+            } h-10 rounded-md justify-center items-center px-2`,
           )}
           entering={FadeInDown}
+          exiting={FadeOutDown}
         >
-          <Animated.Text style={tailwind.style("text-white")}>
+          <Animated.Text
+            style={tailwind.style("text-base text-white font-medium")}
+          >
             Sharing to {currentShareTarget}
           </Animated.Text>
         </Animated.View>
