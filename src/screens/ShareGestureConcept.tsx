@@ -149,7 +149,6 @@ export const SharedGestureConcept = () => {
 
   const panGesture = Gesture.Pan()
     .activateAfterLongPress(350)
-    .activeOffsetY(10)
     .onBegin(event => {
       tapScale.value = withSpring(1, DEFAULT_SPRING_CONFIG);
       hapticSelection && runOnJS(hapticSelection)();
@@ -162,18 +161,12 @@ export const SharedGestureConcept = () => {
             Math.abs(event.y) / SEGMENT_HEIGHT,
           );
 
-          if (translationDiffFactor === people.length) {
-            selectedContainerTranslate.value = withSpring(
-              -(SEGMENT_HEIGHT * translationDiffFactor - 1),
-              DEFAULT_SPRING_CONFIG,
-            );
-          }
           if (
             translationDiffFactor >= 0 &&
-            translationDiffFactor < people.length
+            translationDiffFactor <= people.length
           ) {
             selectedContainerTranslate.value = withSpring(
-              -(SEGMENT_HEIGHT * translationDiffFactor - 1),
+              -(SEGMENT_HEIGHT * (translationDiffFactor - 1)),
               DEFAULT_SPRING_CONFIG,
             );
           }
