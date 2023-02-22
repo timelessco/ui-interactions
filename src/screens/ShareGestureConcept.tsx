@@ -214,7 +214,7 @@ export const SharedGestureConcept = () => {
       }
     })
     .onEnd(event => {
-      containerStretch.value = withSpring(0);
+      containerStretch.value = withSpring(0, DEFAULT_SPRING_CONFIG);
       if (currentTarget.value >= 0 && currentTarget.value < people.length) {
         runOnJS(setCurrentShareTarget)(
           // Reversing the array simplify the complication of mapping the diff factor to array index
@@ -285,8 +285,8 @@ export const SharedGestureConcept = () => {
         {
           scale: interpolate(
             containerStretch.value,
-            [0, 50],
-            [1, 0.9],
+            [-50, 0, 50],
+            [1.1, 1, 0.9],
             Extrapolation.CLAMP,
           ),
         },
