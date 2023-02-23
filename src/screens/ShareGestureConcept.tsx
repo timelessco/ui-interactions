@@ -93,11 +93,7 @@ const PersonComponent = ({
       <Pressable
         key={person.name}
         onPress={handlePress}
-        style={({ pressed }) => [
-          pressed
-            ? tailwind.style("bg-slate-100 rounded-md px-2")
-            : tailwind.style("px-2 z-20"),
-        ]}
+        style={[tailwind.style("px-2 z-20")]}
       >
         <Animated.View
           style={tailwind.style(
@@ -137,6 +133,7 @@ export const SharedGestureConcept = () => {
   const containerStretch = useSharedValue(0);
 
   const activatedFromTap = useSharedValue(0);
+  const enableSpringTranslation = useSharedValue(0);
 
   const tapGesture = Gesture.Tap()
     .onStart(() => {
@@ -157,6 +154,7 @@ export const SharedGestureConcept = () => {
       if (event.y < -22 && activatedFromTap.value === 0) {
         if (event.y > -250) {
           activatedFromTap.value = 1;
+          enableSpringTranslation.value = 1;
           const translationDiffFactor = Math.floor(
             Math.abs(event.y) / SEGMENT_HEIGHT,
           );
@@ -165,9 +163,9 @@ export const SharedGestureConcept = () => {
             translationDiffFactor >= 0 &&
             translationDiffFactor <= people.length
           ) {
-            selectedContainerTranslate.value = withSpring(
-              -(SEGMENT_HEIGHT * (translationDiffFactor - 1)),
-              DEFAULT_SPRING_CONFIG,
+            selectedContainerTranslate.value = -(
+              SEGMENT_HEIGHT *
+              (translationDiffFactor - 1)
             );
           }
         }
@@ -204,13 +202,29 @@ export const SharedGestureConcept = () => {
               translationDiffFactor < people.length
             ) {
               // Translate Up the moving segment up by the height of the segment
+              if (enableSpringTranslation.value) {
+                selectedContainerTranslate.value = -(
+                  SEGMENT_HEIGHT * translationDiffFactor
+                );
+                enableSpringTranslation.value = 0;
+              } else {
+                selectedContainerTranslate.value = withSpring(
+                  -(SEGMENT_HEIGHT * translationDiffFactor),
+                  DEFAULT_SPRING_CONFIG,
+                );
+              }
 
-              selectedContainerTranslate.value = withSpring(
-                -(SEGMENT_HEIGHT * translationDiffFactor),
-                DEFAULT_SPRING_CONFIG,
-              );
               currentTarget.value = translationDiffFactor;
               enableSelection.value = withSpring(1, DEFAULT_SPRING_CONFIG);
+            }
+          } else {
+            if (enableSpringTranslation.value) {
+              enableSelection.value = withSpring(1, DEFAULT_SPRING_CONFIG);
+              const translationDiffFactor = Math.floor(
+                Math.abs(event.y) / SEGMENT_HEIGHT,
+              );
+              currentTarget.value = translationDiffFactor - 1;
+              enableSpringTranslation.value = 0;
             }
           }
         } else {
@@ -268,7 +282,7 @@ export const SharedGestureConcept = () => {
     return {
       transform: [
         {
-          scale: interpolate(tapScale.value, [0, 1], [1, 0.7]),
+          scale: interpolate(tapScale.value, [0, 1], [1, 0.95]),
         },
       ],
     };
