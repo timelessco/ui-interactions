@@ -22,6 +22,7 @@ import tailwind from "twrnc";
 import { ChevronRight } from "./src/icons/ChevronRight";
 import {
   AlignInteraction1,
+  DynamicTabBar,
   EventCreation,
   ImageUpload,
   InputPasswordCheck,
@@ -49,6 +50,7 @@ export type UIInteractionParamList = {
   "Event Creation": undefined;
   "Share Gesture": undefined;
   "Volume Radial Control": undefined;
+  "Dynamic Tab Bar": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -136,6 +138,10 @@ const rootStackScreens: screenType[] = [
     name: "Volume Radial Control",
     component: VolumeRadialControl,
   },
+  {
+    name: "Dynamic Tab Bar",
+    component: DynamicTabBar,
+  },
 ];
 
 const App = () => {
@@ -179,6 +185,7 @@ const App = () => {
               name="Volume Radial Control"
               component={VolumeRadialControl}
             />
+            <Stack.Screen name="Dynamic Tab Bar" component={DynamicTabBar} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

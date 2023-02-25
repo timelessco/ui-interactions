@@ -1,4 +1,5 @@
 export * from "./AlignInteraction1";
+export * from "./DynamicTabBar";
 export * from "./EventCreation";
 export * from "./ImageUpload";
 export * from "./InputPasswordCheck";
