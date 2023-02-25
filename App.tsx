@@ -30,6 +30,7 @@ import {
   SharedElementConceptOne,
   SharedGestureConcept,
   SpotifyScreen,
+  VolumeRadialControl,
 } from "./src/screens";
 
 enableScreens();
@@ -47,6 +48,7 @@ export type UIInteractionParamList = {
   "UI Interactions": undefined;
   "Event Creation": undefined;
   "Share Gesture": undefined;
+  "Volume Radial Control": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -130,6 +132,10 @@ const rootStackScreens: screenType[] = [
     name: "Share Gesture",
     component: SharedGestureConcept,
   },
+  {
+    name: "Volume Radial Control",
+    component: VolumeRadialControl,
+  },
 ];
 
 const App = () => {
@@ -168,6 +174,10 @@ const App = () => {
             <Stack.Screen
               name="Share Gesture"
               component={SharedGestureConcept}
+            />
+            <Stack.Screen
+              name="Volume Radial Control"
+              component={VolumeRadialControl}
             />
           </Stack.Navigator>
         </NavigationContainer>
