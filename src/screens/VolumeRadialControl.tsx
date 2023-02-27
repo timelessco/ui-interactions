@@ -1,6 +1,10 @@
 import { Image, StatusBar, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  interpolateColor,
+  runOnJS,
+  SharedValue,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -9,11 +13,18 @@ import { toDeg, toRad } from "react-native-redash";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
 
+import { useHaptic } from "../utils/useHaptic";
+
 const D = 170;
 const R = D / 2;
 const angle = 45;
+const notches = 360 / angle;
 
-// The space between the circle and the stroke
+const sweeping_angle = angle * 2;
+const last_angle = 90 - sweeping_angle / 2;
+const start_angle = 90 + sweeping_angle / 2;
+
+// The space between the circle and the notches
 const distanceFactor = 1.6;
 
 const getStrokePosition = (angleInDegrees: number) => {
@@ -34,10 +45,82 @@ const getTransform = (tranformAngle: number): ViewStyle => {
   };
 };
 
+type NotchesProps = {
+  index: number;
+  currentAngle: SharedValue<number>;
+};
+
+const Notches = ({ index, currentAngle }: NotchesProps) => {
+  const hapticSelection = useHaptic();
+  const active = useSharedValue(0);
+  useAnimatedReaction(
+    () => currentAngle.value,
+    (next, _prev) => {
+      // Mapping current angle to an index value
+      let currentAngleFactor = next / angle;
+      // Mapping Notch angle to an index value
+      let notchAngleFactor = (index * angle) / angle;
+      // Setting the currentAngleFactor && notchAngleFactor to the notches when it is zero
+      // It is the 0, 360 degree point in the Knob
+      if (currentAngleFactor === 0) {
+        currentAngleFactor = notches;
+      }
+      if (notchAngleFactor === 0) {
+        notchAngleFactor = notches;
+      }
+      // Setting the currentAngleFactor && notchAngleFactor to the (notches+(factor)) when it is more than zero
+      // It is the (start angle) degree point in the Knob, which is the max point
+
+      if (currentAngleFactor > 0 && currentAngleFactor < start_angle / angle) {
+        currentAngleFactor = notches + currentAngleFactor;
+      }
+      if (notchAngleFactor > 0 && notchAngleFactor < start_angle / angle) {
+        notchAngleFactor = notches + notchAngleFactor;
+      }
+
+      if (currentAngleFactor >= notchAngleFactor) {
+        if (active.value === 0) {
+          hapticSelection && runOnJS(hapticSelection)();
+        }
+        active.value = withSpring(1);
+      } else {
+        if (active.value === 1) {
+          hapticSelection && runOnJS(hapticSelection)();
+        }
+        active.value = withSpring(0);
+      }
+    },
+  );
+  const currentStrokeAngle = index * angle;
+  const animatedStyles = useAnimatedStyle(() => {
+    return {
+      backgroundColor: interpolateColor(
+        active.value,
+        [0, 1],
+        ["white", "orange"],
+      ),
+    };
+  });
+  if (currentStrokeAngle === 90) {
+    return null;
+  }
+  return (
+    <Animated.View
+      key={index}
+      style={[
+        tailwind.style("absolute h-1 w-5 "),
+        getTransform(currentStrokeAngle),
+        animatedStyles,
+      ]}
+    />
+  );
+};
+
 export const VolumeRadialControl = () => {
   const sv = useSharedValue(0);
-  const currentAngle = useSharedValue(270);
-  const gestureInSweepingAngle = useSharedValue(0);
+  const currentAngle = useSharedValue(start_angle);
+  const goingInOppDirection = useSharedValue(0);
+
   const panGesture = Gesture.Pan()
     .onBegin(() => {
       sv.value = withSpring(1);
@@ -50,13 +133,31 @@ export const VolumeRadialControl = () => {
       const angleDegrees = toDeg(angleRadians);
       let adjustedAngle = angleDegrees;
       adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
-      if (adjustedAngle > 45 && adjustedAngle < 135) {
-        gestureInSweepingAngle.value = 1;
+
+      /* Making sure that the angle is always a multiple of 45. */
+      // By adding half of the angle to the calculated angle we take it to closer multiple of angle = 45
+      // Like for 15 -> 15 + (45/2) = 37.5
+      // Like for 24 -> 24 + (45/2) = 46.5
+      adjustedAngle = adjustedAngle + angle / 2;
+      // By subtracting the remainder of (value/angle) of the result, we get the closest multiple of the angle
+      // Now 37.5 -> 37.5 - (37.5%45) = 0
+      // Now 46.5 -> 46.5 - (46.5%45) = 45
+      adjustedAngle = adjustedAngle - (adjustedAngle % angle);
+
+      if (adjustedAngle > last_angle && adjustedAngle < start_angle) {
+        goingInOppDirection.value = 1;
       } else {
-        currentAngle.value = adjustedAngle;
+        if (goingInOppDirection.value) {
+          if (currentAngle.value === adjustedAngle) {
+            goingInOppDirection.value = 0;
+          }
+        } else {
+          currentAngle.value = adjustedAngle;
+        }
       }
     })
     .onEnd(() => {
+      goingInOppDirection.value = 0;
       sv.value = withSpring(0);
     });
 
@@ -97,23 +198,11 @@ export const VolumeRadialControl = () => {
               indicatorAnimationStyle,
             ]}
           />
-          {Array(8)
+          {Array(notches)
             .fill(1)
-            .map((_value, index) => {
-              const currentStrokeAngle = index * angle;
-              if (currentStrokeAngle === 90) {
-                return;
-              }
-              return (
-                <Animated.View
-                  key={index}
-                  style={[
-                    tailwind.style("absolute h-1 w-5 bg-white"),
-                    getTransform(currentStrokeAngle),
-                  ]}
-                />
-              );
-            })}
+            .map((_value, index) => (
+              <Notches key={index} index={index} currentAngle={currentAngle} />
+            ))}
         </Animated.View>
       </GestureDetector>
     </SafeAreaView>
