@@ -1,6 +1,7 @@
-import { Image, StatusBar, ViewStyle } from "react-native";
+import { Dimensions, Image, StatusBar, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  interpolate,
   interpolateColor,
   runOnJS,
   SharedValue,
@@ -9,15 +10,18 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { toDeg, toRad } from "react-native-redash";
+import { toRad } from "react-native-redash";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
 
 import { useHaptic } from "../utils/useHaptic";
 
+const SCREEN_WIDTH = Dimensions.get("window").width;
+
 const D = 170;
 const R = D / 2;
-const angle = 45;
+
+const angle = 6;
 const notches = 360 / angle;
 
 const sweeping_angle = angle * 2;
@@ -117,47 +121,42 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
 };
 
 export const VolumeRadialControl = () => {
+  const remainingPixels = SCREEN_WIDTH - D;
+  // These are the min and max points along the x-axis
+  const min_x = -(remainingPixels / 2);
+  const max_x = SCREEN_WIDTH + min_x;
+
   const sv = useSharedValue(0);
   const currentAngle = useSharedValue(start_angle);
   const goingInOppDirection = useSharedValue(0);
+  const startAngle = useSharedValue(start_angle);
+
+  const startXDistance = useSharedValue(0);
+  const currentXDistance = useSharedValue(0);
 
   const panGesture = Gesture.Pan()
-    .onBegin(() => {
+    .onBegin(event => {
       sv.value = withSpring(1);
+      startXDistance.value = event.x;
     })
     .onChange(event => {
-      const { x, y } = event;
-      const deltaX = x - R; // The Center Coordinates of the Container is now (R, R)
-      const deltaY = y - R; // The Center Coordinates of the Container is now (R, R)
-      const angleRadians = Math.atan2(deltaY, deltaX);
-      const angleDegrees = toDeg(angleRadians);
-      let adjustedAngle = angleDegrees;
-      adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
-
-      /* Making sure that the angle is always a multiple of 45. */
-      // By adding half of the angle to the calculated angle we take it to closer multiple of angle = 45
-      // Like for 15 -> 15 + (45/2) = 37.5
-      // Like for 24 -> 24 + (45/2) = 46.5
-      adjustedAngle = adjustedAngle + angle / 2;
-      // By subtracting the remainder of (value/angle) of the result, we get the closest multiple of the angle
-      // Now 37.5 -> 37.5 - (37.5%45) = 0
-      // Now 46.5 -> 46.5 - (46.5%45) = 45
-      adjustedAngle = adjustedAngle - (adjustedAngle % angle);
-
-      if (adjustedAngle > last_angle && adjustedAngle < start_angle) {
-        goingInOppDirection.value = 1;
-      } else {
-        if (goingInOppDirection.value) {
-          if (currentAngle.value === adjustedAngle) {
-            goingInOppDirection.value = 0;
-          }
-        } else {
-          currentAngle.value = adjustedAngle;
-        }
+      // This x translation goes from -129 to 299 in the cartesian plane
+      const { x } = event;
+      if (x >= min_x && x <= max_x) {
+        currentXDistance.value = x;
+        const interpolatedValue = interpolate(
+          currentXDistance.value,
+          [min_x, startXDistance.value, max_x],
+          [start_angle, startAngle.value, 360 + last_angle],
+        );
+        let adjustedAngle = interpolatedValue + angle / 2;
+        adjustedAngle = adjustedAngle - (adjustedAngle % angle);
+        currentAngle.value = adjustedAngle;
       }
     })
     .onEnd(() => {
       goingInOppDirection.value = 0;
+      startAngle.value = currentAngle.value;
       sv.value = withSpring(0);
     });
 
@@ -189,12 +188,12 @@ export const VolumeRadialControl = () => {
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={tailwind.style(
-            `h-[${D}px] w-[${D}px] rounded-full bg-gray-600 shadow-lg flex justify-center items-center`,
+            `h-[${D}px] w-[${D}px] rounded-full bg-white shadow-lg flex justify-center items-center`,
           )}
         >
           <Animated.View
             style={[
-              tailwind.style("absolute h-1.5 w-5 bg-gray-400"),
+              tailwind.style("absolute h-1.5 w-5 bg-[#FFA500] shadow-sm"),
               indicatorAnimationStyle,
             ]}
           />
@@ -208,3 +207,30 @@ export const VolumeRadialControl = () => {
     </SafeAreaView>
   );
 };
+
+// const deltaX = x - R; // The Center Coordinates of the Container is now (R, R)
+// const deltaY = y - R; // The Center Coordinates of the Container is now (R, R)
+// const angleRadians = Math.atan2(deltaY, deltaX);
+// const angleDegrees = toDeg(angleRadians);
+// let adjustedAngle = angleDegrees;
+// adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
+// /* Making sure that the angle is always a multiple of 45. */
+// // By adding half of the angle to the calculated angle we take it to closer multiple of angle = 45
+// // Like for 15 -> 15 + (45/2) = 37.5
+// // Like for 24 -> 24 + (45/2) = 46.5
+// adjustedAngle = adjustedAngle + angle / 2;
+// // By subtracting the remainder of (value/angle) of the result, we get the closest multiple of the angle
+// // Now 37.5 -> 37.5 - (37.5%45) = 0
+// // Now 46.5 -> 46.5 - (46.5%45) = 45
+// adjustedAngle = adjustedAngle - (adjustedAngle % angle);
+// if (adjustedAngle > last_angle && adjustedAngle < start_angle) {
+//   goingInOppDirection.value = 1;
+// } else {
+//   if (goingInOppDirection.value) {
+//     if (currentAngle.value === adjustedAngle) {
+//       goingInOppDirection.value = 0;
+//     }
+//   } else {
+//     currentAngle.value = adjustedAngle;
+//   }
+// }
