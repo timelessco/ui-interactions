@@ -31,6 +31,7 @@ import {
   SharedElementConceptOne,
   SharedGestureConcept,
   SpotifyScreen,
+  TwoPinchKnob,
   VolumeRadialControl,
 } from "./src/screens";
 
@@ -51,6 +52,7 @@ export type UIInteractionParamList = {
   "Share Gesture": undefined;
   "Volume Radial Control": undefined;
   "Dynamic Tab Bar": undefined;
+  "Two Pinch Knob": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -142,6 +144,10 @@ const rootStackScreens: screenType[] = [
     name: "Dynamic Tab Bar",
     component: DynamicTabBar,
   },
+  {
+    name: "Two Pinch Knob",
+    component: TwoPinchKnob,
+  },
 ];
 
 const App = () => {
@@ -186,6 +192,7 @@ const App = () => {
               component={VolumeRadialControl}
             />
             <Stack.Screen name="Dynamic Tab Bar" component={DynamicTabBar} />
+            <Stack.Screen name="Two Pinch Knob" component={TwoPinchKnob} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
