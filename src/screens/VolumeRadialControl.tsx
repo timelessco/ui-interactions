@@ -1,4 +1,4 @@
-import { Dimensions, Image, StatusBar, ViewStyle } from "react-native";
+import { Image, StatusBar, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   interpolate,
@@ -10,23 +10,21 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { toRad } from "react-native-redash";
+import { toDeg, toRad } from "react-native-redash";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
 
 import { useHaptic } from "../utils/useHaptic";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
-
 const D = 170;
 const R = D / 2;
 
-const angle = 6;
+const angle = 30;
 const notches = 360 / angle;
 
 const sweeping_angle = angle * 2;
-const last_angle = 90 - sweeping_angle / 2;
-const start_angle = 90 + sweeping_angle / 2;
+const last_angle = 360 - sweeping_angle / 2;
+const start_angle = sweeping_angle / 2;
 
 // The space between the circle and the notches
 const distanceFactor = 1.6;
@@ -105,7 +103,7 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
       ),
     };
   });
-  if (currentStrokeAngle === 90) {
+  if (currentStrokeAngle === 0) {
     return null;
   }
   return (
@@ -121,43 +119,70 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
 };
 
 export const VolumeRadialControl = () => {
-  const remainingPixels = SCREEN_WIDTH - D;
-  // These are the min and max points along the x-axis
-  const min_x = -(remainingPixels / 2);
-  const max_x = SCREEN_WIDTH + min_x;
-
-  const sv = useSharedValue(0);
   const currentAngle = useSharedValue(start_angle);
-  const goingInOppDirection = useSharedValue(0);
   const startAngle = useSharedValue(start_angle);
 
-  const startXDistance = useSharedValue(0);
-  const currentXDistance = useSharedValue(0);
+  const gestureStartThetaθ = useSharedValue(0);
+
+  // const movingForwardGestureReachedLimit = useSharedValue(1);
+  // const movingBackwardGestureReachedLimit = useSharedValue(1);
+
+  const gestureReachedDeadZone = useSharedValue(0);
+
+  const findNearestMultiple = (angleValue: number) => {
+    "worklet";
+    let adjustedAngle = angleValue + angle / 2;
+    adjustedAngle = adjustedAngle - (adjustedAngle % angle);
+    return adjustedAngle;
+  };
 
   const panGesture = Gesture.Pan()
     .onBegin(event => {
-      sv.value = withSpring(1);
-      startXDistance.value = event.x;
+      const { x, y } = event;
+      const deltaX = x - R; // The Center Coordinates of the Container is now (R, R)
+      const deltaY = y - R; // The Center Coordinates of the Container is now (R, R)
+      const angleRadians = Math.atan2(deltaY, deltaX);
+      const angleDegrees = toDeg(angleRadians);
+      let adjustedAngle = angleDegrees;
+      adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
+      gestureStartThetaθ.value = adjustedAngle;
     })
     .onChange(event => {
-      // This x translation goes from -129 to 299 in the cartesian plane
-      const { x } = event;
-      if (x >= min_x && x <= max_x) {
-        currentXDistance.value = x;
-        const interpolatedValue = interpolate(
-          currentXDistance.value,
-          [min_x, startXDistance.value, max_x],
-          [start_angle, startAngle.value, 360 + last_angle],
-        );
-        let adjustedAngle = interpolatedValue + angle / 2;
-        adjustedAngle = adjustedAngle - (adjustedAngle % angle);
-        currentAngle.value = adjustedAngle;
+      const { x, y } = event;
+      const deltaX = x - R; // The Center Coordinates of the Container is now (R, R)
+      const deltaY = y - R; // The Center Coordinates of the Container is now (R, R)
+      const angleRadians = Math.atan2(deltaY, deltaX);
+
+      const angleDegrees = toDeg(angleRadians);
+      let adjustedAngle = angleDegrees;
+      adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
+
+      if (
+        Math.round(adjustedAngle) < start_angle &&
+        Math.round(adjustedAngle) > 0 &&
+        currentAngle.value === start_angle
+      ) {
+        gestureReachedDeadZone.value = 1;
+      }
+      if (
+        Math.round(adjustedAngle) > last_angle &&
+        Math.round(adjustedAngle) < 360 &&
+        currentAngle.value === last_angle
+      ) {
+        gestureReachedDeadZone.value = 1;
+      }
+      const interpolatedValue = interpolate(
+        adjustedAngle,
+        [0, gestureStartThetaθ.value, 360],
+        [start_angle, startAngle.value, last_angle],
+      );
+      if (gestureReachedDeadZone.value === 0) {
+        currentAngle.value = findNearestMultiple(interpolatedValue);
       }
     })
     .onEnd(() => {
-      goingInOppDirection.value = 0;
       startAngle.value = currentAngle.value;
-      sv.value = withSpring(0);
+      gestureReachedDeadZone.value = 0;
     });
 
   const indicatorAnimationStyle = useAnimatedStyle(() => {
@@ -187,9 +212,14 @@ export const VolumeRadialControl = () => {
       </Animated.View>
       <GestureDetector gesture={panGesture}>
         <Animated.View
-          style={tailwind.style(
-            `h-[${D}px] w-[${D}px] rounded-full bg-white shadow-lg flex justify-center items-center`,
-          )}
+          style={[
+            tailwind.style(
+              `h-[${D}px] w-[${D}px] rounded-full bg-white shadow-lg flex justify-center items-center`,
+            ),
+            {
+              transform: [{ rotate: "90deg" }],
+            },
+          ]}
         >
           <Animated.View
             style={[
