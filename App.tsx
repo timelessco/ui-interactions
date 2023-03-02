@@ -24,6 +24,7 @@ import {
   AlignInteraction1,
   DynamicTabBar,
   EventCreation,
+  HorizontalDialInteraction,
   ImageUpload,
   InputPasswordCheck,
   MenuInteraction,
@@ -53,6 +54,7 @@ export type UIInteractionParamList = {
   "Volume Radial Control": undefined;
   "Dynamic Tab Bar": undefined;
   "Two Pinch Knob": undefined;
+  "Horizontal Dial Interaction": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -148,6 +150,10 @@ const rootStackScreens: screenType[] = [
     name: "Two Pinch Knob",
     component: TwoPinchKnob,
   },
+  {
+    name: "Horizontal Dial Interaction",
+    component: HorizontalDialInteraction,
+  },
 ];
 
 const App = () => {
@@ -193,6 +199,10 @@ const App = () => {
             />
             <Stack.Screen name="Dynamic Tab Bar" component={DynamicTabBar} />
             <Stack.Screen name="Two Pinch Knob" component={TwoPinchKnob} />
+            <Stack.Screen
+              name="Horizontal Dial Interaction"
+              component={HorizontalDialInteraction}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

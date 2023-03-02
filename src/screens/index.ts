@@ -1,6 +1,7 @@
 export * from "./AlignInteraction1";
 export * from "./DynamicTabBar";
 export * from "./EventCreation";
+export * from "./HorizontalDialInteraction";
 export * from "./ImageUpload";
 export * from "./InputPasswordCheck";
 export * from "./MenuInteraction";
