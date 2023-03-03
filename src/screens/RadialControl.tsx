@@ -118,7 +118,7 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
   );
 };
 
-export const VolumeRadialControl = () => {
+export const RadialControl = () => {
   const currentAngle = useSharedValue(start_angle);
   const startAngle = useSharedValue(start_angle);
 

@@ -28,12 +28,12 @@ import {
   ImageUpload,
   InputPasswordCheck,
   MenuInteraction,
+  RadialControl,
   ShareAnimationConceptScreen,
   SharedElementConceptOne,
   SharedGestureConcept,
   SpotifyScreen,
   TwoPinchKnob,
-  VolumeRadialControl,
 } from "./src/screens";
 
 enableScreens();
@@ -51,7 +51,7 @@ export type UIInteractionParamList = {
   "UI Interactions": undefined;
   "Event Creation": undefined;
   "Share Gesture": undefined;
-  "Volume Radial Control": undefined;
+  "Radial Control": undefined;
   "Dynamic Tab Bar": undefined;
   "Two Pinch Knob": undefined;
   "Horizontal Dial Interaction": undefined;
@@ -139,8 +139,8 @@ const rootStackScreens: screenType[] = [
     component: SharedGestureConcept,
   },
   {
-    name: "Volume Radial Control",
-    component: VolumeRadialControl,
+    name: "Radial Control",
+    component: RadialControl,
   },
   {
     name: "Dynamic Tab Bar",
@@ -193,10 +193,7 @@ const App = () => {
               name="Share Gesture"
               component={SharedGestureConcept}
             />
-            <Stack.Screen
-              name="Volume Radial Control"
-              component={VolumeRadialControl}
-            />
+            <Stack.Screen name="Radial Control" component={RadialControl} />
             <Stack.Screen name="Dynamic Tab Bar" component={DynamicTabBar} />
             <Stack.Screen name="Two Pinch Knob" component={TwoPinchKnob} />
             <Stack.Screen
