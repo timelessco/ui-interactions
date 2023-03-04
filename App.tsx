@@ -34,6 +34,7 @@ import {
   SharedGestureConcept,
   SpotifyScreen,
   TwoPinchKnob,
+  VolumeInteraction,
 } from "./src/screens";
 
 enableScreens();
@@ -55,6 +56,7 @@ export type UIInteractionParamList = {
   "Dynamic Tab Bar": undefined;
   "Two Pinch Knob": undefined;
   "Horizontal Dial Interaction": undefined;
+  "Volume Interaction": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -154,6 +156,10 @@ const rootStackScreens: screenType[] = [
     name: "Horizontal Dial Interaction",
     component: HorizontalDialInteraction,
   },
+  {
+    name: "Volume Interaction",
+    component: VolumeInteraction,
+  },
 ];
 
 const App = () => {
@@ -199,6 +205,10 @@ const App = () => {
             <Stack.Screen
               name="Horizontal Dial Interaction"
               component={HorizontalDialInteraction}
+            />
+            <Stack.Screen
+              name="Volume Interaction"
+              component={VolumeInteraction}
             />
           </Stack.Navigator>
         </NavigationContainer>

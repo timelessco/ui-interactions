@@ -12,3 +12,4 @@ export * from "./ShareGestureConcept";
 export * from "./SpotifyScreen";
 export * from "./SpotifyScreen";
 export * from "./TwoPinchKnob";
+export * from "./VolumeInteraction";
