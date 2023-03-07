@@ -1,7 +1,6 @@
 import { Image, StatusBar, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  interpolate,
   interpolateColor,
   runOnJS,
   SharedValue,
@@ -19,7 +18,7 @@ import { useHaptic } from "../utils/useHaptic";
 const D = 170;
 const R = D / 2;
 
-const angle = 30;
+const angle = 15;
 const notches = 360 / angle;
 
 const sweeping_angle = angle * 2;
@@ -120,14 +119,14 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
 
 export const RadialControl = () => {
   const currentAngle = useSharedValue(start_angle);
-  const startAngle = useSharedValue(start_angle);
 
-  const gestureStartThetaθ = useSharedValue(0);
+  const gesturePreviousTheta = useSharedValue(0);
+  const previousChangedAngle = useSharedValue(0);
+
+  const finalAngleNotReached = useSharedValue(1);
 
   // const movingForwardGestureReachedLimit = useSharedValue(1);
   // const movingBackwardGestureReachedLimit = useSharedValue(1);
-
-  const gestureReachedDeadZone = useSharedValue(0);
 
   const findNearestMultiple = (angleValue: number) => {
     "worklet";
@@ -145,7 +144,7 @@ export const RadialControl = () => {
       const angleDegrees = toDeg(angleRadians);
       let adjustedAngle = angleDegrees;
       adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
-      gestureStartThetaθ.value = adjustedAngle;
+      gesturePreviousTheta.value = findNearestMultiple(adjustedAngle);
     })
     .onChange(event => {
       const { x, y } = event;
@@ -157,32 +156,39 @@ export const RadialControl = () => {
       let adjustedAngle = angleDegrees;
       adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
 
+      adjustedAngle = findNearestMultiple(adjustedAngle);
+      const angleDiff = adjustedAngle - gesturePreviousTheta.value;
+
+      const nextAngle =
+        currentAngle.value + (angleDiff - previousChangedAngle.value);
+      const changeAngleFactor =
+        Math.abs(angleDiff - previousChangedAngle.value) / angle;
+
       if (
-        Math.round(adjustedAngle) < start_angle &&
-        Math.round(adjustedAngle) > 0 &&
-        currentAngle.value === start_angle
+        changeAngleFactor >= 1 &&
+        changeAngleFactor <= 2 &&
+        finalAngleNotReached.value
       ) {
-        gestureReachedDeadZone.value = 1;
-      }
-      if (
-        Math.round(adjustedAngle) > last_angle &&
-        Math.round(adjustedAngle) < 360 &&
-        currentAngle.value === last_angle
-      ) {
-        gestureReachedDeadZone.value = 1;
-      }
-      const interpolatedValue = interpolate(
-        adjustedAngle,
-        [0, gestureStartThetaθ.value, 360],
-        [start_angle, startAngle.value, last_angle],
-      );
-      if (gestureReachedDeadZone.value === 0) {
-        currentAngle.value = findNearestMultiple(interpolatedValue);
+        if (nextAngle === 360 || nextAngle === 0) {
+          return;
+        }
+
+        if (nextAngle <= last_angle) {
+          currentAngle.value = nextAngle;
+          previousChangedAngle.value = angleDiff;
+        }
+      } else {
+        if (changeAngleFactor === notches - 1) {
+          finalAngleNotReached.value = 0;
+        }
+        if (changeAngleFactor === 0) {
+          finalAngleNotReached.value = 1;
+        }
       }
     })
     .onEnd(() => {
-      startAngle.value = currentAngle.value;
-      gestureReachedDeadZone.value = 0;
+      previousChangedAngle.value = 0;
+      finalAngleNotReached.value = 1;
     });
 
   const indicatorAnimationStyle = useAnimatedStyle(() => {
@@ -237,30 +243,3 @@ export const RadialControl = () => {
     </SafeAreaView>
   );
 };
-
-// const deltaX = x - R; // The Center Coordinates of the Container is now (R, R)
-// const deltaY = y - R; // The Center Coordinates of the Container is now (R, R)
-// const angleRadians = Math.atan2(deltaY, deltaX);
-// const angleDegrees = toDeg(angleRadians);
-// let adjustedAngle = angleDegrees;
-// adjustedAngle = adjustedAngle < 0 ? adjustedAngle + 360 : adjustedAngle;
-// /* Making sure that the angle is always a multiple of 45. */
-// // By adding half of the angle to the calculated angle we take it to closer multiple of angle = 45
-// // Like for 15 -> 15 + (45/2) = 37.5
-// // Like for 24 -> 24 + (45/2) = 46.5
-// adjustedAngle = adjustedAngle + angle / 2;
-// // By subtracting the remainder of (value/angle) of the result, we get the closest multiple of the angle
-// // Now 37.5 -> 37.5 - (37.5%45) = 0
-// // Now 46.5 -> 46.5 - (46.5%45) = 45
-// adjustedAngle = adjustedAngle - (adjustedAngle % angle);
-// if (adjustedAngle > last_angle && adjustedAngle < start_angle) {
-//   goingInOppDirection.value = 1;
-// } else {
-//   if (goingInOppDirection.value) {
-//     if (currentAngle.value === adjustedAngle) {
-//       goingInOppDirection.value = 0;
-//     }
-//   } else {
-//     currentAngle.value = adjustedAngle;
-//   }
-// }
