@@ -9,9 +9,11 @@ import {
   Text,
   View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
   interpolate,
+  runOnJS,
   scrollTo,
   SharedValue,
   useAnimatedRef,
@@ -20,6 +22,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import tailwind from "twrnc";
 
@@ -51,13 +54,22 @@ type FlatListTextProps = {
 };
 
 const FlatListImage = ({ item }: FlatListImageProps) => {
+  const navigation = useNavigation();
+  const handleGoBack = () => {
+    navigation.goBack();
+  };
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .onStart(() => runOnJS(handleGoBack)());
   return (
-    <Animated.View
-      key={item.tabName}
-      style={tailwind.style(`h-[${SCREEN_HEIGHT}px] w-[${SCREEN_WIDTH}px]`)}
-    >
-      <Image style={tailwind.style("h-full w-full")} source={item.imageSrc} />
-    </Animated.View>
+    <GestureDetector gesture={doubleTap}>
+      <Animated.View
+        key={item.tabName}
+        style={tailwind.style(`h-[${SCREEN_HEIGHT}px] w-[${SCREEN_WIDTH}px]`)}
+      >
+        <Image style={tailwind.style("h-full w-full")} source={item.imageSrc} />
+      </Animated.View>
+    </GestureDetector>
   );
 };
 
