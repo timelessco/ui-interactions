@@ -4,13 +4,16 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
   interpolate,
+  interpolateColor,
   SharedValue,
+  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { interpolatePath, parse } from "react-native-redash";
 import Svg, { Path } from "react-native-svg";
 import tailwind from "twrnc";
 
@@ -84,7 +87,48 @@ const VolumeStrokes = ({ currentFill }: VolumeStrokesProps) => {
   );
 };
 
-const SpeakerIcon = () => {
+type SpeakerIconProps = {
+  currentFill: SharedValue<number>;
+  sliderActive: SharedValue<number>;
+};
+
+const SpeakerIcon = ({ currentFill, sliderActive }: SpeakerIconProps) => {
+  const defaultPath = parse("M 4 4 L 0 0");
+  const extendedPath = parse("M 4 4 L 19 19");
+
+  const innerPathAnimatedProps = useAnimatedProps(() => {
+    const d = interpolatePath(
+      currentFill.value,
+      [1, 0],
+      [defaultPath, extendedPath],
+    );
+    const opacity = interpolate(currentFill.value, [1, 0], [0, 1]);
+
+    return {
+      d,
+      opacity,
+    };
+  });
+
+  const outerPathAnimatedProps = useAnimatedProps(() => {
+    const d = interpolatePath(
+      currentFill.value,
+      [1, 0],
+      [defaultPath, extendedPath],
+    );
+    const opacity = interpolate(currentFill.value, [1, 0], [0, 1]);
+    const stroke = interpolateColor(
+      sliderActive.value,
+      [0, 1],
+      ["#141414", "#232326"],
+    );
+    return {
+      d,
+      opacity,
+      stroke,
+    };
+  });
+
   return (
     <View style={tailwind.style("relative")}>
       <Svg width="25" height="25" viewBox="0 0 25 25" fill="none">
@@ -93,6 +137,26 @@ const SpeakerIcon = () => {
           fill="#A09FA6"
         />
       </Svg>
+      <View style={tailwind.style("absolute left-[3px]")}>
+        <Svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+          <AnimatedPath
+            stroke="#141414"
+            strokeWidth="5"
+            strokeLinecap="round"
+            animatedProps={outerPathAnimatedProps}
+          />
+        </Svg>
+      </View>
+      <View style={tailwind.style("absolute left-[3px]")}>
+        <Svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+          <AnimatedPath
+            stroke="#A09FA6"
+            strokeWidth="3"
+            strokeLinecap="round"
+            animatedProps={innerPathAnimatedProps}
+          />
+        </Svg>
+      </View>
     </View>
   );
 };
@@ -107,10 +171,12 @@ const SLIDER_HEIGHT = 4;
 const INCREASED_SLIDER_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING;
 const INCREASED_SLIDER_HEIGHT = 40;
 
+const SCALING_FACTOR = 1.1;
+
 export const VolumeInteraction = () => {
   const sliderActive = useSharedValue(0);
 
-  const scaledSliderWidth = 1.1 * INCREASED_SLIDER_WIDTH;
+  const scaledSliderWidth = SCALING_FACTOR * INCREASED_SLIDER_WIDTH;
   const remainingPixels = parseFloat(
     (SCREEN_WIDTH - scaledSliderWidth).toFixed(1),
   );
@@ -186,7 +252,7 @@ export const VolumeInteraction = () => {
           scale: interpolate(
             sliderActive.value,
             [0, 1],
-            [1, 1.1],
+            [1, SCALING_FACTOR],
             Extrapolation.CLAMP,
           ),
         },
@@ -196,7 +262,8 @@ export const VolumeInteraction = () => {
 
   const filledSlider = useAnimatedStyle(() => {
     return {
-      width: `${fillContainerWidth.value}%`,
+      width:
+        fillContainerWidth.value >= 0 ? `${fillContainerWidth.value}%` : "0%",
     };
   });
 
@@ -217,8 +284,11 @@ export const VolumeInteraction = () => {
               ),
             ]}
           >
-            <View style={tailwind.style("flex flex-row z-10")}>
-              <SpeakerIcon currentFill={fillContainerWidth} />
+            <View style={tailwind.style("flex flex-row items-center z-10")}>
+              <SpeakerIcon
+                currentFill={fillContainerWidth}
+                sliderActive={sliderActive}
+              />
               <VolumeStrokes currentFill={fillContainerWidth} />
             </View>
             <Animated.View
