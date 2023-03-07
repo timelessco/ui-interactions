@@ -176,13 +176,9 @@ const SCALING_FACTOR = 1.1;
 export const VolumeInteraction = () => {
   const sliderActive = useSharedValue(0);
 
-  const scaledSliderWidth = SCALING_FACTOR * INCREASED_SLIDER_WIDTH;
-  const remainingPixels = parseFloat(
-    (SCREEN_WIDTH - scaledSliderWidth).toFixed(1),
-  );
   // These are the min and max points along the x-axis
-  const min_x = -(remainingPixels / 2);
-  const max_x = scaledSliderWidth + min_x;
+  const min_x = 0;
+  const max_x = INCREASED_SLIDER_WIDTH;
   const startingWidth = useSharedValue(0);
   const fillContainerWidth = useSharedValue(0);
 
