@@ -8,9 +8,12 @@
  * @format
  */
 
-import { Pressable, StatusBar, Text, View } from "react-native";
+import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { enableScreens } from "react-native-screens";
 import { NavigationContainer } from "@react-navigation/native";
 import {
@@ -65,10 +68,13 @@ type RootStackProps = StackScreenProps<
 >;
 
 const RootStack = (props: RootStackProps) => {
+  const { top } = useSafeAreaInsets();
   return (
-    <SafeAreaView style={tailwind.style("flex-1 bg-[#F4F2F1]")}>
-      <View
-        style={tailwind.style("bg-white mx-3 rounded-[14px] overflow-hidden")}
+    <View style={tailwind.style("flex-1 bg-[#F4F2F1] ")}>
+      <ScrollView
+        contentContainerStyle={tailwind.style(
+          `bg-white mx-3 rounded-[14px] overflow-hidden mt-[${top}px]`,
+        )}
       >
         {rootStackScreens.map((item, index) => {
           return (
@@ -93,8 +99,8 @@ const RootStack = (props: RootStackProps) => {
             </Pressable>
           );
         })}
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 };
 
