@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Image, Pressable, StatusBar } from "react-native";
+import { Image, ImageSourcePropType, Pressable, StatusBar } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
@@ -23,17 +23,20 @@ import tailwind from "twrnc";
 
 import { useHaptic } from "../utils/useHaptic";
 
-type PeopleObject = { name: string };
+type PeopleObject = { name: string; avatar: ImageSourcePropType };
 
 const people: PeopleObject[] = [
-  { name: "Jane Cooper" },
-  { name: "Cody Fisher" },
-  { name: "Esther Howard" },
-  { name: "Jenny Wilson" },
-  { name: "Cameron Williamson" },
+  { name: "Jane Cooper", avatar: require("../assets/avatar/avatar.png") },
+  { name: "Cody Fisher", avatar: require("../assets/avatar/avatar-1.png") },
+  { name: "Esther Howard", avatar: require("../assets/avatar/avatar-2.png") },
+  { name: "Jenny Wilson", avatar: require("../assets/avatar/avatar-3.png") },
+  { name: "Jim Carrey", avatar: require("../assets/avatar/avatar-4.png") },
+  { name: "Joshua Goldberg", avatar: require("../assets/avatar/avatar-5.png") },
 ];
 
 const SEGMENT_HEIGHT = 44;
+const SEGMENT_WIDTH = 250;
+const MOVING_SEGMENT_WIDTH = 272;
 const MOVING_SEGMENT_HEIGHT = 48;
 
 const DEFAULT_SPRING_CONFIG: WithSpringConfig = {
@@ -97,7 +100,7 @@ const PersonComponent = ({
       >
         <Animated.View
           style={tailwind.style(
-            `h-[${SEGMENT_HEIGHT}px] w-60 flex-row items-center`,
+            `h-[${SEGMENT_HEIGHT}px] w-[${SEGMENT_WIDTH}px] flex-row items-center`,
           )}
         >
           <Animated.View
@@ -105,7 +108,7 @@ const PersonComponent = ({
           >
             <Animated.Image
               style={tailwind.style("h-full w-full ")}
-              source={{ uri: `https://i.pravatar.cc/300?img=${index + 1}` }}
+              source={person.avatar}
             />
           </Animated.View>
           <Animated.Text
@@ -122,6 +125,8 @@ const PersonComponent = ({
 };
 
 export const SharedGestureConcept = () => {
+  const lowerBounds = -20;
+  const upperBounds = -(people.length * SEGMENT_HEIGHT + 30);
   const { bottom } = useSafeAreaInsets();
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
   const [currentShareTarget, setCurrentShareTarget] = useState("");
@@ -151,8 +156,8 @@ export const SharedGestureConcept = () => {
       hapticSelection && runOnJS(hapticSelection)();
 
       selectedContainerTranslate.value = 0;
-      if (event.y < -22 && activatedFromTap.value === 0) {
-        if (event.y > -250) {
+      if (event.y < lowerBounds && activatedFromTap.value === 0) {
+        if (event.y > upperBounds) {
           activatedFromTap.value = 1;
           enableSpringTranslation.value = 1;
           const translationDiffFactor = Math.floor(
@@ -176,11 +181,11 @@ export const SharedGestureConcept = () => {
     })
     .maxPointers(1)
     .onChange(event => {
-      if (event.y < -22) {
+      if (event.y < lowerBounds) {
         // The Gesture is in bound of the Share Sheet
         // Enable the Selection Mode which brings the Moving Segment
         // Translate to the initial position
-        if (event.y > -250) {
+        if (event.y > upperBounds) {
           containerStretch.value = withSpring(0, DEFAULT_SPRING_CONFIG);
           // Allowing +20px extra on moving upwards because the selected state gets
           // deselected too soon
@@ -229,10 +234,12 @@ export const SharedGestureConcept = () => {
           }
         } else {
           // Write code to stretch the whole container upwards - the selection is enabled
-          // The event.translationY moves from -250 and beyond
+          // The event.translationY moves from upperBounds and beyond
           // so get the translation beyond 250 using %
           // Disable selection and reset current target
-          containerStretch.value = Math.floor(Math.abs(event.y) % 250);
+          containerStretch.value = Math.floor(
+            Math.abs(event.y) % Math.abs(upperBounds),
+          );
           enableSelection.value = withSpring(0, DEFAULT_SPRING_CONFIG);
           currentTarget.value = -1;
         }
@@ -260,9 +267,9 @@ export const SharedGestureConcept = () => {
           people.reverse()[currentTarget.value].name,
         );
       }
-      if (event.y < -22) {
+      if (event.y < lowerBounds) {
         // Gesture end out of lower bounds
-        if (event.y > -250) {
+        if (event.y > upperBounds) {
           // When these cases are checked, the gesture is within the Share Sheet bounds
           runOnJS(setShareSheetOpen)(false);
           currentTarget.value = -1;
@@ -274,6 +281,7 @@ export const SharedGestureConcept = () => {
     })
     .onFinalize(() => {
       tapScale.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+      activatedFromTap.value = 0;
     });
 
   const composed = Gesture.Exclusive(tapGesture, panGesture);
@@ -344,8 +352,11 @@ export const SharedGestureConcept = () => {
       clearTimeout(resetCurrentShareTarget);
     };
   }, [currentShareTarget]);
+
   return (
-    <SafeAreaView style={tailwind.style("flex-1 items-center justify-center")}>
+    <SafeAreaView
+      style={tailwind.style("flex-1 items-center justify-end pb-40")}
+    >
       <StatusBar barStyle={"dark-content"} />
       <Animated.View style={tailwind.style("absolute inset-0")}>
         <Image
@@ -357,17 +368,23 @@ export const SharedGestureConcept = () => {
         <Animated.View
           style={[
             tailwind.style(
-              "relative flex items-center justify-center rounded-[11px]",
+              "relative flex items-center justify-center rounded-2xl",
             ),
           ]}
         >
           {shareSheetOpen ? (
             <Animated.View
-              entering={FadeInDown}
-              exiting={FadeOutDown}
+              entering={FadeInDown.springify()
+                .damping(15)
+                .stiffness(180)
+                .mass(1)}
+              exiting={FadeOutDown.springify()
+                .damping(15)
+                .stiffness(180)
+                .mass(1)}
               style={[
                 tailwind.style(
-                  "absolute items-center px-2 py-2 rounded-[11px] -top-[248px] bg-white",
+                  "absolute items-center px-2 py-2 rounded-2xl bottom-15 bg-white ",
                 ),
                 containerOutOfBoundStyle,
               ]}
@@ -375,7 +392,7 @@ export const SharedGestureConcept = () => {
               <Animated.View
                 style={[
                   tailwind.style(
-                    `absolute h-[${MOVING_SEGMENT_HEIGHT}px] w-66 bottom-1.5 rounded-[9px] bg-white shadow-md z-10`,
+                    `absolute h-[${MOVING_SEGMENT_HEIGHT}px] w-[${MOVING_SEGMENT_WIDTH}px] bottom-1.5 rounded-xl bg-white shadow-md z-10`,
                   ),
                   movingSegmentStyle,
                 ]}
