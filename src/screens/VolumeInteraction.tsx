@@ -7,7 +7,6 @@ import Animated, {
   runOnJS,
   SharedValue,
   useAnimatedProps,
-  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -234,15 +233,6 @@ export const VolumeInteraction = () => {
 
   const isMuted = useSharedValue(0);
   const isVolumeFull = useSharedValue(0);
-
-  useAnimatedReaction(
-    () => isMuted.value,
-    (prev, next) => {
-      if (prev !== next) {
-        // console.log("%c⧭", "color: #cc0036", prev, next);
-      }
-    },
-  );
 
   const hapticWarning = useHaptic("warning");
   const hapticHeavy = useHaptic("heavy");
