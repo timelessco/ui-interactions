@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Dimensions, StatusBar, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -9,9 +8,7 @@ import Animated, {
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
   withSpring,
-  withTiming,
 } from "react-native-reanimated";
 import { interpolatePath, parse } from "react-native-redash";
 import Svg, { Path } from "react-native-svg";
@@ -20,31 +17,40 @@ import tailwind from "twrnc";
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 type VolumeStrokesProps = {
-  currentFill: SharedValue<number>;
+  sliderCurrentValue: SharedValue<number>;
 };
 
-const VolumeStrokes = ({ currentFill }: VolumeStrokesProps) => {
+const VolumeStrokes = ({ sliderCurrentValue }: VolumeStrokesProps) => {
   const lowStrokeStyle = useAnimatedStyle(() => {
     return {
-      opacity: currentFill.value >= 1 ? withSpring(1) : withSpring(0),
+      opacity: sliderCurrentValue.value >= 1 ? withSpring(1) : withSpring(0),
       transform: [
-        { scale: currentFill.value >= 1 ? withSpring(1) : withSpring(0.9) },
+        {
+          scale:
+            sliderCurrentValue.value >= 1 ? withSpring(1) : withSpring(0.9),
+        },
       ],
     };
   });
   const mediumStrokeStyle = useAnimatedStyle(() => {
     return {
-      opacity: currentFill.value > 25 ? withSpring(1) : withSpring(0),
+      opacity: sliderCurrentValue.value >= 25 ? withSpring(1) : withSpring(0),
       transform: [
-        { scale: currentFill.value >= 25 ? withSpring(1) : withSpring(0.9) },
+        {
+          scale:
+            sliderCurrentValue.value >= 25 ? withSpring(1) : withSpring(0.9),
+        },
       ],
     };
   });
   const normalStrokeStyle = useAnimatedStyle(() => {
     return {
-      opacity: currentFill.value > 60 ? withSpring(1) : withSpring(0),
+      opacity: sliderCurrentValue.value > 60 ? withSpring(1) : withSpring(0),
       transform: [
-        { scale: currentFill.value >= 25 ? withSpring(1) : withSpring(0.9) },
+        {
+          scale:
+            sliderCurrentValue.value > 60 ? withSpring(1) : withSpring(0.9),
+        },
       ],
     };
   });
@@ -88,21 +94,24 @@ const VolumeStrokes = ({ currentFill }: VolumeStrokesProps) => {
 };
 
 type SpeakerIconProps = {
-  currentFill: SharedValue<number>;
+  sliderCurrentValue: SharedValue<number>;
   sliderActive: SharedValue<number>;
 };
 
-const SpeakerIcon = ({ currentFill, sliderActive }: SpeakerIconProps) => {
+const SpeakerIcon = ({
+  sliderCurrentValue,
+  sliderActive,
+}: SpeakerIconProps) => {
   const defaultPath = parse("M 4 4 L 0 0");
   const extendedPath = parse("M 4 4 L 19 19");
 
   const innerPathAnimatedProps = useAnimatedProps(() => {
     const d = interpolatePath(
-      currentFill.value,
+      sliderCurrentValue.value,
       [1, 0],
       [defaultPath, extendedPath],
     );
-    const opacity = interpolate(currentFill.value, [1, 0], [0, 1]);
+    const opacity = interpolate(sliderCurrentValue.value, [1, 0], [0, 1]);
 
     return {
       d,
@@ -112,11 +121,11 @@ const SpeakerIcon = ({ currentFill, sliderActive }: SpeakerIconProps) => {
 
   const outerPathAnimatedProps = useAnimatedProps(() => {
     const d = interpolatePath(
-      currentFill.value,
+      sliderCurrentValue.value,
       [1, 0],
       [defaultPath, extendedPath],
     );
-    const opacity = interpolate(currentFill.value, [1, 0], [0, 1]);
+    const opacity = interpolate(sliderCurrentValue.value, [1, 0], [0, 1]);
     const stroke = interpolateColor(
       sliderActive.value,
       [0, 1],
@@ -180,7 +189,7 @@ export const VolumeInteraction = () => {
   const min_x = 0;
   const max_x = INCREASED_SLIDER_WIDTH;
   const startingWidth = useSharedValue(0);
-  const fillContainerWidth = useSharedValue(0);
+  const sliderState = useSharedValue(0);
 
   const startXDistance = useSharedValue(0);
   const currentXDistance = useSharedValue(0);
@@ -200,7 +209,7 @@ export const VolumeInteraction = () => {
           [0, startingWidth.value, 100],
         );
         const computedValue = Math.round(interpolatedValue);
-        fillContainerWidth.value = withSpring(computedValue, {
+        sliderState.value = withSpring(computedValue, {
           damping: 20,
           stiffness: 120,
           mass: 1,
@@ -208,7 +217,7 @@ export const VolumeInteraction = () => {
       }
     })
     .onEnd(() => {
-      startingWidth.value = fillContainerWidth.value;
+      startingWidth.value = sliderState.value;
     })
     .onFinalize(() => {
       sliderActive.value = withSpring(0);
@@ -258,14 +267,8 @@ export const VolumeInteraction = () => {
 
   const filledSlider = useAnimatedStyle(() => {
     return {
-      width:
-        fillContainerWidth.value >= 0 ? `${fillContainerWidth.value}%` : "0%",
+      width: sliderState.value >= 0 ? `${sliderState.value}%` : "0%",
     };
-  });
-
-  const sharedValue = useSharedValue(0);
-  useEffect(() => {
-    sharedValue.value = withRepeat(withTiming(70), -1, true);
   });
 
   return (
@@ -282,10 +285,10 @@ export const VolumeInteraction = () => {
           >
             <View style={tailwind.style("flex flex-row items-center z-10")}>
               <SpeakerIcon
-                currentFill={fillContainerWidth}
+                sliderCurrentValue={sliderState}
                 sliderActive={sliderActive}
               />
-              <VolumeStrokes currentFill={fillContainerWidth} />
+              <VolumeStrokes sliderCurrentValue={sliderState} />
             </View>
             <Animated.View
               style={[
