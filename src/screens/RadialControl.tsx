@@ -173,7 +173,7 @@ export const RadialControl = () => {
           return;
         }
 
-        if (nextAngle <= last_angle) {
+        if (nextAngle <= last_angle && nextAngle > 0) {
           currentAngle.value = nextAngle;
           previousChangedAngle.value = angleDiff;
         }
