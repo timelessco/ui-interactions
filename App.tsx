@@ -176,7 +176,7 @@ const App = () => {
         style={tailwind.style("flex-1 justify-center bg-gray-100")}
       >
         <NavigationContainer>
-          <Stack.Navigator headerMode="none">
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="UI Interactions" component={RootStack} />
             <Stack.Screen
               name="Shared Element Concept"

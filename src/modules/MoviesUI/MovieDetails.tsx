@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  SharedElement,
-  SharedElementCompatRoute,
-} from "react-navigation-shared-element";
+import { SharedElementCompatRoute } from "react-navigation-shared-element";
 import {
   Image,
   InteractionManager,
@@ -301,15 +298,13 @@ const MovieDetails = (props: MoviesDetailsProps) => {
             ]}
           />
           <View style={tailwind.style("mt-8")}>
-            <SharedElement id={`item.${item.id}.image`}>
-              <Image
-                style={[
-                  tailwind.style("rounded-xl h-[430px] w-[287px]"),
-                  styles.imageStyle,
-                ]}
-                source={{ uri: item.url }}
-              />
-            </SharedElement>
+            <Image
+              style={[
+                tailwind.style("rounded-xl h-[430px] w-[287px]"),
+                styles.imageStyle,
+              ]}
+              source={{ uri: item.url }}
+            />
           </View>
           <Animated.View
             style={{ opacity: contentOpacity.value }}

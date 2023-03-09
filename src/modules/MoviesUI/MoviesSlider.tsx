@@ -1,5 +1,4 @@
 import React, { useCallback } from "react";
-import { SharedElement } from "react-navigation-shared-element";
 import { FlatList, Image, Pressable, StyleSheet } from "react-native";
 import Animated from "react-native-reanimated";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -37,17 +36,15 @@ const MovieCard = ({ item, index, navigation }: MovieCardProps) => {
   return (
     <Animated.View style={animatedStyle}>
       <Pressable onPress={handlePress} {...handlers}>
-        <SharedElement id={`item.${item.id}.image`}>
-          <Image
-            style={[
-              tailwind.style(
-                `w-[145px] h-[216px] rounded-md ${index !== 0 ? "ml-5" : ""}`,
-              ),
-              styles.imageStyle,
-            ]}
-            source={{ uri: item.url }}
-          />
-        </SharedElement>
+        <Image
+          style={[
+            tailwind.style(
+              `w-[145px] h-[216px] rounded-md ${index !== 0 ? "ml-5" : ""}`,
+            ),
+            styles.imageStyle,
+          ]}
+          source={{ uri: item.url }}
+        />
       </Pressable>
     </Animated.View>
   );
