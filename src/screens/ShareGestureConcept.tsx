@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Image, ImageSourcePropType, Pressable, StatusBar } from "react-native";
+import { Image, Pressable, StatusBar } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
@@ -23,15 +23,33 @@ import tailwind from "twrnc";
 
 import { useHaptic } from "../utils/useHaptic";
 
-type PeopleObject = { name: string; avatar: ImageSourcePropType };
+type PeopleObject = { name: string; avatar: string };
 
 const people: PeopleObject[] = [
-  { name: "Jane Cooper", avatar: require("../assets/avatar/avatar.png") },
-  { name: "Cody Fisher", avatar: require("../assets/avatar/avatar-1.png") },
-  { name: "Esther Howard", avatar: require("../assets/avatar/avatar-2.png") },
-  { name: "Jenny Wilson", avatar: require("../assets/avatar/avatar-3.png") },
-  { name: "Jim Carrey", avatar: require("../assets/avatar/avatar-4.png") },
-  { name: "Joshua Goldberg", avatar: require("../assets/avatar/avatar-5.png") },
+  {
+    name: "Jane Cooper",
+    avatar: "https://timeless.sgp1.cdn.digitaloceanspaces.com/avatar-1.png",
+  },
+  {
+    name: "Cody Fisher",
+    avatar: "https://timeless.sgp1.cdn.digitaloceanspaces.com/avatar-2.png",
+  },
+  {
+    name: "Esther Howard",
+    avatar: "https://timeless.sgp1.cdn.digitaloceanspaces.com/avatar-3.png",
+  },
+  {
+    name: "Jenny Wilson",
+    avatar: "https://timeless.sgp1.cdn.digitaloceanspaces.com/avatar-4.png",
+  },
+  {
+    name: "Jim Carrey",
+    avatar: "https://timeless.sgp1.cdn.digitaloceanspaces.com/avatar-5.png",
+  },
+  {
+    name: "Joshua Goldberg",
+    avatar: "https://timeless.sgp1.cdn.digitaloceanspaces.com/avatar.png",
+  },
 ];
 
 const SEGMENT_HEIGHT = 44;
@@ -108,7 +126,7 @@ const PersonComponent = ({
           >
             <Animated.Image
               style={tailwind.style("h-full w-full ")}
-              source={person.avatar}
+              source={{ uri: person.avatar }}
             />
           </Animated.View>
           <Animated.Text
