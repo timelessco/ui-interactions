@@ -31,6 +31,7 @@ import {
   ImageUpload,
   InputPasswordCheck,
   MenuInteraction,
+  PhotoCollection,
   RadialControl,
   ShareAnimationConceptScreen,
   SharedElementConceptOne,
@@ -60,6 +61,7 @@ export type UIInteractionParamList = {
   "Two Pinch Knob": undefined;
   "Horizontal Dial Interaction": undefined;
   "Volume Interaction": undefined;
+  "Photo Collection": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -166,6 +168,10 @@ const rootStackScreens: screenType[] = [
     name: "Volume Interaction",
     component: VolumeInteraction,
   },
+  {
+    name: "Photo Collection",
+    component: PhotoCollection,
+  },
 ];
 
 const App = () => {
@@ -216,6 +222,7 @@ const App = () => {
               name="Volume Interaction"
               component={VolumeInteraction}
             />
+            <Stack.Screen name="Photo Collection" component={PhotoCollection} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

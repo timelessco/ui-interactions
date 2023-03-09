@@ -5,6 +5,7 @@ export * from "./HorizontalDialInteraction";
 export * from "./ImageUpload";
 export * from "./InputPasswordCheck";
 export * from "./MenuInteraction";
+export * from "./PhotoCollection";
 export * from "./RadialControl";
 export * from "./ShareAnimationConceptScreen";
 export * from "./SharedElementConceptOne";
