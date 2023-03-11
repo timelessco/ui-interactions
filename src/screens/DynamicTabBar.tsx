@@ -2,8 +2,6 @@ import { useState } from "react";
 import {
   Dimensions,
   FlatList,
-  Image,
-  ImageSourcePropType,
   LayoutChangeEvent,
   StatusBar,
   Text,
@@ -23,7 +21,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
 import tailwind from "twrnc";
 
 const SCREEN_HEIGHT = Dimensions.get("screen").height;
@@ -31,14 +28,30 @@ const SCREEN_WIDTH = Dimensions.get("screen").width;
 
 type TabsProps = {
   tabName: string;
-  imageSrc: ImageSourcePropType;
+  imageSrc: string;
 };
 
 const tabs: TabsProps[] = [
-  { tabName: "Men", imageSrc: require("../assets/men.jpg") },
-  { tabName: "Women", imageSrc: require("../assets/women.jpg") },
-  { tabName: "Kids", imageSrc: require("../assets/kid.jpg") },
-  { tabName: "Home Decor", imageSrc: require("../assets/home-decor.jpg") },
+  {
+    tabName: "Gasoline",
+    imageSrc:
+      "https://cdn.dribbble.com/users/13754/screenshots/6757736/vintage-beatle-in-gasoline-station_4x.png",
+  },
+  {
+    tabName: "Food",
+    imageSrc:
+      "https://cdn.dribbble.com/users/13754/screenshots/7029221/media/04ef25817ef4d934cce6afa00cde1d92.png",
+  },
+  {
+    tabName: "Road Trip",
+    imageSrc:
+      "https://cdn.dribbble.com/users/13754/screenshots/6964294/media/856c1a787726f6e5a263ce1b12509e56.png",
+  },
+  {
+    tabName: "Gifts",
+    imageSrc:
+      "https://cdn.dribbble.com/users/13754/screenshots/6703179/gift_in_balloons_4x.png",
+  },
 ];
 
 const AnimatedFlatlist = Animated.createAnimatedComponent(FlatList);
@@ -61,13 +74,17 @@ const FlatListImage = ({ item }: FlatListImageProps) => {
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
     .onStart(() => runOnJS(handleGoBack)());
+
   return (
     <GestureDetector gesture={doubleTap}>
       <Animated.View
         key={item.tabName}
         style={tailwind.style(`h-[${SCREEN_HEIGHT}px] w-[${SCREEN_WIDTH}px]`)}
       >
-        <Image style={tailwind.style("h-full w-full")} source={item.imageSrc} />
+        <Animated.Image
+          style={[tailwind.style("absolute h-full w-full left-0")]}
+          source={{ uri: item.imageSrc }}
+        />
       </Animated.View>
     </GestureDetector>
   );
@@ -119,20 +136,41 @@ const Tabs = ({ scrollXValue }: TabProps) => {
       ? {
           width: interpolate(
             scrollXValue.value,
-            [0, SCREEN_WIDTH, 2 * SCREEN_WIDTH, 3 * SCREEN_WIDTH],
-            [tabWidths[0], tabWidths[1], tabWidths[2], tabWidths[3]],
+            [
+              -SCREEN_WIDTH / 2,
+              0,
+              SCREEN_WIDTH,
+              2 * SCREEN_WIDTH,
+              3 * SCREEN_WIDTH,
+              3 * SCREEN_WIDTH + (3 * SCREEN_WIDTH) / 2,
+            ],
+            [
+              tabWidths[0] + scrollXValue.value * 0.2,
+              tabWidths[0],
+              tabWidths[1],
+              tabWidths[2],
+              tabWidths[3],
+              tabWidths[3] - scrollXValue.value * 0.1,
+            ],
             Extrapolation.CLAMP,
           ),
           transform: [
             {
               translateX: interpolate(
                 scrollXValue.value,
-                [0, SCREEN_WIDTH, 2 * SCREEN_WIDTH, 3 * SCREEN_WIDTH],
+                [
+                  0,
+                  SCREEN_WIDTH,
+                  2 * SCREEN_WIDTH,
+                  3 * SCREEN_WIDTH,
+                  3 * SCREEN_WIDTH + (3 * SCREEN_WIDTH) / 2,
+                ],
                 [
                   viewTranslatePoints[0],
                   viewTranslatePoints[1],
                   viewTranslatePoints[2],
                   viewTranslatePoints[3],
+                  viewTranslatePoints[3] + scrollXValue.value * 0.1,
                 ],
                 Extrapolation.CLAMP,
               ),
@@ -204,10 +242,6 @@ export const DynamicTabBar = () => {
     <View style={tailwind.style(`flex-1 pt-[${top}px] bg-[#141414]`)}>
       <StatusBar barStyle={"light-content"} />
       <Tabs scrollXValue={scrollValue} />
-      <LinearGradient
-        colors={["rgba(0,0,0,1)", "transparent"]}
-        style={tailwind.style(`absolute inset-0 h-[${top * 2}px] z-10`)}
-      />
       <AnimatedFlatlist
         // @ts-ignore
         ref={scrollRef}
