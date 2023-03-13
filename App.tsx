@@ -10,10 +10,7 @@
 
 import { Pressable, ScrollView, StatusBar, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { enableScreens } from "react-native-screens";
 import { NavigationContainer } from "@react-navigation/native";
 import {
@@ -37,6 +34,7 @@ import {
   SharedElementConceptOne,
   SharedGestureConcept,
   SpotifyScreen,
+  SwipeToBuy,
   TwoPinchKnob,
   VolumeInteraction,
 } from "./src/screens";
@@ -62,6 +60,7 @@ export type UIInteractionParamList = {
   "Horizontal Dial Interaction": undefined;
   "Volume Interaction": undefined;
   "Photo Collection": undefined;
+  "Swipe To Buy": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -70,39 +69,38 @@ type RootStackProps = StackScreenProps<
 >;
 
 const RootStack = (props: RootStackProps) => {
-  const { top } = useSafeAreaInsets();
   return (
-    <View style={tailwind.style("flex-1 bg-[#F4F2F1] ")}>
-      <ScrollView
-        contentContainerStyle={tailwind.style(
-          `bg-white mx-3 rounded-[14px] overflow-hidden mt-[${top}px]`,
-        )}
-      >
-        {rootStackScreens.map((item, index) => {
-          return (
-            <Pressable
-              style={({ pressed }) => [
-                tailwind.style(
-                  `flex-row justify-between items-center px-4 min-h-13 border-[#EBEAEA] ${
-                    index === 0 ? "" : "border-t-[1px]"
-                  }`,
-                ),
-                pressed ? tailwind.style("bg-gray-100") : {},
-              ]}
-              onPress={() => props.navigation.push(item.name)}
-              key={item.name}
-            >
-              <Text
-                style={tailwind.style("text-base text-[#151414] font-medium")}
+    <SafeAreaView style={tailwind.style("flex-1")}>
+      <ScrollView>
+        <View
+          style={tailwind.style("bg-white mx-3 rounded-[14px] overflow-hidden")}
+        >
+          {rootStackScreens.map((item, index) => {
+            return (
+              <Pressable
+                style={({ pressed }) => [
+                  tailwind.style(
+                    `flex-row justify-between items-center px-4 min-h-13 border-[#EBEAEA] ${
+                      index === 0 ? "" : "border-t-[1px]"
+                    }`,
+                  ),
+                  pressed ? tailwind.style("bg-gray-100") : {},
+                ]}
+                onPress={() => props.navigation.push(item.name)}
+                key={item.name}
               >
-                {item.name}
-              </Text>
-              <ChevronRight />
-            </Pressable>
-          );
-        })}
+                <Text
+                  style={tailwind.style("text-base text-[#151414] font-medium")}
+                >
+                  {item.name}
+                </Text>
+                <ChevronRight />
+              </Pressable>
+            );
+          })}
+        </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -172,6 +170,10 @@ const rootStackScreens: screenType[] = [
     name: "Photo Collection",
     component: PhotoCollection,
   },
+  {
+    name: "Swipe To Buy",
+    component: SwipeToBuy,
+  },
 ];
 
 const App = () => {
@@ -223,6 +225,7 @@ const App = () => {
               component={VolumeInteraction}
             />
             <Stack.Screen name="Photo Collection" component={PhotoCollection} />
+            <Stack.Screen name="Swipe To Buy" component={SwipeToBuy} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
