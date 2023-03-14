@@ -5,9 +5,7 @@ import Animated, {
   interpolate,
   SharedValue,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
@@ -56,75 +54,248 @@ type PhotoProps = {
 
 const CARD_HEIGHT = 4 * 96;
 const CARD_WIDTH = 4 * 72;
+const TRANSLATION_FACTOR = 30;
+
+const getRotationBasedOnActiveIndex = (index: number, activeIndex: number) => {
+  "worklet";
+  return index < activeIndex
+    ? -(activeIndex - index)
+    : index > activeIndex
+    ? index - activeIndex
+    : 0;
+};
+
+const getScaleBasedOnActiveIndex = (index: number, activeIndex: number) => {
+  "worklet";
+  const scaleValue =
+    index < activeIndex
+      ? 1 - (activeIndex - index) / (items.length + 8)
+      : index > activeIndex
+      ? 1 + (activeIndex - index) / (items.length + 8)
+      : 1;
+
+  return Math.round(scaleValue * 100) / 100;
+};
+
+const getZIndexBasedOnActiveIndex = (index: number, activeIndex: number) => {
+  "worklet";
+  return index < activeIndex
+    ? -(activeIndex - index)
+    : index > activeIndex
+    ? activeIndex - index
+    : items.length;
+};
 
 const Photo = ({ index, activeItem, item, translation }: PhotoProps) => {
-  const rotationFactor = useDerivedValue(() => {
-    const activeCardRotation = interpolate(
-      translation.value,
-      [-30, 0, 30],
-      [-5, 0, 5],
-      Extrapolation.CLAMP,
-    );
-    return index < activeItem.value
-      ? -(activeItem.value - index)
-      : index > activeItem.value
-      ? index - activeItem.value
-      : activeCardRotation;
-  });
-
-  const zIndex =
-    index < activeItem.value
-      ? -(activeItem.value - index)
-      : index > activeItem.value
-      ? activeItem.value - index
-      : items.length;
-
-  const scaleFactor = useDerivedValue(() => {
-    const activeCardScale = interpolate(
-      translation.value,
-      [-30, 0, 30],
-      [0.85, 1, 0.85],
-      Extrapolation.CLAMP,
-    );
-    return index < activeItem.value
-      ? 1 - (activeItem.value - index) / (items.length + 8)
-      : index > activeItem.value
-      ? 1 + (activeItem.value - index) / (items.length + 8)
-      : activeCardScale;
-  });
-
   const itemStyle = useAnimatedStyle(() => {
-    const getTransform = () => {
-      let transform = {
+    const rotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value,
+    );
+    const scaleFactor = getScaleBasedOnActiveIndex(index, activeItem.value);
+    const zIndex = getZIndexBasedOnActiveIndex(index, activeItem.value);
+    const transforms = withAnchorPoint(
+      {
         transform: [
-          { rotate: `${rotationFactor.value * 2}deg` },
-          { scale: scaleFactor.value },
-          {
-            translateX:
-              activeItem.value === index
-                ? interpolate(
-                    translation.value,
-                    [-30, 30],
-                    [-30, 30],
-                    Extrapolation.CLAMP,
-                  )
-                : 0,
-          },
+          { rotate: `${rotationFactor * 2}deg` },
+          { scale: scaleFactor },
         ],
-      };
-      return withAnchorPoint(
-        transform,
-        { x: rotationFactor.value < 0 ? 0 : 1, y: 1 },
-        { width: CARD_WIDTH, height: CARD_HEIGHT },
-      );
-    };
-
+      },
+      { x: rotationFactor < 0 ? 0 : 1, y: 1 },
+      { width: CARD_WIDTH, height: CARD_HEIGHT },
+    );
     return {
       zIndex,
-      ...getTransform(),
+      ...transforms,
     };
-  });
+  }, [activeItem.value]);
 
+  const activelyTranslatingStyle = useAnimatedStyle(() => {
+    const rotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value,
+    );
+    const previousRotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value + 1,
+    );
+    const nextRotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value - 1,
+    );
+    const scaleFactor = getScaleBasedOnActiveIndex(index, activeItem.value);
+    const previousScaleFactor = getScaleBasedOnActiveIndex(
+      index,
+      activeItem.value + 1,
+    );
+    const nextScaleFactor = getScaleBasedOnActiveIndex(
+      index,
+      activeItem.value - 1,
+    );
+    const zIndex = getZIndexBasedOnActiveIndex(index, activeItem.value);
+    const previousZIndex = getZIndexBasedOnActiveIndex(
+      index,
+      activeItem.value + 1,
+    );
+    const nextZIndex = getZIndexBasedOnActiveIndex(index, activeItem.value - 1);
+    const interpolatedRotate = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR, 0, TRANSLATION_FACTOR],
+      [previousRotationFactor, rotationFactor, nextRotationFactor],
+      Extrapolation.CLAMP,
+    );
+    const interpolatedScale = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR, 0, TRANSLATION_FACTOR],
+      [previousScaleFactor, scaleFactor, nextScaleFactor],
+      Extrapolation.CLAMP,
+    );
+    const interpolatedZIndex = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR - 1, -TRANSLATION_FACTOR, 0, TRANSLATION_FACTOR],
+      [previousZIndex + 1, zIndex, zIndex, nextZIndex + 1],
+      Extrapolation.CLAMP,
+    );
+
+    const interpolatedTranslationX = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR, 0, TRANSLATION_FACTOR],
+      [-TRANSLATION_FACTOR * 2, 0, TRANSLATION_FACTOR * 2],
+      Extrapolation.CLAMP,
+    );
+    const transforms = withAnchorPoint(
+      {
+        transform: [
+          { rotate: `${interpolatedRotate * 2}deg` },
+          { scale: interpolatedScale },
+          { translateX: interpolatedTranslationX },
+        ],
+      },
+      { x: interpolatedRotate < 0 ? 0 : 1, y: 1 },
+      { width: CARD_WIDTH, height: CARD_HEIGHT },
+    );
+    return activeItem.value === index
+      ? {
+          zIndex: interpolatedZIndex,
+          ...transforms,
+        }
+      : {};
+  }, [activeItem.value]);
+
+  const activelyTranslatingNextCardStyle = useAnimatedStyle(() => {
+    const rotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value,
+    );
+    const nextRotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value + 1,
+    );
+
+    const scaleFactor = getScaleBasedOnActiveIndex(index, activeItem.value);
+    const nextScaleFactor = getScaleBasedOnActiveIndex(
+      index,
+      activeItem.value + 1,
+    );
+    const zIndex = getZIndexBasedOnActiveIndex(index, activeItem.value);
+    const nextZIndex = getZIndexBasedOnActiveIndex(index, activeItem.value + 1);
+
+    const interpolatedRotate = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR, 0],
+      [nextRotationFactor, rotationFactor],
+      Extrapolation.CLAMP,
+    );
+    const interpolatedScale = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR, 0],
+      [nextScaleFactor, scaleFactor],
+      Extrapolation.CLAMP,
+    );
+    const interpolatedZIndex = interpolate(
+      translation.value,
+      [-TRANSLATION_FACTOR - 1, -TRANSLATION_FACTOR, 0],
+      [nextZIndex + 1, zIndex - 1, zIndex],
+      Extrapolation.CLAMP,
+    );
+
+    const transforms = withAnchorPoint(
+      {
+        transform: [
+          { rotate: `${interpolatedRotate * 2}deg` },
+          { scale: interpolatedScale },
+        ],
+      },
+      { x: interpolatedRotate < 0 ? 0 : 1, y: 1 },
+      { width: CARD_WIDTH, height: CARD_HEIGHT },
+    );
+    return activeItem.value + 1 === index
+      ? {
+          zIndex: interpolatedZIndex,
+          ...transforms,
+        }
+      : {};
+  }, [activeItem.value]);
+
+  const activelyTranslatingPrevCardStyle = useAnimatedStyle(() => {
+    const rotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value,
+    );
+    const previousRotationFactor = getRotationBasedOnActiveIndex(
+      index,
+      activeItem.value - 1,
+    );
+
+    const scaleFactor = getScaleBasedOnActiveIndex(index, activeItem.value);
+    const previousScaleFactor = getScaleBasedOnActiveIndex(
+      index,
+      activeItem.value - 1,
+    );
+
+    const zIndex = getZIndexBasedOnActiveIndex(index, activeItem.value);
+    const previousZIndex = getZIndexBasedOnActiveIndex(
+      index,
+      activeItem.value - 1,
+    );
+    const interpolatedRotate = interpolate(
+      translation.value,
+      [0, TRANSLATION_FACTOR],
+      [rotationFactor, previousRotationFactor],
+      Extrapolation.CLAMP,
+    );
+    const interpolatedScale = interpolate(
+      translation.value,
+      [0, TRANSLATION_FACTOR],
+      [scaleFactor, previousScaleFactor],
+      Extrapolation.CLAMP,
+    );
+    const interpolatedZIndex = interpolate(
+      translation.value,
+      [0, TRANSLATION_FACTOR, TRANSLATION_FACTOR + 1],
+      [zIndex, zIndex + 1, previousZIndex],
+      Extrapolation.CLAMP,
+    );
+    if (activeItem.value - 1 === index) {
+      console.log("%c⧭", "color: #99614d", zIndex, previousZIndex);
+    }
+    const transforms = withAnchorPoint(
+      {
+        transform: [
+          { rotate: `${interpolatedRotate * 2}deg` },
+          { scale: interpolatedScale },
+        ],
+      },
+      { x: interpolatedRotate < 0 ? 0 : 1, y: 1 },
+      { width: CARD_WIDTH, height: CARD_HEIGHT },
+    );
+    return activeItem.value - 1 === index
+      ? {
+          zIndex: interpolatedZIndex,
+          ...transforms,
+        }
+      : {};
+  }, [activeItem.value]);
   return (
     <Animated.View
       key={item.key}
@@ -133,6 +304,9 @@ const Photo = ({ index, activeItem, item, translation }: PhotoProps) => {
           "absolute -top-48 h-96 w-72 bg-gray-600 rounded-2xl shadow-md",
         ),
         itemStyle,
+        activelyTranslatingStyle,
+        activelyTranslatingNextCardStyle,
+        activelyTranslatingPrevCardStyle,
       ]}
     >
       <Image
@@ -144,17 +318,41 @@ const Photo = ({ index, activeItem, item, translation }: PhotoProps) => {
 };
 
 export const PhotoCollection = () => {
-  const activeItem = useSharedValue(2);
+  const activeItem = useSharedValue(0);
   const translation = useSharedValue(0);
   const panGesture = Gesture.Pan()
     .onChange(event => {
-      translation.value = withSpring(event.translationX);
+      const { translationX } = event;
+      if (activeItem.value === 0) {
+        if (translationX > 0) {
+          return;
+        }
+      }
+      if (activeItem.value === items.length - 1) {
+        if (translationX < 0) {
+          return;
+        }
+      }
+      translation.value = event.translationX;
     })
-    .onFinalize(() => {
-      translation.value = withSpring(0);
+    .onFinalize(event => {
+      const { translationX } = event;
+      if (translationX < -TRANSLATION_FACTOR) {
+        if (activeItem.value !== items.length - 1) {
+          activeItem.value = activeItem.value + 1;
+        }
+        translation.value = 0;
+      } else if (translationX > TRANSLATION_FACTOR) {
+        if (activeItem.value !== 0) {
+          activeItem.value = activeItem.value - 1;
+        }
+        translation.value = 0;
+      } else {
+        translation.value = 0;
+      }
     });
   return (
-    <SafeAreaView style={tailwind.style("flex-1 justify-center bg-[#141414]")}>
+    <SafeAreaView style={tailwind.style("flex-1 justify-center bg-white")}>
       <StatusBar barStyle={"light-content"} />
       <GestureDetector gesture={panGesture}>
         <Animated.View style={tailwind.style("flex items-center")}>
