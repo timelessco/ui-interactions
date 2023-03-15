@@ -276,9 +276,7 @@ const Photo = ({ index, activeItem, item, translation }: PhotoProps) => {
       [zIndex, zIndex + 1, previousZIndex],
       Extrapolation.CLAMP,
     );
-    if (activeItem.value - 1 === index) {
-      console.log("%c⧭", "color: #99614d", zIndex, previousZIndex);
-    }
+
     const transforms = withAnchorPoint(
       {
         transform: [
