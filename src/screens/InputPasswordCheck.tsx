@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Text, TextInput } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { LayoutChangeEvent, Text, TextInput } from "react-native";
 import Animated, {
+  interpolate,
+  interpolateColor,
   Layout,
   useAnimatedStyle,
   useSharedValue,
@@ -9,7 +11,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import tailwind from "twrnc";
 
 const DefaultSpringConfig: WithSpringConfig = {
@@ -21,8 +22,6 @@ const DefaultSpringConfig: WithSpringConfig = {
   restDisplacementThreshold: 0.001,
 };
 
-const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
-
 export const InputPasswordCheck = () => {
   const [focused, setFocused] = useState(false);
   const [_passwordState, setPasswordState] = useState<
@@ -32,6 +31,12 @@ export const InputPasswordCheck = () => {
   const mediumV = useSharedValue(0);
   const strongV = useSharedValue(0);
   const [password, setPassword] = useState("");
+
+  const [singleContainerWidth, setSingleContainerWidth] = useState(0);
+  const passwordState = useSharedValue(0);
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    setSingleContainerWidth(event.nativeEvent.layout.width);
+  }, []);
 
   const entering = () => {
     "worklet";
@@ -92,20 +97,24 @@ export const InputPasswordCheck = () => {
         lowV.value = 0;
         mediumV.value = 0;
         strongV.value = withSpring(100, DefaultSpringConfig);
+        passwordState.value = withSpring(3, DefaultSpringConfig);
         return "strong";
       }
       if (strength >= 2) {
         lowV.value = 0;
         mediumV.value = withSpring(100, DefaultSpringConfig);
         strongV.value = 0;
+        passwordState.value = withSpring(2, DefaultSpringConfig);
         return "medium";
       }
       if (strength === 1) {
         lowV.value = withSpring(100, DefaultSpringConfig);
         mediumV.value = 0;
         strongV.value = 0;
+        passwordState.value = withSpring(1, DefaultSpringConfig);
         return "low";
       }
+      passwordState.value = withSpring(0, DefaultSpringConfig);
       lowV.value = 0;
       mediumV.value = 0;
       strongV.value = 0;
@@ -115,19 +124,28 @@ export const InputPasswordCheck = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [password]);
 
-  const animatedLowStyle = useAnimatedStyle(() => {
+  const translatingViewStyle = useAnimatedStyle(() => {
     return {
-      width: `${lowV.value}%`,
-    };
-  });
-  const animatedMediumStyle = useAnimatedStyle(() => {
-    return {
-      width: `${mediumV.value}%`,
-    };
-  });
-  const animatedStrongStyle = useAnimatedStyle(() => {
-    return {
-      width: `${strongV.value}%`,
+      backgroundColor: interpolateColor(
+        passwordState.value,
+        [0, 1, 2, 3],
+        ["#E4E3E2", "#FF4A11", "#F2781F", "#68E95C"],
+      ),
+      opacity: interpolate(passwordState.value, [0, 0.5, 1], [0, 0, 1]),
+      transform: [
+        {
+          translateX: interpolate(
+            passwordState.value,
+            [0, 1, 2, 3],
+            [
+              -singleContainerWidth,
+              0,
+              singleContainerWidth + 4,
+              singleContainerWidth * 2 + 8,
+            ],
+          ),
+        },
+      ],
     };
   });
 
@@ -141,6 +159,7 @@ export const InputPasswordCheck = () => {
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           placeholder="Password"
+          placeholderTextColor={"#827E7D"}
           value={password}
           onChange={event => setPassword(event.nativeEvent.text)}
           style={tailwind.style("")}
@@ -149,56 +168,35 @@ export const InputPasswordCheck = () => {
         {focused && (
           <Animated.View
             layout={Layout.springify().stiffness(100).damping(20)}
-            style={tailwind.style("flex flex-row w-full mt-3")}
+            style={tailwind.style("relative flex flex-row w-full mt-3")}
           >
             <Animated.View
+              style={[
+                tailwind.style(
+                  `absolute w-[${singleContainerWidth}px] h-[3px] z-50 rounded-2xl`,
+                ),
+                translatingViewStyle,
+              ]}
+            />
+            <Animated.View
+              onLayout={handleLayout}
               entering={entering}
-              style={tailwind.style("relative h-[3px] flex-1 overflow-hidden")}
-            >
-              <AnimatedLinearGradient
-                start={{ x: -1, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                colors={[
-                  "rgba(255, 74, 17, 0)",
-                  "rgba(255, 92, 82, 0.51)",
-                  "rgba(255, 134, 66, 1)",
-                ]}
-                style={[tailwind.style("flex-1 h-full"), animatedLowStyle]}
-              />
-            </Animated.View>
+              style={tailwind.style(
+                "h-[3px] flex-1 overflow-hidden rounded-2xl",
+              )}
+            />
             <Animated.View
               entering={entering}
               style={tailwind.style(
-                "mx-1 relative h-[3px] flex-1 overflow-hidden",
+                "mx-1 h-[3px] flex-1 overflow-hidden rounded-2xl",
               )}
-            >
-              <AnimatedLinearGradient
-                start={{ x: -1, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                colors={[
-                  "rgba(242, 120, 31, 0)",
-                  "rgba(252, 145, 67, 0.51)",
-                  "rgba(255, 179, 66, 1)",
-                ]}
-                style={[tailwind.style("flex-1 h-full"), animatedMediumStyle]}
-              />
-            </Animated.View>
-
+            />
             <Animated.View
               entering={entering}
-              style={tailwind.style("relative h-[3px] flex-1 overflow-hidden")}
-            >
-              <AnimatedLinearGradient
-                start={{ x: -1, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                colors={[
-                  "rgba(104, 233, 92, 0)",
-                  "rgba(61, 213, 103, 0.59)",
-                  "rgba(120, 222, 111, 1)",
-                ]}
-                style={[tailwind.style("flex-1 h-full"), animatedStrongStyle]}
-              />
-            </Animated.View>
+              style={tailwind.style(
+                "h-[3px] flex-1 overflow-hidden rounded-2xl",
+              )}
+            />
           </Animated.View>
         )}
       </Animated.View>
