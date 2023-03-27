@@ -1,6 +1,7 @@
 import { Image, StatusBar, ViewStyle } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  interpolate,
   interpolateColor,
   runOnJS,
   SharedValue,
@@ -13,6 +14,7 @@ import { toDeg, toRad } from "react-native-redash";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
 
+import { BackgroundGradient } from "../components/BackgroundGradient";
 import { useHaptic } from "../utils/useHaptic";
 
 const D = 170;
@@ -95,10 +97,12 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
   const currentStrokeAngle = index * angle;
   const animatedStyles = useAnimatedStyle(() => {
     return {
+      opacity: interpolate(active.value, [0, 1], [0.45, 1]),
       backgroundColor: interpolateColor(
         active.value,
         [0, 1],
-        ["white", "orange"],
+        ["rgba(0,0,0,0.51)", "white"],
+        "RGB",
       ),
     };
   });
@@ -109,7 +113,7 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
     <Animated.View
       key={index}
       style={[
-        tailwind.style("absolute h-1 w-5 "),
+        tailwind.style("absolute h-1 w-5 rounded-3xl"),
         getTransform(currentStrokeAngle),
         animatedStyles,
       ]}
@@ -194,8 +198,8 @@ export const RadialControl = () => {
   const indicatorAnimationStyle = useAnimatedStyle(() => {
     const localGetIndicatorPosition = (angleInDegrees: number) => {
       const angleInRadians = (angleInDegrees * Math.PI) / 180;
-      const x = R * 0.7 * Math.cos(angleInRadians);
-      const y = R * 0.7 * Math.sin(angleInRadians);
+      const x = R * 0.6 * Math.cos(angleInRadians);
+      const y = R * 0.6 * Math.sin(angleInRadians);
       return {
         transform: [
           { translateX: x },
@@ -204,18 +208,26 @@ export const RadialControl = () => {
         ],
       };
     };
-    return localGetIndicatorPosition(currentAngle.value);
+
+    return {
+      opacity: 0.8,
+      backgroundColor: "rgba(0,0,0,0.51)",
+      ...localGetIndicatorPosition(currentAngle.value),
+    };
   });
 
   return (
-    <SafeAreaView style={tailwind.style("flex-1 items-center justify-center")}>
+    <SafeAreaView
+      style={tailwind.style("flex-1 items-center justify-end pb-40")}
+    >
       <StatusBar barStyle={"dark-content"} />
-      <Animated.View style={tailwind.style("absolute inset-0")}>
+      {/* <Animated.View style={tailwind.style("absolute inset-0")}>
         <Image
           style={tailwind.style("h-full w-full")}
           source={require("../assets/background1.jpg")}
         />
-      </Animated.View>
+      </Animated.View> */}
+      <BackgroundGradient sv={currentAngle} />
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[
@@ -227,9 +239,18 @@ export const RadialControl = () => {
             },
           ]}
         >
+          <Image
+            source={require("../assets/Dial.png")}
+            style={[
+              tailwind.style("absolute h-[340px] w-[340px]"),
+              { transform: [{ rotate: "-90deg" }, { translateY: 64 }] },
+            ]}
+          />
           <Animated.View
             style={[
-              tailwind.style("absolute h-1.5 w-5 bg-[#FFA500] shadow-sm"),
+              tailwind.style(
+                "absolute h-1.5 w-8 bg-[#FFA500] shadow-sm rounded-2xl",
+              ),
               indicatorAnimationStyle,
             ]}
           />
