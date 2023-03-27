@@ -227,7 +227,11 @@ export const RadialControl = () => {
           source={require("../assets/background1.jpg")}
         />
       </Animated.View> */}
-      <BackgroundGradient sv={currentAngle} />
+      <BackgroundGradient
+        sv={currentAngle}
+        startAngle={start_angle}
+        lastAngle={last_angle}
+      />
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[

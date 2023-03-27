@@ -8,34 +8,42 @@ import Svg, { Defs, Path, RadialGradient, Stop } from "react-native-svg";
 import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
 
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+
 type BackgroundGradientProps = {
   sv: SharedValue<number>;
+  startAngle: number;
+  lastAngle: number;
 };
 
 export const BackgroundGradient = (props: BackgroundGradientProps) => {
-  const { sv } = props;
+  const { sv, startAngle, lastAngle } = props;
+  const blurIntensity = useDerivedValue(
+    () => interpolate(sv.value, [startAngle, lastAngle], [45, 75]),
+    [sv.value],
+  );
   const purpleTranslationX = useDerivedValue(
-    () => interpolate(sv.value, [15, 345], [-950, -1100]),
+    () => interpolate(sv.value, [startAngle, lastAngle], [-950, -1100]),
     [sv.value],
   );
 
   const yellowTranslationX = useDerivedValue(
-    () => interpolate(sv.value, [15, 345], [-900, -600]),
+    () => interpolate(sv.value, [startAngle, lastAngle], [-900, -600]),
     [sv.value],
   );
 
   const yellowTranslationY = useDerivedValue(
-    () => interpolate(sv.value, [15, 345], [-350, 0]),
+    () => interpolate(sv.value, [startAngle, lastAngle], [-350, 0]),
     [sv.value],
   );
 
   const blueTranslationY = useDerivedValue(
-    () => interpolate(sv.value, [15, 345], [-950, -700]),
+    () => interpolate(sv.value, [startAngle, lastAngle], [-950, -700]),
     [sv.value],
   );
 
   const blueTranslationX = useDerivedValue(
-    () => interpolate(sv.value, [15, 345], [-80, -680]),
+    () => interpolate(sv.value, [startAngle, lastAngle], [-80, -680]),
     [sv.value],
   );
 
@@ -96,11 +104,7 @@ export const BackgroundGradient = (props: BackgroundGradientProps) => {
     <Animated.View style={tailwind.style("absolute inset-0")}>
       {/* Light Blue */}
       <Animated.View
-        style={[
-          tailwind.style("absolute z-10"),
-          // { transform: [{ translateY: -850 }, { translateX: -550 }] },
-          lightBlueAnimation,
-        ]}
+        style={[tailwind.style("absolute z-10"), lightBlueAnimation]}
       >
         <Svg width="1375" height="1312" viewBox="0 0 1375 1312" fill="none">
           <Path
@@ -193,8 +197,8 @@ export const BackgroundGradient = (props: BackgroundGradientProps) => {
           </Defs>
         </Svg>
       </Animated.View>
-      <BlurView
-        intensity={100}
+      <AnimatedBlurView
+        intensity={blurIntensity.value}
         style={tailwind.style("absolute inset-0 z-50")}
       />
     </Animated.View>
