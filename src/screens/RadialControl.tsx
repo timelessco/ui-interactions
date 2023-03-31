@@ -1,4 +1,10 @@
-import { Image, StatusBar, ViewStyle } from "react-native";
+import {
+  Dimensions,
+  Image,
+  StatusBar,
+  StyleSheet,
+  ViewStyle,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   interpolate,
@@ -7,6 +13,7 @@ import Animated, {
   SharedValue,
   useAnimatedReaction,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
@@ -14,7 +21,6 @@ import { toDeg, toRad } from "react-native-redash";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
 
-import { BackgroundGradient } from "../components/BackgroundGradient";
 import { useHaptic } from "../utils/useHaptic";
 
 const D = 170;
@@ -29,6 +35,8 @@ const start_angle = sweeping_angle / 2;
 
 // The space between the circle and the notches
 const distanceFactor = 1.6;
+const SCREEN_HEIGHT = Dimensions.get("screen").height;
+const SCREEN_WIDTH = Dimensions.get("screen").width;
 
 const getStrokePosition = (angleInDegrees: number) => {
   const angleInRadians = toRad(angleInDegrees);
@@ -215,23 +223,38 @@ export const RadialControl = () => {
       ...localGetIndicatorPosition(currentAngle.value),
     };
   });
-
+  const translationY = useDerivedValue(() => {
+    return withSpring(
+      interpolate(
+        currentAngle.value,
+        [start_angle, last_angle],
+        [-SCREEN_HEIGHT * 0.5, 0],
+      ),
+      {
+        overshootClamping: true,
+      },
+    );
+  });
+  const gradientBg = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateY: translationY.value,
+        },
+      ],
+    };
+  });
   return (
     <SafeAreaView
       style={tailwind.style("flex-1 items-center justify-end pb-40")}
     >
       <StatusBar barStyle={"dark-content"} />
-      {/* <Animated.View style={tailwind.style("absolute inset-0")}>
+      <Animated.View style={[tailwind.style("absolute inset-0"), gradientBg]}>
         <Image
-          style={tailwind.style("h-full w-full")}
-          source={require("../assets/background1.jpg")}
+          style={[styles.imageStyle]}
+          source={require("../assets/radialbg.jpg")}
         />
-      </Animated.View> */}
-      <BackgroundGradient
-        sv={currentAngle}
-        startAngle={start_angle}
-        lastAngle={last_angle}
-      />
+      </Animated.View>
       <GestureDetector gesture={panGesture}>
         <Animated.View
           style={[
@@ -268,3 +291,10 @@ export const RadialControl = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  imageStyle: {
+    width: SCREEN_WIDTH + SCREEN_WIDTH * 0.5,
+    height: (8252 * (SCREEN_WIDTH + SCREEN_WIDTH * 0.5)) / 3728,
+  },
+});
