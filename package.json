@@ -39,6 +39,7 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "expo": "^47.0.0",
+    "expo-av": "~13.0.3",
     "expo-blur": "~12.0.1",
     "expo-haptics": "~12.0.1",
     "expo-linear-gradient": "~12.0.1",
