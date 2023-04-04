@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Image, Pressable, StatusBar } from "react-native";
+import { Image, Pressable, StatusBar, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
@@ -157,6 +157,44 @@ export const SharedGestureConcept = () => {
 
   const activatedFromTap = useSharedValue(0);
   const enableSpringTranslation = useSharedValue(0);
+
+  const enteringAnimation = () => {
+    "worklet";
+    const animations = {
+      transform: [
+        { translateY: withSpring(0, { damping: 15, stiffness: 180, mass: 1 }) },
+      ],
+      opacity: withSpring(1, { damping: 15, stiffness: 180, mass: 1 }),
+    };
+    const initialValues = {
+      opacity: 0,
+      transform: [{ translateY: 15 }],
+    };
+    return {
+      initialValues,
+      animations,
+    };
+  };
+
+  const exitingAnimation = () => {
+    "worklet";
+    const animations = {
+      transform: [
+        {
+          translateY: withSpring(15, { damping: 15, stiffness: 180, mass: 1 }),
+        },
+      ],
+      opacity: withSpring(0, { damping: 15, stiffness: 180, mass: 1 }),
+    };
+    const initialValues = {
+      opacity: 1,
+      transform: [{ translateY: 0 }],
+    };
+    return {
+      initialValues,
+      animations,
+    };
+  };
 
   const tapGesture = Gesture.Tap()
     .onStart(() => {
@@ -378,8 +416,8 @@ export const SharedGestureConcept = () => {
       <StatusBar barStyle={"dark-content"} />
       <Animated.View style={tailwind.style("absolute inset-0")}>
         <Image
-          style={tailwind.style("h-full w-full")}
-          source={require("../assets/background.jpg")}
+          style={[tailwind.style("h-full w-full")]}
+          source={require("../assets/share-gesture-background.jpg")}
         />
       </Animated.View>
       <GestureDetector gesture={composed}>
@@ -388,21 +426,16 @@ export const SharedGestureConcept = () => {
             tailwind.style(
               "relative flex items-center justify-center rounded-2xl",
             ),
+            styles.shadowStyle,
           ]}
         >
           {shareSheetOpen ? (
             <Animated.View
-              entering={FadeInDown.springify()
-                .damping(15)
-                .stiffness(180)
-                .mass(1)}
-              exiting={FadeOutDown.springify()
-                .damping(15)
-                .stiffness(180)
-                .mass(1)}
+              entering={enteringAnimation}
+              exiting={exitingAnimation}
               style={[
                 tailwind.style(
-                  "absolute items-center px-2 py-2 rounded-2xl bottom-15 bg-white ",
+                  "absolute items-center px-2 py-2 rounded-2xl bottom-15 bg-white",
                 ),
                 containerOutOfBoundStyle,
               ]}
@@ -430,8 +463,9 @@ export const SharedGestureConcept = () => {
           ) : null}
           <Animated.View
             style={[
-              tailwind.style("h-11 w-11 rounded-md overflow-hidden"),
+              tailwind.style("h-11 w-11 rounded-xl"),
               scaleStyle,
+              styles.shadowStyle,
             ]}
           >
             <Image
@@ -461,3 +495,17 @@ export const SharedGestureConcept = () => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  shadowStyle: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowRadius: 14,
+    shadowOpacity: 0.12,
+
+    elevation: 19,
+  },
+});
