@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -19,6 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { toDeg, toRad } from "react-native-redash";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
 import tailwind from "twrnc";
 
 import { useHaptic } from "../utils/useHaptic";
@@ -59,11 +61,13 @@ const getTransform = (tranformAngle: number): ViewStyle => {
 type NotchesProps = {
   index: number;
   currentAngle: SharedValue<number>;
+  playSound: () => void;
 };
 
-const Notches = ({ index, currentAngle }: NotchesProps) => {
+const Notches = ({ index, currentAngle, playSound }: NotchesProps) => {
   const hapticSelection = useHaptic();
   const active = useSharedValue(0);
+
   useAnimatedReaction(
     () => currentAngle.value,
     (next, _prev) => {
@@ -92,11 +96,13 @@ const Notches = ({ index, currentAngle }: NotchesProps) => {
       if (currentAngleFactor >= notchAngleFactor) {
         if (active.value === 0) {
           hapticSelection && runOnJS(hapticSelection)();
+          runOnJS(playSound)();
         }
         active.value = withSpring(1);
       } else {
         if (active.value === 1) {
           hapticSelection && runOnJS(hapticSelection)();
+          runOnJS(playSound)();
         }
         active.value = withSpring(0);
       }
@@ -145,6 +151,31 @@ export const RadialControl = () => {
     let adjustedAngle = angleValue + angle / 2;
     adjustedAngle = adjustedAngle - (adjustedAngle % angle);
     return adjustedAngle;
+  };
+
+  const [localSound, setLocalSound] = useState<Audio.Sound>();
+  useEffect(() => {
+    const loadSound = async () => {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../assets/tap_05.mp3"),
+      );
+      setLocalSound(sound);
+    };
+    loadSound();
+  }, []);
+
+  async function playSound() {
+    try {
+      if (localSound) {
+        // await localSound.setRateAsync(1.2, false);
+        await localSound.setPositionAsync(0);
+        await localSound.playAsync();
+      }
+    } catch (e) {}
+  }
+
+  const stopSound = () => {
+    localSound?.stopAsync();
   };
 
   const panGesture = Gesture.Pan()
@@ -201,6 +232,7 @@ export const RadialControl = () => {
     .onEnd(() => {
       previousChangedAngle.value = 0;
       finalAngleNotReached.value = 1;
+      runOnJS(stopSound)();
     });
 
   const indicatorAnimationStyle = useAnimatedStyle(() => {
@@ -228,7 +260,7 @@ export const RadialControl = () => {
       interpolate(
         currentAngle.value,
         [start_angle, last_angle],
-        [-SCREEN_HEIGHT * 0.5, 0],
+        [-SCREEN_HEIGHT * 0.53, 0],
       ),
       {
         overshootClamping: true,
@@ -249,7 +281,9 @@ export const RadialControl = () => {
       style={tailwind.style("flex-1 items-center justify-end pb-40")}
     >
       <StatusBar barStyle={"dark-content"} />
-      <Animated.View style={[tailwind.style("absolute inset-0"), gradientBg]}>
+      <Animated.View
+        style={[tailwind.style("absolute bottom-0 top-0"), gradientBg]}
+      >
         <Image
           style={[styles.imageStyle]}
           source={require("../assets/radialbg.jpg")}
@@ -284,7 +318,12 @@ export const RadialControl = () => {
           {Array(notches)
             .fill(1)
             .map((_value, index) => (
-              <Notches key={index} index={index} currentAngle={currentAngle} />
+              <Notches
+                playSound={playSound}
+                key={index}
+                index={index}
+                currentAngle={currentAngle}
+              />
             ))}
         </Animated.View>
       </GestureDetector>
