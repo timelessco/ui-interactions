@@ -36,6 +36,7 @@ import {
   SpotifyScreen,
   SwipeToBuy,
   TwoPinchKnob,
+  VaultInteraction,
   VolumeInteraction,
 } from "./src/screens";
 
@@ -61,6 +62,7 @@ export type UIInteractionParamList = {
   "Volume Interaction": undefined;
   "Photo Collection": undefined;
   "Swipe To Buy": undefined;
+  "Vault Interaction": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -174,6 +176,10 @@ const rootStackScreens: screenType[] = [
     name: "Swipe To Buy",
     component: SwipeToBuy,
   },
+  {
+    name: "Vault Interaction",
+    component: VaultInteraction,
+  },
 ];
 
 const App = () => {
@@ -226,6 +232,10 @@ const App = () => {
             />
             <Stack.Screen name="Photo Collection" component={PhotoCollection} />
             <Stack.Screen name="Swipe To Buy" component={SwipeToBuy} />
+            <Stack.Screen
+              name="Vault Interaction"
+              component={VaultInteraction}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

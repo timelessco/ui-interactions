@@ -14,4 +14,5 @@ export * from "./SpotifyScreen";
 export * from "./SpotifyScreen";
 export * from "./SwipeToBuy";
 export * from "./TwoPinchKnob";
+export * from "./VaultInteraction";
 export * from "./VolumeInteraction";
