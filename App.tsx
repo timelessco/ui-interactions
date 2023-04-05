@@ -22,6 +22,7 @@ import tailwind from "twrnc";
 import { ChevronRight } from "./src/icons/ChevronRight";
 import {
   AlignInteraction1,
+  AllocationSlider,
   DynamicTabBar,
   EventCreation,
   HorizontalDialInteraction,
@@ -63,6 +64,7 @@ export type UIInteractionParamList = {
   "Photo Collection": undefined;
   "Swipe To Buy": undefined;
   "Vault Interaction": undefined;
+  "Allocation Slider": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -112,6 +114,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Allocation Slider",
+    component: AllocationSlider,
+  },
   {
     name: "Shared Element Concept",
     component: SharedElementConceptOne,
@@ -235,6 +241,10 @@ const App = () => {
             <Stack.Screen
               name="Vault Interaction"
               component={VaultInteraction}
+            />
+            <Stack.Screen
+              name="Allocation Slider"
+              component={AllocationSlider}
             />
           </Stack.Navigator>
         </NavigationContainer>
