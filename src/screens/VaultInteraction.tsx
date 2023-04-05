@@ -84,10 +84,18 @@ export const VaultInteraction = () => {
         return adjustedAngle;
       };
       if (isDecayingFinished.value) {
-        currentAngle.value = withSpring(findNearestMultiple(next), {
-          damping: 18,
-          stiffness: 140,
-        });
+        currentAngle.value = withSpring(
+          findNearestMultiple(next),
+          {
+            damping: 18,
+            stiffness: 140,
+          },
+          finished => {
+            if (finished) {
+              currentAngle.value = findNearestMultiple(next) % 360;
+            }
+          },
+        );
       }
     },
   );
@@ -116,7 +124,7 @@ export const VaultInteraction = () => {
       const nextAngle = currentAngle.value + angleDiff;
       currentAngle.value = nextAngle;
     })
-    .onEnd(event => {
+    .onFinalize(event => {
       currentAngle.value = withDecay(
         {
           velocity: event.velocityY,
