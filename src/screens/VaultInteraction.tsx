@@ -8,10 +8,19 @@ import Animated, {
   withDecay,
   withSpring,
 } from "react-native-reanimated";
-import { toDeg, toRad } from "react-native-redash";
 import tailwind from "twrnc";
 
 import { withAnchorPoint } from "../utils/withAnchorPoint";
+
+function toRad(degrees: number) {
+  "worklet";
+  return (degrees * Math.PI) / 180;
+}
+
+function toDeg(radians: number) {
+  "worklet";
+  return (radians * 180) / Math.PI;
+}
 
 const chars: string[] = [];
 const notches = 360;
