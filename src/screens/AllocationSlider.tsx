@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import {
   LayoutChangeEvent,
   StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -138,9 +139,12 @@ export const AllocationSlider = () => {
                 Equity
               </Text>
               <AnimatedTextInput
-                style={tailwind.style(
-                  "text-base font-medium text-[#63605F] tracking-wide",
-                )}
+                style={[
+                  tailwind.style(
+                    "text-base font-medium text-[#63605F] tracking-wide",
+                  ),
+                  styles.textLineHeight,
+                ]}
                 editable={false}
                 value={`${String(Math.round(equityShare.value))}%`}
                 // @ts-ignore
@@ -169,9 +173,12 @@ export const AllocationSlider = () => {
                 Debt
               </Text>
               <AnimatedTextInput
-                style={tailwind.style(
-                  "text-base font-medium text-[#63605F] tracking-wide",
-                )}
+                style={[
+                  tailwind.style(
+                    "text-base font-medium text-[#63605F] tracking-wide",
+                  ),
+                  styles.textLineHeight,
+                ]}
                 editable={false}
                 value={`${String(Math.round(100 - equityShare.value))}%`}
                 // @ts-ignore
@@ -224,3 +231,7 @@ export const AllocationSlider = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  textLineHeight: { lineHeight: 19 },
+});
