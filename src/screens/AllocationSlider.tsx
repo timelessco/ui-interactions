@@ -38,8 +38,8 @@ const DoubleSideArrow = () => {
 };
 
 export const AllocationSlider = () => {
-  const markerPosition = useSharedValue(0);
-  const markerDraggingPosition = useSharedValue(0);
+  const markerPosition = useSharedValue(110);
+  const markerDraggingPosition = useSharedValue(110);
   const sliderWidth = useSharedValue(0);
   const equityShare = useDerivedValue(() => {
     return interpolate(
@@ -73,6 +73,7 @@ export const AllocationSlider = () => {
       const { translationX } = event;
       const newPosition = markerPosition.value + translationX;
       if (newPosition > 0 && newPosition <= sliderWidth.value) {
+        console.log("%c⧭", "color: #f27999", newPosition);
         markerDraggingPosition.value = withSpring(newPosition, {
           damping: 18,
           stiffness: 140,
