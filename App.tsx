@@ -30,6 +30,7 @@ import {
   InputPasswordCheck,
   MenuInteraction,
   PhotoCollection,
+  PortfolioHealthCard,
   RadialControl,
   ShareAnimationConceptScreen,
   SharedElementConceptOne,
@@ -65,6 +66,7 @@ export type UIInteractionParamList = {
   "Swipe To Buy": undefined;
   "Vault Interaction": undefined;
   "Allocation Slider": undefined;
+  "Portfolio Health Card": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -117,6 +119,10 @@ const rootStackScreens: screenType[] = [
   {
     name: "Allocation Slider",
     component: AllocationSlider,
+  },
+  {
+    name: "Portfolio Health Card",
+    component: PortfolioHealthCard,
   },
   {
     name: "Shared Element Concept",
@@ -245,6 +251,10 @@ const App = () => {
             <Stack.Screen
               name="Allocation Slider"
               component={AllocationSlider}
+            />
+            <Stack.Screen
+              name="Portfolio Health Card"
+              component={PortfolioHealthCard}
             />
           </Stack.Navigator>
         </NavigationContainer>
