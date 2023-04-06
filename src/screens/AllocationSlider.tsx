@@ -73,7 +73,6 @@ export const AllocationSlider = () => {
       const { translationX } = event;
       const newPosition = markerPosition.value + translationX;
       if (newPosition > 0 && newPosition <= sliderWidth.value) {
-        console.log("%c⧭", "color: #f27999", newPosition);
         markerDraggingPosition.value = withSpring(newPosition, {
           damping: 18,
           stiffness: 140,
