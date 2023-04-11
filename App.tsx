@@ -32,6 +32,7 @@ import {
   PhotoCollection,
   PortfolioHealthCard,
   RadialControl,
+  RadialMenu,
   ShareAnimationConceptScreen,
   SharedElementConceptOne,
   SharedGestureConcept,
@@ -67,6 +68,7 @@ export type UIInteractionParamList = {
   "Vault Interaction": undefined;
   "Allocation Slider": undefined;
   "Portfolio Health Card": undefined;
+  "Radial Menu": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -123,6 +125,10 @@ const rootStackScreens: screenType[] = [
   {
     name: "Portfolio Health Card",
     component: PortfolioHealthCard,
+  },
+  {
+    name: "Radial Menu",
+    component: RadialMenu,
   },
   {
     name: "Shared Element Concept",
@@ -256,6 +262,7 @@ const App = () => {
               name="Portfolio Health Card"
               component={PortfolioHealthCard}
             />
+            <Stack.Screen name="Radial Menu" component={RadialMenu} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

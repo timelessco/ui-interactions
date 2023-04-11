@@ -9,6 +9,7 @@ export * from "./MenuInteraction";
 export * from "./PhotoCollection";
 export * from "./PortfolioHealthCard";
 export * from "./RadialControl";
+export * from "./RadialMenu";
 export * from "./ShareAnimationConceptScreen";
 export * from "./SharedElementConceptOne";
 export * from "./ShareGestureConcept";
