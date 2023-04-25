@@ -1,7 +1,18 @@
 {
-  "name": "ExampleApp",
-  "displayName": "ExampleApp",
+  "name": "UI Interactions",
+  "displayName": "UI Interactions",
+  "version": "1.0",
+  "userInterfaceStyle": "light",
+  "icon": "src/assets/appIcon.png",
+  "splash": {
+    "image": "src/assets/splash.png",
+    "resizeMode": "contain",
+    "backgroundColor": "#000"
+  },
   "android": {
-    "jsEngine": "hermes"
+    "package": "com.timelessco.uiinteractions"
+  },
+  "ios": {
+    "bundleIdentifier": "com.timelessco.uiinteractions"
   }
 }
