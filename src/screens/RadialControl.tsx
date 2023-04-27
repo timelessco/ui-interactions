@@ -28,7 +28,7 @@ import { useHaptic } from "../utils/useHaptic";
 const D = 170;
 const R = D / 2;
 
-const angle = 15;
+const angle = 45;
 const notches = 360 / angle;
 
 const sweeping_angle = angle * 2;
@@ -71,26 +71,13 @@ const Notches = ({ index, currentAngle, playSound }: NotchesProps) => {
   useAnimatedReaction(
     () => currentAngle.value,
     (next, _prev) => {
-      // Mapping current angle to an index value
       let currentAngleFactor = next / angle;
-      // Mapping Notch angle to an index value
-      let notchAngleFactor = (index * angle) / angle;
-      // Setting the currentAngleFactor && notchAngleFactor to the notches when it is zero
-      // It is the 0, 360 degree point in the Knob
+      let notchAngleFactor = index;
       if (currentAngleFactor === 0) {
         currentAngleFactor = notches;
       }
       if (notchAngleFactor === 0) {
         notchAngleFactor = notches;
-      }
-      // Setting the currentAngleFactor && notchAngleFactor to the (notches+(factor)) when it is more than zero
-      // It is the (start angle) degree point in the Knob, which is the max point
-
-      if (currentAngleFactor > 0 && currentAngleFactor < start_angle / angle) {
-        currentAngleFactor = notches + currentAngleFactor;
-      }
-      if (notchAngleFactor > 0 && notchAngleFactor < start_angle / angle) {
-        notchAngleFactor = notches + notchAngleFactor;
       }
 
       if (currentAngleFactor >= notchAngleFactor) {
