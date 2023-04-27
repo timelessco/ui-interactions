@@ -49,7 +49,7 @@
     "prettier": "^2.8.3",
     "react": "18.1.0",
     "react-hook-form": "^7.43.0",
-    "react-native": "0.70.8",
+    "react-native": "0.71.7",
     "react-native-anchor-point": "^1.0.6",
     "react-native-calendars": "^1.1293.0",
     "react-native-gesture-handler": "~2.8.0",
