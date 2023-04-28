@@ -2,6 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import Animated, {
+  Layout,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -34,6 +35,9 @@ export const AlignInteraction1 = () => {
   const verticalLine = useSharedValue(20);
   const horizontalLine = useSharedValue(28);
   const scaleAnim = useSharedValue(1);
+
+  const alignState = useSharedValue(0);
+
   const verticalLineStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -61,12 +65,32 @@ export const AlignInteraction1 = () => {
       ],
     };
   });
+
+  const textAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      textAlign:
+        alignState.value === 0
+          ? "left"
+          : alignState.value === 1
+          ? "center"
+          : alignState.value === 2
+          ? "right"
+          : "auto",
+    };
+  });
   return (
-    <View
-      style={tailwind.style(
-        "flex-1 bg-white justify-center items-center bg-blue-300",
-      )}
-    >
+    <View style={tailwind.style("flex-1 bg-white justify-center items-center")}>
+      <Animated.Text
+        layout={Layout.delay(1000).springify()}
+        style={[
+          tailwind.style("text-lg text-center px-10 py-4"),
+          textAnimatedStyle,
+        ]}
+      >
+        Good design and development put the user at the center of the process.
+        This means understanding the user's needs, wants, and behaviors, and
+        designing products that address these.
+      </Animated.Text>
       <Animated.View
         style={[
           tailwind.style(
@@ -84,6 +108,7 @@ export const AlignInteraction1 = () => {
             }))
           }
           onPress={() => {
+            alignState.value = 0;
             verticalLine.value = withSpring(20, VerticalSpringConfig);
             horizontalLine.value = withDelay(
               100,
@@ -106,6 +131,7 @@ export const AlignInteraction1 = () => {
             }))
           }
           onPress={() => {
+            alignState.value = 1;
             verticalLine.value = withSpring(122, VerticalSpringConfig);
             horizontalLine.value = withDelay(
               100,
@@ -130,6 +156,7 @@ export const AlignInteraction1 = () => {
             }))
           }
           onPress={() => {
+            alignState.value = 2;
             verticalLine.value = withSpring(226, VerticalSpringConfig);
             horizontalLine.value = withDelay(
               100,
@@ -140,9 +167,7 @@ export const AlignInteraction1 = () => {
             "flex flex-row items-center justify-end w-[70px]",
           )}
         >
-          <View
-            style={tailwind.style("h-2 w-6 bg-blue-100 rounded-sm mr-1 ")}
-          />
+          <View style={tailwind.style("h-2 w-6 bg-blue-100 rounded-sm mr-1")} />
           <View style={tailwind.style("h-8 w-1 bg-blue-100 rounded-xl")} />
         </TouchableWithoutFeedback>
         <Animated.View
