@@ -42,42 +42,42 @@ type TimeSegementRenderProps = {
 };
 
 const timeline = [
-  "00:00",
-  "01:00",
-  "02:00",
-  "03:00",
-  "04:00",
-  "05:00",
-  "06:00",
-  "07:00",
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
-  "22:00",
-  "23:00",
-  "00:00",
+  "12 AM",
+  "1 AM",
+  "2 AM",
+  "3 AM",
+  "4 AM",
+  "5 AM",
+  "6 AM",
+  "7 AM",
+  "8 AM",
+  "9 AM",
+  "10 AM",
+  "11 AM",
+  "12 PM",
+  "1 PM",
+  "2 PM",
+  "3 PM",
+  "4 PM",
+  "5 PM",
+  "6 PM",
+  "7 PM",
+  "8 PM",
+  "9 PM",
+  "10 PM",
+  "11 PM",
+  "12 AM",
 ];
 
-const week = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const week = ["S", "M", "T", "W", "T", "F", "S"];
 const days = [
-  "2023-10-06",
-  "2023-10-07",
-  "2023-10-08",
-  "2023-10-09",
-  "2023-10-10",
-  "2023-10-11",
-  "2023-10-12",
+  "2023-10-23",
+  "2023-10-24",
+  "2023-10-25",
+  "2023-10-26",
+  "2023-10-27",
+  "2023-10-28",
+  "2023-10-29",
 ];
 
 /**
@@ -113,6 +113,23 @@ function formatTime(timeString: string) {
   return formattedTime;
 }
 
+const parseTime = (formattedTime: string) => {
+  // Extracting hours, minutes and period from the formattedTime string
+  const [time, period] = formattedTime.split(" ");
+  const [hours, minutes] = time.split(":").map(str => parseInt(str, 10));
+
+  // Converting hours to 24-hour format
+  const isPM = period.toUpperCase() === "PM";
+  const convertedHours = isPM ? (hours === 12 ? 12 : hours + 12) : hours % 12;
+
+  // Concatenating hours and minutes to form the new time string
+  const convertedTime = `${
+    convertedHours < 10 ? "0" : ""
+  }${convertedHours}:${minutes}`;
+
+  return convertedTime;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SEGMENT_HEIGHT = 60;
 const SEGMENT_WIDTH = Dimensions.get("screen").width - (16 + 16 + 44);
@@ -129,8 +146,8 @@ const INIT_POINTER_HEIGHT = 15;
  * @returns An object with two properties: heightValue and translateYValue.
  */
 const getSectionMeasurements = (startTime: string, endTime: string) => {
-  let [startHour, startMinute] = startTime.split(":").map(Number);
-  let [endHour, endMinute] = endTime.split(":").map(Number);
+  let [startHour, startMinute] = parseTime(startTime).split(":").map(Number);
+  let [endHour, endMinute] = parseTime(endTime).split(":").map(Number);
 
   let startTimeInMinutes = 60 * startHour + startMinute;
   let endTimeInMinutes = 60 * endHour + endMinute;
@@ -160,9 +177,9 @@ const TimeSegmentRender = memo((props: TimeSegementRenderProps) => {
           tailwind.style(
             `flex-1 flex-col items-center px-4 ${
               index === timeline.length - 1 ? "h-0" : "h-15"
-            } border-[#303030] pr-4`,
+            } border-t-[1px] border-black pr-4`,
           ),
-          { borderTopWidth: StyleSheet.hairlineWidth },
+          styles.hourSegmentStyle,
         ]}
       />
     </Animated.View>
@@ -229,7 +246,7 @@ const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 export const EventCreation = () => {
   const hapticSelection = useHaptic();
-  const [selectedDate, setSelectedDate] = useState("2023-10-08");
+  const [selectedDate, setSelectedDate] = useState("2023-10-24");
   const eventStore = useEventStore();
   const [currentEvent, setCurrentEvent] = useState<CalendarEvent | null>(null);
   const [startTime, setStartTime] = useState("");
@@ -264,8 +281,16 @@ export const EventCreation = () => {
           (remainingMinutes < 10 ? "0" + remainingMinutes : remainingMinutes);
         return time;
       };
-      runOnJS(setStartTime)(getTimeFromMins(prev[0]));
-      runOnJS(setEndTime)(getTimeFromMins(prev[1]));
+      function format24HRTime(timeString: string) {
+        const [hours, minutes] = timeString.split(":");
+        const isPM = parseInt(hours, 10) >= 12;
+        const formattedHours = isPM ? parseInt(hours, 10) - 12 : hours;
+        const period = isPM ? "PM" : "AM";
+        const formattedTime = `${formattedHours}:${minutes} ${period}`;
+        return formattedTime;
+      }
+      runOnJS(setStartTime)(format24HRTime(getTimeFromMins(prev[0])));
+      runOnJS(setEndTime)(format24HRTime(getTimeFromMins(prev[1])));
     },
   );
 
@@ -500,16 +525,11 @@ export const EventCreation = () => {
   );
 
   return (
-    <SafeAreaView style={tailwind.style("flex-1 bg-[#141414] pb-5")}>
-      <StatusBar barStyle={"light-content"} />
-      <View style={tailwind.style("px-4 py-1 border-b-[1px] border-[#1C1C1C]")}>
-        <Text
-          style={tailwind.style(
-            "text-lg font-medium text-[#EDEDED] text-center",
-          )}
-        >
-          October{" "}
-          <Text style={tailwind.style("font-normal text-[#7E7E7E]")}>2023</Text>
+    <SafeAreaView style={tailwind.style("flex-1 bg-white pb-5")}>
+      <StatusBar barStyle={"dark-content"} />
+      <View style={tailwind.style("px-4 py-1")}>
+        <Text style={tailwind.style("text-3xl font-bold text-black")}>
+          Today
         </Text>
         <Animated.View style={tailwind.style("py-2")}>
           <View
@@ -517,13 +537,17 @@ export const EventCreation = () => {
               "flex flex-row w-full justify-between items-center",
             )}
           >
-            {week.map(day => {
+            {week.map((day, index) => {
               return (
                 <View
                   style={tailwind.style("flex flex-row flex-1 justify-center")}
-                  key={day}
+                  key={day + index}
                 >
-                  <Text style={tailwind.style("text-[#A0A0A0]")}>{day}</Text>
+                  <Text
+                    style={tailwind.style("text-sm font-medium text-[#9A9A9A]")}
+                  >
+                    {day}
+                  </Text>
                 </View>
               );
             })}
@@ -545,11 +569,16 @@ export const EventCreation = () => {
                 >
                   <View
                     style={tailwind.style(
-                      "flex items-center justify-center p-2.5 rounded-md",
-                      isSelected ? "bg-[#1C1C1C]" : "",
+                      "flex items-center justify-center w-9 h-9",
+                      isSelected ? "bg-black rounded-full" : "",
                     )}
                   >
-                    <Text style={tailwind.style("text-center text-[#A0A0A0]")}>
+                    <Text
+                      style={tailwind.style(
+                        "text-lg text-center text-black font-medium",
+                        isSelected ? "text-white" : "",
+                      )}
+                    >
                       {dayjs(day).date()}
                     </Text>
                   </View>
@@ -810,6 +839,7 @@ export const EventCreation = () => {
 };
 
 const styles = StyleSheet.create({
+  hourSegmentStyle: { opacity: 0.06 },
   handleIndicatorStyle: {
     width: 32,
     height: 4,
