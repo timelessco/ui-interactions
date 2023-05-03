@@ -11,21 +11,19 @@ export type COLORS =
   | "pink"
   | "blue"
   | "green"
-  | "slate"
-  | "mint"
+  | "black"
   | "plum"
   | "orange";
 
 const COLORS_COMBO: Record<COLORS, ColorComboType> = {
-  purple: { bg: "#793aaf", text: "#f9f1fe" },
-  pink: { bg: "#cd1d8d", text: "#feeef8" },
-  blue: { bg: "#006adc", text: "#edf6ff" },
-  green: { bg: "#18794e", text: "#e9f9ee" },
-  slate: { bg: "#687076", text: "#f1f3f5" },
-  mint: { bg: "#147d6f", text: "#e1fbf4" },
-  red: { bg: "#cd2b31", text: "#ffefef" },
-  plum: { bg: "#9c2bad", text: "#fceffc" },
-  orange: { bg: "#bd4b00", text: "#fff1e7" },
+  purple: { bg: "#8B32FC", text: "#ffffff" },
+  pink: { bg: "#FF5391", text: "#ffffff" },
+  blue: { bg: "#315EFD", text: "#ffffff" },
+  green: { bg: "#30a46c", text: "#ffffff" },
+  black: { bg: "#000000", text: "#ffffff" },
+  red: { bg: "#e5484d", text: "#ffffff" },
+  plum: { bg: "#00ACEB", text: "#ffffff" },
+  orange: { bg: "#FF5C28", text: "#ffffff" },
 };
 
 export interface CalendarEvent {
@@ -36,7 +34,9 @@ export interface CalendarEvent {
   endTime: string;
   color: ColorComboType;
   translateY: number;
+  totalTime: string;
   height: number;
+  location: string;
 }
 
 interface CalendarEventsStore {
