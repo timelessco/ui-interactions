@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Alert,
   Dimensions,
   Pressable,
   StatusBar,
@@ -12,6 +13,7 @@ import { Gesture, GestureDetector, State } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
   interpolate,
+  Layout,
   runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
@@ -19,13 +21,13 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ClipPath, Defs, G, Path, Rect, Svg } from "react-native-svg";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetTextInput,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import dayjs from "dayjs";
-import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
 
 import {
@@ -35,6 +37,59 @@ import {
   useEventStore,
 } from "../utils/useEventState";
 import { useHaptic } from "../utils/useHaptic";
+
+const CalendarIcon = () => {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M17.5 8.33332H2.5M13.3333 1.66666V4.99999M6.66667 1.66666V4.99999M6.5 18.3333H13.5C14.9001 18.3333 15.6002 18.3333 16.135 18.0608C16.6054 17.8212 16.9878 17.4387 17.2275 16.9683C17.5 16.4335 17.5 15.7335 17.5 14.3333V7.33332C17.5 5.93319 17.5 5.23313 17.2275 4.69835C16.9878 4.22794 16.6054 3.84549 16.135 3.60581C15.6002 3.33332 14.9001 3.33332 13.5 3.33332H6.5C5.09987 3.33332 4.3998 3.33332 3.86502 3.60581C3.39462 3.84549 3.01217 4.22794 2.77248 4.69835C2.5 5.23313 2.5 5.93319 2.5 7.33332V14.3333C2.5 15.7335 2.5 16.4335 2.77248 16.9683C3.01217 17.4387 3.39462 17.8212 3.86502 18.0608C4.3998 18.3333 5.09987 18.3333 6.5 18.3333Z"
+        stroke="black"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+const ClockIcon = () => {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <G clip-path="url(#clip0_7026_48458)">
+        <Path
+          d="M9.99996 4.99999V9.99999L13.3333 11.6667M18.3333 9.99999C18.3333 14.6024 14.6023 18.3333 9.99996 18.3333C5.39759 18.3333 1.66663 14.6024 1.66663 9.99999C1.66663 5.39762 5.39759 1.66666 9.99996 1.66666C14.6023 1.66666 18.3333 5.39762 18.3333 9.99999Z"
+          stroke="black"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </G>
+      <Defs>
+        <ClipPath id="clip0_7026_48458">
+          <Rect width="20" height="20" fill="white" />
+        </ClipPath>
+      </Defs>
+    </Svg>
+  );
+};
+
+const LocationIcon = () => {
+  return (
+    <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <Path
+        d="M10 9C10.5523 9 11 8.55228 11 8C11 7.44772 10.5523 7 10 7C9.44772 7 9 7.44772 9 8C9 8.55228 9.44772 9 10 9Z"
+        fill="black"
+      />
+      <Path
+        d="M10 18.3334C13.3334 15 16.6667 12.0153 16.6667 8.33335C16.6667 4.65146 13.6819 1.66669 10 1.66669C6.31814 1.66669 3.33337 4.65146 3.33337 8.33335C3.33337 12.0153 6.66671 15 10 18.3334Z"
+        stroke="black"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
 
 type TimeSegementRenderProps = {
   item: string;
@@ -80,6 +135,21 @@ const days = [
   "2023-10-29",
 ];
 
+function formatTimeIntoMins(totalMins: string) {
+  const minutes = parseInt(totalMins, 10);
+  if (minutes <= 60) {
+    return `${minutes}m`;
+  } else {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (mins === 0) {
+      return `${hours}h`;
+    } else {
+      return `${hours}h ${mins}m`;
+    }
+  }
+}
+
 /**
  * "If you pass a string to this function, it will return a string."
  *
@@ -93,7 +163,7 @@ function formatDate(dateString: string) {
   const options = {
     month: "long",
     day: "numeric",
-    year: "numeric",
+    weekday: "long",
   } as Intl.DateTimeFormatOptions;
   return date.toLocaleDateString("en-US", options);
 }
@@ -104,13 +174,20 @@ function formatDate(dateString: string) {
  * @param {string} timeString - a string representing a time in the format "HH:MM"
  * @returns a string that is formatted to be in 12 hour time.
  */
-function formatTime(timeString: string) {
-  const [hours, minutes] = timeString.split(":");
-  const isPM = parseInt(hours, 10) >= 12;
-  const formattedHours = isPM ? parseInt(hours, 10) - 12 : hours;
-  const period = isPM ? "PM" : "AM";
-  const formattedTime = `${formattedHours}:${minutes} ${period}`;
-  return formattedTime;
+function formatTime(time: string) {
+  "worklet";
+  // Parse the time string into hours and minutes
+  var hours = parseInt(time.substring(0, 2), 10);
+  var minutes = parseInt(time.substring(3, 5), 10);
+
+  // Determine the AM/PM suffix
+  var suffix = hours >= 12 ? "PM" : "AM";
+
+  // Convert hours from 24-hour format to 12-hour format
+  hours = ((hours + 11) % 12) + 1;
+
+  // Return the formatted time string
+  return hours + ":" + (minutes < 10 ? "0" : "") + minutes + " " + suffix;
 }
 
 const parseTime = (formattedTime: string) => {
@@ -133,9 +210,9 @@ const parseTime = (formattedTime: string) => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SEGMENT_HEIGHT = 60;
 const SEGMENT_WIDTH = Dimensions.get("screen").width - (16 + 16 + 44);
-const MINS_MULTIPLIER = 15;
+const MINS_MULTIPLIER = 30;
 
-const INIT_POINTER_HEIGHT = 15;
+const INIT_POINTER_HEIGHT = 30;
 
 /**
  * It takes in a start time and an end time, and returns the height and translateY values for a section
@@ -190,67 +267,58 @@ type EventComponentProps = {
 };
 const EventComponent = (props: EventComponentProps) => {
   const { event } = props;
-  const isSmallSection = event.height === 15;
-  const isMediumSection = event.height === 30 || event.height === 45;
-
+  const isEvent30Mins = event.height === 30;
   return (
     <Animated.View
       key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
-          `absolute flex my-[1px] ${
-            isSmallSection || isMediumSection ? "flex-row" : "flex-col"
-          } w-full pl-2 ${
-            isSmallSection || isMediumSection
-              ? "justify-start items-center"
-              : "pt-1"
-          } ${
-            isSmallSection ? "rounded-[4px]" : "rounded-md"
-          } w-[${SEGMENT_WIDTH}px] left-15 overflow-hidden`,
+          "absolute flex flex-row w-full pl-3 justify-between pr-3 left-15 overflow-hidden",
+          `w-[${SEGMENT_WIDTH}px]`,
+          isEvent30Mins
+            ? { alignItems: "center", borderRadius: 10 }
+            : "pt-3 items-start rounded-xl",
         ),
         {
           backgroundColor: event.color.bg,
-          height: event.height - 2,
+          height: event.height,
           transform: [{ translateY: event.translateY }],
         },
       ]}
     >
       <Animated.Text
         style={[
-          tailwind.style(
-            `text-${isMediumSection ? "sm" : "base"} text-white font-medium`,
-          ),
-          isSmallSection ? styles.smallTitleStyle : {},
+          tailwind.style("text-white font-medium"),
+          styles.eventText,
           { color: event.color.text },
         ]}
       >
         {event.title}
       </Animated.Text>
-      {!isSmallSection ? (
-        <Animated.Text
-          style={[
-            styles.subtitleStyle,
-            tailwind.style(
-              `${isSmallSection || isMediumSection ? "pl-[6px]" : ""}`,
-            ),
-          ]}
-        >
-          {formatTime(event.startTime)} — {formatTime(event.endTime)}
-        </Animated.Text>
-      ) : null}
+      <Animated.Text
+        style={[
+          tailwind.style("text-white font-semibold"),
+          styles.bottomSheetTotalTimeText,
+          {
+            color: event.color.text,
+          },
+        ]}
+      >
+        {formatTimeIntoMins(event.totalTime)}
+      </Animated.Text>
     </Animated.View>
   );
 };
 
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
-
 export const EventCreation = () => {
   const hapticSelection = useHaptic();
-  const [selectedDate, setSelectedDate] = useState("2023-10-24");
+  const [selectedDate, setSelectedDate] = useState(days[2]);
   const eventStore = useEventStore();
   const [currentEvent, setCurrentEvent] = useState<CalendarEvent | null>(null);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [totalTime, setTotalTime] = useState("");
+
   // Pan handling State
   const [state, setGestureState] = useState<State>(State.UNDETERMINED);
   const panActive = useSharedValue(0);
@@ -263,6 +331,7 @@ export const EventCreation = () => {
   const selectionHeight = useSharedValue(INIT_POINTER_HEIGHT);
 
   const inputRef = useRef<TextInput>(null);
+  const locationInputRef = useRef<TextInput>(null);
   // Pan handling State
   useAnimatedReaction(
     () => [startIndex.value, endIndex.value],
@@ -281,16 +350,9 @@ export const EventCreation = () => {
           (remainingMinutes < 10 ? "0" + remainingMinutes : remainingMinutes);
         return time;
       };
-      function format24HRTime(timeString: string) {
-        const [hours, minutes] = timeString.split(":");
-        const isPM = parseInt(hours, 10) >= 12;
-        const formattedHours = isPM ? parseInt(hours, 10) - 12 : hours;
-        const period = isPM ? "PM" : "AM";
-        const formattedTime = `${formattedHours}:${minutes} ${period}`;
-        return formattedTime;
-      }
-      runOnJS(setStartTime)(format24HRTime(getTimeFromMins(prev[0])));
-      runOnJS(setEndTime)(format24HRTime(getTimeFromMins(prev[1])));
+      runOnJS(setTotalTime)(`${prev[1] - prev[0]}`);
+      runOnJS(setStartTime)(formatTime(getTimeFromMins(prev[0])));
+      runOnJS(setEndTime)(formatTime(getTimeFromMins(prev[1])));
     },
   );
 
@@ -361,13 +423,15 @@ export const EventCreation = () => {
       if (currentEvent === null) {
         runOnJS(setCurrentEvent)({
           id: new Date().getTime(),
-          color: COLORS_COMBO.slate,
+          color: COLORS_COMBO.blue,
           date: selectedDate,
           startTime,
           endTime,
+          totalTime,
           title: "",
           translateY: 0,
           height: 0,
+          location: "",
         });
       } else {
         runOnJS(setCurrentEvent)({
@@ -389,7 +453,11 @@ export const EventCreation = () => {
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
       top: startPoint.value,
-      height: selectionHeight.value,
+      height: withSpring(selectionHeight.value, {
+        mass: 1,
+        damping: 30,
+        stiffness: 250,
+      }),
       opacity: interpolate(
         panActive.value,
         [0, 1],
@@ -398,8 +466,8 @@ export const EventCreation = () => {
       ),
       borderRadius: interpolate(
         selectionHeight.value,
-        [0, 15, 30, 45],
-        [0, 4, 6, 8],
+        [0, 30, 45],
+        [0, 10, 12],
         Extrapolation.CLAMP,
       ),
       width: interpolate(
@@ -408,54 +476,41 @@ export const EventCreation = () => {
         [0, SEGMENT_WIDTH],
         Extrapolation.CLAMP,
       ),
-      marginTop: marginTop.value,
+      marginTop: withSpring(marginTop.value, {
+        mass: 1,
+        damping: 30,
+        stiffness: 250,
+      }),
       zIndex: 99999,
     };
   });
 
-  const segmentTextStyle = useAnimatedStyle(() => {
+  const textContainerStyle = useAnimatedStyle(() => {
     return {
       fontSize: interpolate(
         textScale.value,
-        [0, 45],
-        [8, 12],
+        [30, 60],
+        [10, 12],
         Extrapolation.CLAMP,
       ),
-      paddingTop: interpolate(
-        textScale.value,
-        [0, 45],
-        [0, 4],
-        Extrapolation.CLAMP,
-      ),
-      paddingLeft: interpolate(
-        textScale.value,
-        [0, 45],
-        [2, 4],
-        Extrapolation.CLAMP,
-      ),
-    };
-  });
-
-  const newEventTextStyle = useAnimatedStyle(() => {
-    return {
-      fontSize: interpolate(
-        textScale.value,
-        [0, 45],
-        [8, 12],
-        Extrapolation.CLAMP,
-      ),
-      paddingTop: interpolate(
-        textScale.value,
-        [0, 45],
-        [0, 2],
-        Extrapolation.CLAMP,
-      ),
-      paddingLeft: interpolate(
-        textScale.value,
-        [0, 45],
-        [2, 4],
-        Extrapolation.CLAMP,
-      ),
+      transform: [
+        {
+          translateY: interpolate(
+            textScale.value,
+            [30, 60],
+            [3.5, 8],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          translateX: interpolate(
+            textScale.value,
+            [30, 60],
+            [6, 8],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
     };
   });
 
@@ -472,7 +527,7 @@ export const EventCreation = () => {
   const sheetRef = useRef<BottomSheet>(null);
 
   // variables
-  const snapPoints = useMemo(() => ["35%"], []);
+  const snapPoints = useMemo(() => ["40%"], []);
 
   const handleOnChangeText = useCallback(
     (text: string) => {
@@ -483,14 +538,17 @@ export const EventCreation = () => {
     [currentEvent],
   );
 
-  const handleCancelEventPress = useCallback(() => {
-    sheetRef.current?.close();
-    inputRef.current?.blur();
-    setCurrentEvent(null);
-  }, []);
+  const handleOnChangeLocation = useCallback(
+    (text: string) => {
+      if (currentEvent) {
+        setCurrentEvent({ ...currentEvent, location: text });
+      }
+    },
+    [currentEvent],
+  );
 
   const handleAddEventPress = useCallback(() => {
-    if (currentEvent) {
+    if (currentEvent && currentEvent.title.length >= 5) {
       const sectionMeasurement = getSectionMeasurements(
         currentEvent.startTime,
         currentEvent.endTime,
@@ -503,11 +561,20 @@ export const EventCreation = () => {
       setCurrentEvent(null);
       sheetRef.current?.close();
       inputRef.current?.blur();
+      locationInputRef.current?.blur();
+    } else {
+      Alert.alert(
+        "Enter event title",
+        "Event title must be longer than 4 characters.",
+        [{ text: "OK", onPress: () => inputRef.current?.focus() }],
+      );
     }
   }, [currentEvent, eventStore]);
 
   const handleOnCloseSheet = useCallback(() => {
+    sheetRef.current?.close();
     inputRef.current?.blur();
+    locationInputRef.current?.blur();
     setCurrentEvent(null);
   }, []);
 
@@ -515,6 +582,7 @@ export const EventCreation = () => {
   const renderBackdrop = useCallback(
     (props: any) => (
       <BottomSheetBackdrop
+        pressBehavior={"none"}
         {...props}
         opacity={0.75}
         appearsOnIndex={0}
@@ -619,32 +687,26 @@ export const EventCreation = () => {
             ) : null;
           })}
 
-          <AnimatedBlurView
-            intensity={panActive.value * 10}
-            tint="dark"
+          <Animated.View
             style={[
               StyleSheet.absoluteFill,
-              tailwind.style("left-15 overflow-hidden bg-blue-700"),
+              tailwind.style("left-15 overflow-hidden bg-[#315EFD]"),
               movingSegmentStyle,
             ]}
           >
-            <Animated.Text
-              style={[
-                tailwind.style("font-medium text-white"),
-                segmentTextStyle,
-              ]}
-            >
-              {startTime}-{endTime}
-            </Animated.Text>
-            <Animated.Text
-              style={[
-                tailwind.style("font-medium text-white"),
-                newEventTextStyle,
-              ]}
-            >
-              {"New Event"}
-            </Animated.Text>
-          </AnimatedBlurView>
+            <Animated.View layout={Layout.springify()}>
+              <Animated.Text
+                style={[
+                  tailwind.style("font-medium text-white"),
+                  textContainerStyle,
+                ]}
+              >
+                {startTime}-{endTime}
+                {"\n"}
+                {"New Event"}
+              </Animated.Text>
+            </Animated.View>
+          </Animated.View>
         </Animated.ScrollView>
       </Animated.View>
       <BottomSheet
@@ -653,64 +715,15 @@ export const EventCreation = () => {
         backdropComponent={renderBackdrop}
         ref={sheetRef}
         snapPoints={snapPoints}
-        handleStyle={tailwind.style("bg-[#141414]")}
+        handleStyle={styles.handleStyle}
         handleIndicatorStyle={styles.handleIndicatorStyle}
-        backgroundStyle={tailwind.style("bg-[#141414]")}
+        backgroundStyle={tailwind.style("bg-white")}
         onClose={handleOnCloseSheet}
       >
-        <BottomSheetView style={tailwind.style("flex-1 bg-[#141414] px-4")}>
+        <BottomSheetView style={tailwind.style("flex-1 bg-white px-5")}>
           <View
             style={tailwind.style(
-              "flex w-full flex-row items-center justify-between py-2",
-            )}
-          >
-            <Pressable
-              onPress={handleCancelEventPress}
-              style={tailwind.style("flex-1 items-start")}
-            >
-              <Text
-                style={tailwind.style(
-                  "flex text-base font-medium text-[#DC3D43]",
-                )}
-              >
-                Cancel
-              </Text>
-            </Pressable>
-            <View style={tailwind.style("flex-1 items-center")}>
-              <Text
-                style={tailwind.style("flex text-base font-medium text-white")}
-              >
-                New Event
-              </Text>
-            </View>
-            <Pressable
-              disabled={
-                currentEvent
-                  ? currentEvent.title.length > 2
-                    ? false
-                    : true
-                  : true
-              }
-              onPress={handleAddEventPress}
-              style={tailwind.style("flex-1 items-end")}
-            >
-              <Text
-                style={tailwind.style(
-                  "flex text-base font-medium",
-                  currentEvent
-                    ? currentEvent.title.length > 2
-                      ? "text-[#2563eb]"
-                      : "text-[#6b7280]"
-                    : "text-[#6b7280]",
-                )}
-              >
-                Add
-              </Text>
-            </Pressable>
-          </View>
-          <View
-            style={tailwind.style(
-              "flex flex-row justify-between items-center py-4 px-4",
+              "flex flex-row justify-between items-center py-4",
             )}
           >
             {Object.keys(COLORS_COMBO).map(color => {
@@ -755,10 +768,10 @@ export const EventCreation = () => {
           </View>
           <BottomSheetTextInput
             onChangeText={handleOnChangeText}
-            placeholder="Title"
-            placeholderTextColor={"#7a7a7a"}
+            placeholder="Event title"
+            placeholderTextColor={"rgba(0,0,0,0.3)"}
             style={tailwind.style(
-              "flex flex-row items-center bg-[#252525] h-9 text-sm rounded-[10px] leading-4 px-3 text-white",
+              "flex flex-row items-center text-xl leading-tight h-10 text-black",
             )}
             onBlur={() => sheetRef?.current?.snapToIndex(-1)}
             enablesReturnKeyAutomatically
@@ -768,69 +781,47 @@ export const EventCreation = () => {
             // @ts-ignore Avoid textinput props
             ref={inputRef}
           />
-          <View style={tailwind.style("mt-6 bg-[#252525] rounded-2.5")}>
-            <View
-              style={tailwind.style(
-                "flex-row justify-between items-center px-4 min-h-10 border-[#EBEAEA]",
-              )}
-            >
-              <Text style={tailwind.style("text-white text-sm leading-4")}>
-                Starts
+          <View style={tailwind.style("flex flex-row items-center mt-6")}>
+            <View style={tailwind.style("h-5 w-5 rounded-md bg-[#1C6EE9]")} />
+            <Text style={styles.bottomSheetText}>sandeep@timeless.co</Text>
+          </View>
+          <View style={tailwind.style("flex flex-row items-center mt-6")}>
+            <CalendarIcon />
+            <Text style={styles.bottomSheetText}>
+              {formatDate(selectedDate)}
+            </Text>
+          </View>
+          <View style={tailwind.style("flex flex-row items-center mt-6")}>
+            <ClockIcon />
+            <Text style={styles.bottomSheetText}>
+              {currentEvent?.startTime} → {currentEvent?.endTime}
+            </Text>
+            <View style={styles.totalTimeContainer}>
+              <Text style={[styles.totalTimeText]}>
+                {currentEvent?.totalTime
+                  ? formatTimeIntoMins(currentEvent?.totalTime)
+                  : null}
               </Text>
-              <View style={tailwind.style("flex flex-row items-center")}>
-                <View
-                  style={tailwind.style(
-                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-30",
-                  )}
-                >
-                  <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {formatDate(selectedDate)}
-                  </Text>
-                </View>
-                <View
-                  style={tailwind.style(
-                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-20",
-                  )}
-                >
-                  <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {currentEvent?.startTime
-                      ? formatTime(currentEvent?.startTime)
-                      : ""}
-                  </Text>
-                </View>
-              </View>
             </View>
-            <View
-              style={tailwind.style(
-                "flex-row justify-between items-center mx-4 min-h-10 border-[#363636] border-t-[1px]",
-              )}
-            >
-              <Text style={tailwind.style("text-white text-sm leading-4")}>
-                Ends
-              </Text>
-              <View style={tailwind.style("flex flex-row items-center")}>
-                <View
-                  style={tailwind.style(
-                    "flex flex-row items-center justify-center py-1.5 rounded-lg bg-[#2e2e2e] min-w-30",
-                  )}
-                >
-                  <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {formatDate(selectedDate)}
-                  </Text>
-                </View>
-                <View
-                  style={tailwind.style(
-                    "flex flex-row justify-center ml-1.5 py-1.5 rounded-lg bg-[#2e2e2e] min-w-20",
-                  )}
-                >
-                  <Text style={tailwind.style("text-white text-sm leading-4")}>
-                    {currentEvent?.endTime
-                      ? formatTime(currentEvent?.endTime)
-                      : ""}
-                  </Text>
-                </View>
-              </View>
-            </View>
+          </View>
+          <View style={tailwind.style("flex flex-row items-center mt-6")}>
+            <LocationIcon />
+            <BottomSheetTextInput
+              placeholder="Location"
+              onChangeText={handleOnChangeLocation}
+              placeholderTextColor={"rgba(0,0,0,0.3)"}
+              style={[
+                styles.locationTextInput,
+                tailwind.style("flex flex-row items-center text-black"),
+              ]}
+              onBlur={() => sheetRef?.current?.snapToIndex(-1)}
+              enablesReturnKeyAutomatically
+              returnKeyType="done"
+              onSubmitEditing={handleAddEventPress}
+              value={currentEvent?.location}
+              // @ts-ignore Avoid textinput props
+              ref={locationInputRef}
+            />
           </View>
         </BottomSheetView>
       </BottomSheet>
@@ -839,11 +830,20 @@ export const EventCreation = () => {
 };
 
 const styles = StyleSheet.create({
+  locationTextInput: {
+    height: 18,
+    fontSize: 16,
+    marginLeft: 14,
+  },
   hourSegmentStyle: { opacity: 0.06 },
+  handleStyle: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    backgroundColor: "white",
+  },
   handleIndicatorStyle: {
-    width: 32,
+    width: 36,
     height: 4,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
   subtitleStyle: {
     fontSize: 11,
@@ -852,5 +852,35 @@ const styles = StyleSheet.create({
   smallTitleStyle: {
     fontSize: 12,
     lineHeight: 13.7,
+  },
+  bottomSheetText: {
+    paddingLeft: 14,
+    fontSize: 16,
+    fontWeight: "400",
+    color: "black",
+  },
+  locationText: {
+    opacity: 0.3,
+  },
+  totalTimeContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 4.5,
+    borderRadius: 16,
+    backgroundColor: "#F3F3F3",
+    marginLeft: 12,
+  },
+  totalTimeText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#383838",
+  },
+  bottomSheetTotalTimeText: {
+    opacity: 0.5,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  eventText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
