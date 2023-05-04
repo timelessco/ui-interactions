@@ -490,8 +490,7 @@ export const EventCreation = () => {
 
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor:
-        movingSegmentBackground.value?.bg || COLORS_COMBO.blue.bg,
+      backgroundColor: movingSegmentBackground.value?.bg,
       top: startPoint.value + 2,
       height: withSpring(selectionHeight.value - 4, {
         mass: 1,
@@ -523,7 +522,7 @@ export const EventCreation = () => {
       }),
       zIndex: 99999,
     };
-  });
+  }, [movingSegmentBackground.value]);
 
   const textContainerStyle = useAnimatedStyle(() => {
     return {
