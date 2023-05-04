@@ -32,6 +32,7 @@ import tailwind from "twrnc";
 
 import {
   CalendarEvent,
+  ColorComboType,
   COLORS,
   COLORS_COMBO,
   useEventStore,
@@ -288,7 +289,7 @@ const EventComponent = (props: EventComponentProps) => {
       key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
-          "absolute flex flex-row w-full pl-3 justify-between my-[2px] pr-3 left-15 overflow-hidden",
+          "absolute flex flex-row w-full pl-3 justify-between my-[1px] pr-3 left-15 overflow-hidden",
           `w-[${SEGMENT_WIDTH}px]`,
           isEvent30Mins
             ? { alignItems: "center", borderRadius: 10 }
@@ -296,7 +297,7 @@ const EventComponent = (props: EventComponentProps) => {
         ),
         {
           backgroundColor: event.color.bg,
-          height: convertMinutesToPixels(event.height) - 4,
+          height: convertMinutesToPixels(event.height) - 2,
           transform: [{ translateY: convertMinutesToPixels(event.translateY) }],
         },
       ]}
@@ -344,6 +345,9 @@ export const EventCreation = () => {
   const marginTop = useSharedValue(0);
   const textScale = useSharedValue(0);
   const selectionHeight = useSharedValue(INIT_POINTER_HEIGHT);
+  const movingSegmentBackground = useSharedValue<ColorComboType>(
+    COLORS_COMBO.blue,
+  );
 
   const inputRef = useRef<TextInput>(null);
   const locationInputRef = useRef<TextInput>(null);
@@ -379,9 +383,19 @@ export const EventCreation = () => {
     },
   );
 
+  const getRandomColor = (): ColorComboType => {
+    "worklet";
+    const colors = Object.values(COLORS_COMBO);
+    const randomIndex = Math.floor(Math.random() * colors.length);
+    return colors[randomIndex];
+  };
+
   const panGesture = Gesture.Pan()
     .shouldCancelWhenOutside(true)
     .activateAfterLongPress(400)
+    .onBegin(() => {
+      movingSegmentBackground.value = getRandomColor();
+    })
     .onStart(event => {
       if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * MINS_MULTIPLIER) {
         return;
@@ -446,7 +460,7 @@ export const EventCreation = () => {
       if (currentEvent === null) {
         runOnJS(setCurrentEvent)({
           id: new Date().getTime(),
-          color: COLORS_COMBO.blue,
+          color: movingSegmentBackground.value,
           date: selectedDate,
           startTime,
           endTime,
@@ -463,6 +477,7 @@ export const EventCreation = () => {
           endTime,
         });
       }
+      movingSegmentBackground.value = COLORS_COMBO.blue;
       hapticSelection && runOnJS(hapticSelection)();
       panActive.value = 0;
       selectionHeight.value = INIT_POINTER_HEIGHT;
@@ -475,8 +490,9 @@ export const EventCreation = () => {
 
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
-      top: startPoint.value,
-      height: withSpring(selectionHeight.value, {
+      backgroundColor: movingSegmentBackground.value.bg,
+      top: startPoint.value + 2,
+      height: withSpring(selectionHeight.value - 4, {
         mass: 1,
         damping: 30,
         stiffness: 250,
@@ -521,7 +537,7 @@ export const EventCreation = () => {
           translateY: interpolate(
             textScale.value,
             [30, 60],
-            [6, 8],
+            [4, 8],
             Extrapolation.CLAMP,
           ),
         },
@@ -713,7 +729,7 @@ export const EventCreation = () => {
           <Animated.View
             style={[
               StyleSheet.absoluteFill,
-              tailwind.style("left-15 overflow-hidden bg-[#315EFD]"),
+              tailwind.style("left-15 overflow-hidden"),
               movingSegmentStyle,
             ]}
           >
