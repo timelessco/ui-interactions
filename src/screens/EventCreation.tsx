@@ -273,7 +273,7 @@ const EventComponent = (props: EventComponentProps) => {
       key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
-          "absolute flex flex-row w-full pl-3 justify-between pr-3 left-15 overflow-hidden",
+          "absolute flex flex-row w-full pl-3 my-[2px] justify-between pr-3 left-15 overflow-hidden",
           `w-[${SEGMENT_WIDTH}px]`,
           isEvent30Mins
             ? { alignItems: "center", borderRadius: 10 }
@@ -281,7 +281,7 @@ const EventComponent = (props: EventComponentProps) => {
         ),
         {
           backgroundColor: event.color.bg,
-          height: event.height,
+          height: event.height - 4,
           transform: [{ translateY: event.translateY }],
         },
       ]}
@@ -452,8 +452,8 @@ export const EventCreation = () => {
 
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
-      top: startPoint.value,
-      height: withSpring(selectionHeight.value, {
+      top: startPoint.value + 2,
+      height: withSpring(selectionHeight.value - 4, {
         mass: 1,
         damping: 30,
         stiffness: 250,
