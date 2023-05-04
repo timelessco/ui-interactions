@@ -135,6 +135,9 @@ const days = [
   "2023-10-29",
 ];
 
+const SEGMENT_HEIGHT = 72;
+const SEGMENT_WIDTH = Dimensions.get("screen").width - (16 + 16 + 44);
+
 function formatTimeIntoMins(totalMins: string) {
   const minutes = parseInt(totalMins, 10);
   if (minutes <= 60) {
@@ -207,12 +210,24 @@ const parseTime = (formattedTime: string) => {
   return convertedTime;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const SEGMENT_HEIGHT = 60;
-const SEGMENT_WIDTH = Dimensions.get("screen").width - (16 + 16 + 44);
-const MINS_MULTIPLIER = 30;
+const convertMinutesToPixels = (minutes: number) => {
+  "worklet";
+  const pixelsPerMinute = SEGMENT_HEIGHT / 60;
+  const pixels = minutes * pixelsPerMinute;
+  return pixels;
+};
 
-const INIT_POINTER_HEIGHT = 30;
+const convertPixelsToMinutes = (pixels: number) => {
+  "worklet";
+  const pixelsPerMinute = SEGMENT_HEIGHT / 60;
+  const minutesPerPixel = 1 / pixelsPerMinute;
+  const minutes = pixels * minutesPerPixel;
+  return minutes;
+};
+
+const MINS_MULTIPLIER = convertMinutesToPixels(30);
+
+const INIT_POINTER_HEIGHT = convertMinutesToPixels(30);
 
 /**
  * It takes in a start time and an end time, and returns the height and translateY values for a section
@@ -253,7 +268,7 @@ const TimeSegmentRender = memo((props: TimeSegementRenderProps) => {
         style={[
           tailwind.style(
             `flex-1 flex-col items-center px-4 ${
-              index === timeline.length - 1 ? "h-0" : "h-15"
+              index === timeline.length - 1 ? "h-0" : `h-[${SEGMENT_HEIGHT}px]`
             } border-t-[1px] border-black pr-4`,
           ),
           styles.hourSegmentStyle,
@@ -273,7 +288,7 @@ const EventComponent = (props: EventComponentProps) => {
       key={event.date + event.title + event.height + event.startTime}
       style={[
         tailwind.style(
-          "absolute flex flex-row w-full pl-3 my-[2px] justify-between pr-3 left-15 overflow-hidden",
+          "absolute flex flex-row w-full pl-3 justify-between my-[2px] pr-3 left-15 overflow-hidden",
           `w-[${SEGMENT_WIDTH}px]`,
           isEvent30Mins
             ? { alignItems: "center", borderRadius: 10 }
@@ -281,8 +296,8 @@ const EventComponent = (props: EventComponentProps) => {
         ),
         {
           backgroundColor: event.color.bg,
-          height: event.height - 4,
-          transform: [{ translateY: event.translateY }],
+          height: convertMinutesToPixels(event.height) - 4,
+          transform: [{ translateY: convertMinutesToPixels(event.translateY) }],
         },
       ]}
     >
@@ -335,12 +350,19 @@ export const EventCreation = () => {
   // Pan handling State
   useAnimatedReaction(
     () => [startIndex.value, endIndex.value],
-    (prev, _next) => {
-      textScale.value = withSpring(Math.abs(prev[0] - prev[1]), {
-        mass: 1,
-        damping: 20,
-        stiffness: 180,
-      });
+    (next, _prev) => {
+      const convertedValues = next.map(value => convertPixelsToMinutes(value));
+      textScale.value = withSpring(
+        Math.abs(
+          convertPixelsToMinutes(convertedValues[0]) -
+            convertPixelsToMinutes(convertedValues[1]),
+        ),
+        {
+          mass: 1,
+          damping: 20,
+          stiffness: 180,
+        },
+      );
       const getTimeFromMins = (minutes: number) => {
         const hours = Math.floor(minutes / 60) % 24;
         const remainingMinutes = minutes % 60;
@@ -348,11 +370,12 @@ export const EventCreation = () => {
           (hours < 10 ? "0" + hours : hours) +
           ":" +
           (remainingMinutes < 10 ? "0" + remainingMinutes : remainingMinutes);
+
         return time;
       };
-      runOnJS(setTotalTime)(`${prev[1] - prev[0]}`);
-      runOnJS(setStartTime)(formatTime(getTimeFromMins(prev[0])));
-      runOnJS(setEndTime)(formatTime(getTimeFromMins(prev[1])));
+      runOnJS(setTotalTime)(`${convertedValues[1] - convertedValues[0]}`);
+      runOnJS(setStartTime)(formatTime(getTimeFromMins(convertedValues[0])));
+      runOnJS(setEndTime)(formatTime(getTimeFromMins(convertedValues[1])));
     },
   );
 
@@ -360,7 +383,7 @@ export const EventCreation = () => {
     .shouldCancelWhenOutside(true)
     .activateAfterLongPress(400)
     .onStart(event => {
-      if (event.y <= 0 || event.y >= 1440) {
+      if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * MINS_MULTIPLIER) {
         return;
       }
       runOnJS(setGestureState)(event.state);
@@ -380,7 +403,7 @@ export const EventCreation = () => {
        ** Checking if the event.y is less than or equal to 0 or greater than or equal to 1440.
        ** If it is, it will not perform any gesture related changes.
        */
-      if (event.y <= 0 || event.y >= 1440) {
+      if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * 60) {
         return;
       }
       runOnJS(setGestureState)(event.state);
@@ -452,8 +475,8 @@ export const EventCreation = () => {
 
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
-      top: startPoint.value + 2,
-      height: withSpring(selectionHeight.value - 4, {
+      top: startPoint.value,
+      height: withSpring(selectionHeight.value, {
         mass: 1,
         damping: 30,
         stiffness: 250,
@@ -498,7 +521,7 @@ export const EventCreation = () => {
           translateY: interpolate(
             textScale.value,
             [30, 60],
-            [3.5, 8],
+            [6, 8],
             Extrapolation.CLAMP,
           ),
         },
