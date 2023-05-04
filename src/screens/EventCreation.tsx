@@ -490,7 +490,8 @@ export const EventCreation = () => {
 
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: movingSegmentBackground.value.bg,
+      backgroundColor:
+        movingSegmentBackground.value?.bg || COLORS_COMBO.blue.bg,
       top: startPoint.value + 2,
       height: withSpring(selectionHeight.value - 4, {
         mass: 1,
@@ -634,10 +635,12 @@ export const EventCreation = () => {
   return (
     <SafeAreaView style={tailwind.style("flex-1 bg-white pb-5")}>
       <StatusBar barStyle={"dark-content"} />
-      <View style={tailwind.style("px-4 py-1")}>
-        <Text style={tailwind.style("text-3xl font-bold text-black")}>
-          Today
-        </Text>
+      <View style={tailwind.style("px-4")}>
+        <Animated.View style={[tailwind.style("flex-row items-center")]}>
+          <Text style={tailwind.style("text-3xl font-bold text-black")}>
+            Today
+          </Text>
+        </Animated.View>
         <Animated.View style={tailwind.style("py-2")}>
           <View
             style={tailwind.style(
@@ -697,6 +700,7 @@ export const EventCreation = () => {
       </View>
       <Animated.View style={tailwind.style("relative")}>
         <Animated.ScrollView
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           style={tailwind.style("py-4")}
         >
