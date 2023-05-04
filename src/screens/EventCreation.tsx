@@ -845,22 +845,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
   },
-  subtitleStyle: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.8)",
-  },
-  smallTitleStyle: {
-    fontSize: 12,
-    lineHeight: 13.7,
-  },
   bottomSheetText: {
     paddingLeft: 14,
     fontSize: 16,
     fontWeight: "400",
     color: "black",
-  },
-  locationText: {
-    opacity: 0.3,
   },
   totalTimeContainer: {
     paddingHorizontal: 12,
