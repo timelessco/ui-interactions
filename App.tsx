@@ -31,6 +31,7 @@ import {
   MenuInteraction,
   PhotoCollection,
   PortfolioHealthCard,
+  PullToAction,
   RadialControl,
   RadialMenu,
   ShareAnimationConceptScreen,
@@ -48,6 +49,7 @@ enableScreens();
 const Stack = createStackNavigator<UIInteractionParamList>();
 
 export type UIInteractionParamList = {
+  "Pull To Action": undefined;
   "Shared Element Concept": undefined;
   "Align Interaction - 1": undefined;
   "Image Upload": undefined;
@@ -118,6 +120,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Pull To Action",
+    component: PullToAction,
+  },
   {
     name: "Allocation Slider",
     component: AllocationSlider,
@@ -263,6 +269,7 @@ const App = () => {
               component={PortfolioHealthCard}
             />
             <Stack.Screen name="Radial Menu" component={RadialMenu} />
+            <Stack.Screen name="Pull To Action" component={PullToAction} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
