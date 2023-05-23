@@ -121,14 +121,15 @@ export const PullToAction = () => {
           translateX.value = withSpring(
             calculatedTranslateValue,
             {
-              damping: 18,
-              stiffness: 120,
+              damping: 24,
+              stiffness: 250,
+              mass: 1,
             },
             finished => {
               if (finished) {
                 translateY.value = withSpring(0, {
-                  damping: 15,
-                  stiffness: 200,
+                  damping: 25,
+                  stiffness: 100,
                 });
                 currentSegment.value = segment - 1;
               }
@@ -149,6 +150,7 @@ export const PullToAction = () => {
   const animatedViewStyle = useAnimatedStyle(() => {
     return {
       height: translateValue.value,
+      opacity: interpolate(translateValue.value, [60, 80], [0, 1]),
     };
   });
 
