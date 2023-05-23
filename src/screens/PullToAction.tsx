@@ -92,12 +92,11 @@ export const PullToAction = () => {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(-120);
 
-  const hapticSelection = useHaptic("medium");
+  const hapticSelection = useHaptic();
 
   useAnimatedReaction(
     () => currentSegment.value,
-    (next, prev) => {
-      console.log("%c⧭", "color: #f27999", prev, next);
+    (next, _prev) => {
       if (next !== -1) {
         hapticSelection && runOnJS(hapticSelection)();
       }
@@ -109,10 +108,10 @@ export const PullToAction = () => {
       if (event.translationY > 0) {
         translateValue.value = event.translationY;
         const segment = getCurrentSegment(event.x);
-        if (currentSegment.value !== -1) {
-          currentSegment.value = segment - 1;
-        }
         if (segment - 1 < ACTIONS) {
+          if (currentSegment.value !== -1) {
+            currentSegment.value = segment - 1;
+          }
           const calculatedTranslateValue =
             SEGMENT_WIDTH * (segment - 1) +
             SEGMENT_WIDTH / 2 +
@@ -186,7 +185,7 @@ export const PullToAction = () => {
                   Extrapolation.CLAMP,
                 )
               : currentSegment.value === 0
-              ? withSpring(1.2)
+              ? withSpring(1.4)
               : 1,
         },
       ],
@@ -212,7 +211,7 @@ export const PullToAction = () => {
                   Extrapolation.CLAMP,
                 )
               : currentSegment.value === 1
-              ? withSpring(1.2)
+              ? withSpring(1.4)
               : 1,
         },
       ],
@@ -238,7 +237,7 @@ export const PullToAction = () => {
                   Extrapolation.CLAMP,
                 )
               : currentSegment.value === 2
-              ? withSpring(1.2)
+              ? withSpring(1.4)
               : 1,
         },
       ],
