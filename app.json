@@ -6,8 +6,7 @@
   "icon": "src/assets/appIcon.png",
   "splash": {
     "image": "src/assets/splash.png",
-    "resizeMode": "contain",
-    "backgroundColor": "#000"
+    "resizeMode": "cover"
   },
   "android": {
     "package": "com.timelessco.uiinteractions"
