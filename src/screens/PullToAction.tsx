@@ -31,7 +31,7 @@ const PADDING = 12;
 
 const ACTIONS = 3;
 
-const ACTIONS_LIST = ["Refresh", "Search", "Cancel"];
+const ACTIONS_LIST = ["Search", "Refresh", "Cancel"];
 
 const SEGMENT_WIDTH = (SCREEN_WIDTH - PADDING * 2) / ACTIONS;
 
@@ -327,7 +327,7 @@ export const PullToAction = () => {
             <Animated.View
               style={[tailwind.style("flex-1 items-center"), iconAnimatedStyle]}
             >
-              <RefreshIcon />
+              <SearchIcon />
             </Animated.View>
             <Animated.View
               style={[
@@ -335,7 +335,7 @@ export const PullToAction = () => {
                 iconAnimatedStyle2,
               ]}
             >
-              <SearchIcon />
+              <RefreshIcon />
             </Animated.View>
             <Animated.View
               style={[
