@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Dimensions, Image, Text } from "react-native";
+import { Dimensions, Image, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  Easing,
   Extrapolation,
   FadeInDown,
   FadeOutDown,
@@ -13,10 +14,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Path, Svg } from "react-native-svg";
 import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
@@ -101,18 +99,23 @@ export const PullToAction = () => {
   const translateValue = useSharedValue(0);
   const currentSegment = useSharedValue(-1);
   const translateX = useSharedValue(0);
-  const translateY = useSharedValue(-120);
 
-  const { bottom } = useSafeAreaInsets();
+  const startXDistance = useSharedValue(0);
+
+  const selectionActive = useSharedValue(0);
+
+  const { bottom, top } = useSafeAreaInsets();
   const [currentShareTarget, setCurrentShareTarget] = useState("");
 
+  const hapticActive = useHaptic("medium");
   const hapticSelection = useHaptic();
 
   useAnimatedReaction(
-    () => currentSegment.value,
-    (next, prev) => {
-      if (next !== -1 && next !== prev) {
-        hapticSelection && runOnJS(hapticSelection)();
+    () => selectionActive.value,
+    (next, _prev) => {
+      if (next === 1) {
+        console.log("%c⧭", "color: #807160", "Activation");
+        hapticActive && runOnJS(hapticActive)();
       }
     },
   );
@@ -122,32 +125,43 @@ export const PullToAction = () => {
     setTimeout(() => setCurrentShareTarget(""), 2000);
   };
 
+  useAnimatedReaction(
+    () => currentSegment.value,
+    (next, prev) => {
+      if (prev !== next && prev !== -1 && next !== -1) {
+        console.log("%c⧭", "color: #807160", "Selection", next, prev);
+        hapticSelection && runOnJS(hapticSelection)();
+      }
+    },
+  );
+
   const panGesture = Gesture.Pan()
     .onBegin(event => {
-      const segment = getCurrentSegment(event.x);
+      const segment = 2;
       const calculatedTranslateValue =
         SEGMENT_WIDTH * (segment - 1) + SEGMENT_WIDTH / 2 + PADDING - 60 / 2;
-
+      currentSegment.value = segment - 1;
       translateX.value = calculatedTranslateValue;
+      startXDistance.value = event.x;
     })
     .onChange(event => {
       translateValue.value = event.translationY > 0 ? event.translationY : 0;
-      if (event.translationY > 80) {
-        const segment = getCurrentSegment(event.x);
+      const activatePullToAction = interpolate(
+        translateValue.value,
+        [0, 80],
+        [0, 180],
+        Extrapolation.CLAMP,
+      );
+      if (activatePullToAction === 180) {
+        selectionActive.value = 1;
+      } else {
+        selectionActive.value = 0;
+      }
+
+      const segment = getCurrentSegment(event.x);
+      if (Math.abs(event.translationX) >= 50 && event.translationY >= 200) {
         if (segment - 1 < ACTIONS) {
           currentSegment.value = segment - 1;
-        }
-        translateY.value = withSpring(0, {
-          damping: 25,
-          stiffness: 100,
-        });
-      }
-      if (Math.abs(event.translationX) > 10 && event.translationY > 80) {
-        const segment = getCurrentSegment(event.x);
-        if (segment - 1 < ACTIONS) {
-          if (currentSegment.value !== -1) {
-            currentSegment.value = segment - 1;
-          }
           const calculatedTranslateValue =
             SEGMENT_WIDTH * (segment - 1) +
             SEGMENT_WIDTH / 2 +
@@ -162,13 +176,16 @@ export const PullToAction = () => {
         }
       }
     })
-    .onEnd(event => {
-      if (event.translationY > 80) {
+    .onEnd(() => {
+      if (selectionActive.value) {
         runOnJS(setAction)(ACTIONS_LIST[currentSegment.value]);
       }
-      translateValue.value = withTiming(0);
-      translateY.value = -120;
-      translateX.value = 0;
+      currentSegment.value = -1;
+      selectionActive.value = 0;
+      translateValue.value = withTiming(0, {
+        duration: 300,
+        easing: Easing.inOut(Easing.ease),
+      });
     });
 
   const scrollViewGesture = Gesture.Native();
@@ -176,13 +193,26 @@ export const PullToAction = () => {
   const animatedViewStyle = useAnimatedStyle(() => {
     return {
       height: translateValue.value,
-      opacity: interpolate(translateValue.value, [70, 80], [0, 1]),
+    };
+  });
+
+  const currentSegmentAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        translateValue.value,
+        [70, 80],
+        [0, 0.5],
+        Extrapolation.CLAMP,
+      ),
       transform: [
         {
-          scale: interpolate(
+          translateX: translateX.value,
+        },
+        {
+          translateY: interpolate(
             translateValue.value,
             [70, 80],
-            [0.9, 1],
+            [-30, 0],
             Extrapolation.CLAMP,
           ),
         },
@@ -190,125 +220,84 @@ export const PullToAction = () => {
     };
   });
 
-  const currentSegmentAnimatedStyle = useAnimatedStyle(() => {
+  const searchIconAnimatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: translateX.value > 0 ? withTiming(0.3) : 0,
+      opacity: interpolate(
+        translateValue.value,
+        [40, 70],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
       transform: [
         {
-          translateX: translateX.value,
-        },
-        {
-          translateY: translateY.value,
-        },
-      ],
-    };
-  });
-
-  const iconAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity:
-        currentSegment.value === -1
-          ? interpolate(
-              translateValue.value,
-              [0, 40],
-              [0.45, 1],
-              Extrapolation.CLAMP,
-            )
-          : currentSegment.value === 0
-          ? 1
-          : 0.45,
-      transform: [
-        {
-          scale:
-            currentSegment.value === -1
-              ? interpolate(
-                  translateValue.value,
-                  [0, 40],
-                  [0, 1],
-                  Extrapolation.CLAMP,
-                )
-              : currentSegment.value === 0
-              ? withSpring(1.3)
-              : 1,
+          translateX: interpolate(
+            translateValue.value,
+            [0, 80],
+            [80, 0],
+            Extrapolation.CLAMP,
+          ),
         },
       ],
     };
   });
 
-  const iconAnimatedStyle2 = useAnimatedStyle(() => {
+  const cancelIconAnimatedStyle = useAnimatedStyle(() => {
     return {
-      opacity:
-        currentSegment.value === -1
-          ? interpolate(
-              translateValue.value,
-              [0, 40],
-              [0.45, 1],
-              Extrapolation.CLAMP,
-            )
-          : currentSegment.value === 1
-          ? 1
-          : 0.45,
+      opacity: interpolate(
+        translateValue.value,
+        [40, 70],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
       transform: [
         {
-          scale:
-            currentSegment.value === -1
-              ? interpolate(
-                  translateValue.value,
-                  [0, 40],
-                  [0, 1],
-                  Extrapolation.CLAMP,
-                )
-              : currentSegment.value === 1
-              ? withSpring(1.3)
-              : 1,
+          translateX: interpolate(
+            translateValue.value,
+            [0, 80],
+            [-80, 0],
+            Extrapolation.CLAMP,
+          ),
         },
       ],
     };
   });
 
-  const iconAnimatedStyle3 = useAnimatedStyle(() => {
+  const refreshIconAnimatedStyle = useAnimatedStyle(() => {
     return {
-      opacity:
-        currentSegment.value === -1
-          ? interpolate(
-              translateValue.value,
-              [0, 40],
-              [0.45, 1],
-              Extrapolation.CLAMP,
-            )
-          : currentSegment.value === 2
-          ? 1
-          : 0.45,
+      opacity: interpolate(
+        translateValue.value,
+        [40, 70],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
       transform: [
         {
-          scale:
-            currentSegment.value === -1
-              ? interpolate(
-                  translateValue.value,
-                  [0, 40],
-                  [0, 1],
-                  Extrapolation.CLAMP,
-                )
-              : currentSegment.value === 2
-              ? withSpring(1.3)
-              : 1,
+          rotate: `${interpolate(
+            translateValue.value,
+            [0, 80],
+            [0, 180],
+            Extrapolation.CLAMP,
+          )}deg`,
         },
       ],
     };
   });
 
   return (
-    <SafeAreaView style={tailwind.style("flex-1 bg-white")}>
+    <View style={tailwind.style("flex-1 bg-white", `pt-[${top}px]`)}>
       <Animated.View style={tailwind.style("absolute inset-0")}>
         <Image
           style={tailwind.style("h-full w-full")}
-          source={require("../assets/background.jpg")}
+          source={require("../assets/radialbg.jpg")}
         />
       </Animated.View>
       <GestureDetector
         gesture={Gesture.Simultaneous(panGesture, scrollViewGesture)}
       >
-        <Animated.ScrollView scrollEventThrottle={16}>
+        <Animated.ScrollView
+          style={tailwind.style("overflow-visible")}
+          scrollEventThrottle={16}
+        >
           <Animated.View
             style={[
               tailwind.style("flex flex-row items-center justify-between px-3"),
@@ -325,14 +314,17 @@ export const PullToAction = () => {
               ]}
             />
             <Animated.View
-              style={[tailwind.style("flex-1 items-center"), iconAnimatedStyle]}
+              style={[
+                tailwind.style("flex-1 items-center"),
+                searchIconAnimatedStyle,
+              ]}
             >
               <SearchIcon />
             </Animated.View>
             <Animated.View
               style={[
                 tailwind.style("flex-1 items-center"),
-                iconAnimatedStyle2,
+                refreshIconAnimatedStyle,
               ]}
             >
               <RefreshIcon />
@@ -340,7 +332,7 @@ export const PullToAction = () => {
             <Animated.View
               style={[
                 tailwind.style("flex-1 items-center"),
-                iconAnimatedStyle3,
+                cancelIconAnimatedStyle,
               ]}
             >
               <CancelAction />
@@ -368,6 +360,6 @@ export const PullToAction = () => {
           </Animated.Text>
         </Animated.View>
       ) : null}
-    </SafeAreaView>
+    </View>
   );
 };
