@@ -68,14 +68,14 @@ const DEFAULT_SPRING_CONFIG: WithSpringConfig = {
 
 type PersonComponentProps = {
   person: PeopleObject;
-  setCurrentShareTarget: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedPerson: React.Dispatch<React.SetStateAction<string>>;
   currentTarget: SharedValue<number>;
   index: number;
 };
 
 const PersonComponent = ({
   person,
-  setCurrentShareTarget,
+  setSelectedPerson,
   currentTarget,
   index,
 }: PersonComponentProps) => {
@@ -106,7 +106,7 @@ const PersonComponent = ({
   });
 
   const handlePress = useCallback(() => {
-    setCurrentShareTarget(person.name);
+    setSelectedPerson(person.name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
@@ -147,7 +147,7 @@ export const SharedGestureConcept = () => {
   const upperBounds = -(people.length * SEGMENT_HEIGHT + 30);
   const { bottom } = useSafeAreaInsets();
   const [shareSheetOpen, setShareSheetOpen] = useState(false);
-  const [currentShareTarget, setCurrentShareTarget] = useState("");
+  const [currentShareTarget, setSelectedPerson] = useState("");
   const tapScale = useSharedValue(0);
   const enableSelection = useSharedValue(0);
   const selectedContainerTranslate = useSharedValue(0);
@@ -318,7 +318,7 @@ export const SharedGestureConcept = () => {
     .onEnd(event => {
       containerStretch.value = withSpring(0, DEFAULT_SPRING_CONFIG);
       if (currentTarget.value >= 0 && currentTarget.value < people.length) {
-        runOnJS(setCurrentShareTarget)(
+        runOnJS(setSelectedPerson)(
           // Reversing the array simplify the complication of mapping the diff factor to array index
           people.reverse()[currentTarget.value].name,
         );
@@ -399,13 +399,13 @@ export const SharedGestureConcept = () => {
   });
 
   useEffect(() => {
-    const resetCurrentShareTarget = setTimeout(() => {
-      setCurrentShareTarget("");
+    const resetSelectedPerson = setTimeout(() => {
+      setSelectedPerson("");
     }, 3000);
 
     // Clear the timeout if the component unmounts or if myState changes
     return () => {
-      clearTimeout(resetCurrentShareTarget);
+      clearTimeout(resetSelectedPerson);
     };
   }, [currentShareTarget]);
 
@@ -453,7 +453,7 @@ export const SharedGestureConcept = () => {
                   <PersonComponent
                     key={person.name}
                     person={person}
-                    setCurrentShareTarget={setCurrentShareTarget}
+                    setSelectedPerson={setSelectedPerson}
                     currentTarget={currentTarget}
                     index={index}
                   />
