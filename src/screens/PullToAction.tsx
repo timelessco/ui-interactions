@@ -114,7 +114,6 @@ export const PullToAction = () => {
     () => selectionActive.value,
     (next, _prev) => {
       if (next === 1) {
-        console.log("%c⧭", "color: #807160", "Activation");
         hapticActive && runOnJS(hapticActive)();
       }
     },
@@ -129,7 +128,6 @@ export const PullToAction = () => {
     () => currentSegment.value,
     (next, prev) => {
       if (prev !== next && prev !== -1 && next !== -1) {
-        console.log("%c⧭", "color: #807160", "Selection", next, prev);
         hapticSelection && runOnJS(hapticSelection)();
       }
     },
