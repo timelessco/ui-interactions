@@ -1,16 +1,23 @@
 import { useState } from "react";
-import { Dimensions, Image, Text, View } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { Dimensions, Image, Pressable, Text, View } from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  TextInput,
+} from "react-native-gesture-handler";
 import Animated, {
   Easing,
   Extrapolation,
   FadeInDown,
+  FadeOut,
   FadeOutDown,
+  FadeOutUp,
   interpolate,
   runOnJS,
   useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -29,7 +36,9 @@ const PADDING = 12;
 
 const ACTIONS = 3;
 
-const ACTIONS_LIST = ["Search", "Refresh", "Cancel"];
+type ACTION_TYPE = "Refresh" | "Search" | "Cancel";
+
+const ACTIONS_LIST: ACTION_TYPE[] = ["Refresh", "Search", "Cancel"];
 
 const SEGMENT_WIDTH = (SCREEN_WIDTH - PADDING * 2) / ACTIONS;
 
@@ -38,15 +47,57 @@ const getCurrentSegment = (gestureX: number) => {
   return Math.ceil(gestureX / ((SCREEN_WIDTH - PADDING * 2) / ACTIONS));
 };
 
-const SearchIcon = () => {
+type IconProps = {
+  size?: number;
+};
+
+const Clock = () => {
   return (
     <Svg
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth={1.5}
-      stroke="rgb(0, 0, 0)"
-      height={28}
-      width={28}
+      stroke="rgba(0, 0, 0, 0.7)"
+      height={24}
+      width={24}
+    >
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </Svg>
+  );
+};
+
+const ArrowRight = () => {
+  return (
+    <Svg
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="rgba(0, 0, 0, 0.7)"
+      height={24}
+      width={24}
+    >
+      <Path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+      />
+    </Svg>
+  );
+};
+
+const SearchIcon = ({ size = 28 }: IconProps) => {
+  return (
+    <Svg
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="rgba(0, 0, 0, 0.7)"
+      height={size}
+      width={size}
     >
       <Path
         strokeLinecap="round"
@@ -63,7 +114,7 @@ const RefreshIcon = () => {
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth={1.5}
-      stroke="rgb(0, 0, 0)"
+      stroke="rgba(0, 0, 0, 0.7)"
       height={28}
       width={28}
     >
@@ -99,13 +150,16 @@ export const PullToAction = () => {
   const translateValue = useSharedValue(0);
   const currentSegment = useSharedValue(-1);
   const translateX = useSharedValue(0);
+  const refreshRotationValue = useSharedValue(0);
 
   const startXDistance = useSharedValue(0);
 
   const selectionActive = useSharedValue(0);
 
   const { bottom, top } = useSafeAreaInsets();
-  const [currentShareTarget, setCurrentShareTarget] = useState("");
+  const [currentShareTarget, setCurrentShareTarget] = useState<
+    ACTION_TYPE | ""
+  >("");
 
   const hapticActive = useHaptic("medium");
   const hapticSelection = useHaptic();
@@ -119,9 +173,21 @@ export const PullToAction = () => {
     },
   );
 
-  const setAction = (action: string) => {
+  const setAction = (action: ACTION_TYPE) => {
     setCurrentShareTarget(action);
-    setTimeout(() => setCurrentShareTarget(""), 2000);
+    if (action !== "Search") {
+      if (action === "Refresh") {
+        refreshRotationValue.value = withRepeat(
+          withTiming(360, { duration: 1000, easing: Easing.linear }),
+          4,
+          false,
+        );
+      }
+      setTimeout(() => {
+        setCurrentShareTarget("");
+        refreshRotationValue.value = 0;
+      }, 3000);
+    }
   };
 
   useAnimatedReaction(
@@ -157,7 +223,7 @@ export const PullToAction = () => {
       }
 
       const segment = getCurrentSegment(event.x);
-      if (Math.abs(event.translationX) >= 50 && event.translationY >= 200) {
+      if (Math.abs(event.translationX) >= 50 && event.translationY >= 80) {
         if (segment - 1 < ACTIONS) {
           currentSegment.value = segment - 1;
           const calculatedTranslateValue =
@@ -218,7 +284,7 @@ export const PullToAction = () => {
     };
   });
 
-  const searchIconAnimatedStyle = useAnimatedStyle(() => {
+  const refreshIconAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(
         translateValue.value,
@@ -260,7 +326,7 @@ export const PullToAction = () => {
     };
   });
 
-  const refreshIconAnimatedStyle = useAnimatedStyle(() => {
+  const searchIconAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(
         translateValue.value,
@@ -273,17 +339,124 @@ export const PullToAction = () => {
           rotate: `${interpolate(
             translateValue.value,
             [0, 80],
-            [0, 180],
+            [-90, 0],
             Extrapolation.CLAMP,
           )}deg`,
+        },
+        {
+          scale: interpolate(
+            translateValue.value,
+            [0, 80],
+            [0.9, 1],
+            Extrapolation.CLAMP,
+          ),
         },
       ],
     };
   });
 
+  const refreshingStateStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${refreshRotationValue.value}deg` }],
+    };
+  });
+
   return (
     <View style={tailwind.style("flex-1 bg-white", `pt-[${top}px]`)}>
-      <Animated.View style={tailwind.style("absolute inset-0")}>
+      {currentShareTarget === "Search" ? (
+        <AnimatedBlurView
+          entering={FadeInDown}
+          exiting={FadeOut.duration(250)}
+          intensity={100}
+          style={[tailwind.style("absolute inset-0 z-10")]}
+        >
+          <Animated.View
+            entering={FadeInDown.springify().damping(18).stiffness(140)}
+            style={tailwind.style(
+              "bg-white py-2 mx-4 rounded-xl h-[310px]",
+              `mt-[${top}px]`,
+            )}
+          >
+            <Animated.View
+              style={tailwind.style("relative px-2 flex flex-row items-center")}
+            >
+              <Animated.View
+                style={tailwind.style(
+                  "absolute justify-center items-center h-9 pl-4 z-10",
+                )}
+              >
+                <SearchIcon size={20} />
+              </Animated.View>
+              <TextInput
+                returnKeyType="done"
+                onSubmitEditing={() => setCurrentShareTarget("")}
+                autoFocus
+                placeholder="Search"
+                placeholderTextColor={tailwind.color("bg-gray-800")}
+                style={tailwind.style(
+                  "bg-gray-300 py-[7px] px-2.5 text-base leading-5 rounded-lg flex-1 pl-8 h-9",
+                )}
+              />
+              <Pressable
+                onPress={() => {
+                  setCurrentShareTarget("");
+                }}
+              >
+                <Text style={tailwind.style("text-base pl-2 pr-2 text-black")}>
+                  Cancel
+                </Text>
+              </Pressable>
+            </Animated.View>
+            <Animated.View style={tailwind.style("px-4 pt-3")}>
+              <Text style={tailwind.style("text-sm uppercase text-gray-500")}>
+                Recent Search
+              </Text>
+              <Animated.View>
+                <Animated.View
+                  style={tailwind.style("flex flex-row items-center py-3")}
+                >
+                  <Clock />
+                  <Text style={tailwind.style("text-base text-gray-600 pl-4")}>
+                    Kevin
+                  </Text>
+                </Animated.View>
+                <Animated.View
+                  style={tailwind.style("flex flex-row items-center py-3")}
+                >
+                  <Clock />
+                  <Text style={tailwind.style("text-base text-gray-500 pl-4")}>
+                    Chris
+                  </Text>
+                </Animated.View>
+              </Animated.View>
+            </Animated.View>
+            <Animated.View style={tailwind.style("px-4 pt-3")}>
+              <Text style={tailwind.style("text-sm uppercase text-gray-500")}>
+                Navigation
+              </Text>
+              <Animated.View>
+                <Animated.View
+                  style={tailwind.style("flex flex-row items-center py-3")}
+                >
+                  <ArrowRight />
+                  <Text style={tailwind.style("text-base text-gray-600 pl-4")}>
+                    Go to Dashboard
+                  </Text>
+                </Animated.View>
+                <Animated.View
+                  style={tailwind.style("flex flex-row items-center py-3")}
+                >
+                  <ArrowRight />
+                  <Text style={tailwind.style("text-base text-gray-500 pl-4")}>
+                    Go to Settings
+                  </Text>
+                </Animated.View>
+              </Animated.View>
+            </Animated.View>
+          </Animated.View>
+        </AnimatedBlurView>
+      ) : null}
+      <Animated.View style={tailwind.style("absolute inset-0 z-0")}>
         <Image
           style={tailwind.style("h-full w-full")}
           source={require("../assets/radialbg.jpg")}
@@ -311,14 +484,7 @@ export const PullToAction = () => {
                 currentSegmentAnimatedStyle,
               ]}
             />
-            <Animated.View
-              style={[
-                tailwind.style("flex-1 items-center"),
-                searchIconAnimatedStyle,
-              ]}
-            >
-              <SearchIcon />
-            </Animated.View>
+
             <Animated.View
               style={[
                 tailwind.style("flex-1 items-center"),
@@ -330,15 +496,37 @@ export const PullToAction = () => {
             <Animated.View
               style={[
                 tailwind.style("flex-1 items-center"),
+                searchIconAnimatedStyle,
+              ]}
+            >
+              <SearchIcon />
+            </Animated.View>
+            <Animated.View
+              style={[
+                tailwind.style("flex-1 items-center"),
                 cancelIconAnimatedStyle,
               ]}
             >
               <CancelAction />
             </Animated.View>
           </Animated.View>
-          <Text style={tailwind.style("text-3xl font-bold px-4")}>
-            Settings
-          </Text>
+          {currentShareTarget === "Refresh" ? (
+            <Animated.View
+              style={[
+                tailwind.style("absolute w-full justify-center items-center"),
+                refreshingStateStyle,
+              ]}
+              entering={FadeInDown}
+              exiting={FadeOutUp.duration(500)}
+            >
+              <RefreshIcon />
+            </Animated.View>
+          ) : null}
+          <Animated.View>
+            <Text style={tailwind.style("text-3xl font-bold px-4")}>
+              Contacts
+            </Text>
+          </Animated.View>
         </Animated.ScrollView>
       </GestureDetector>
       {currentShareTarget !== "" ? (
