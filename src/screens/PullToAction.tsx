@@ -542,6 +542,10 @@ export const PullToAction = () => {
           exiting={FadeOut}
           style={[tailwind.style("absolute inset-0 z-10")]}
         >
+          <AnimatedBlurView
+            style={tailwind.style("absolute inset-0")}
+            intensity={100}
+          />
           <Pressable
             style={[tailwind.style("absolute inset-0 z-20")]}
             onPress={() => setCurrentShareTarget("")}
