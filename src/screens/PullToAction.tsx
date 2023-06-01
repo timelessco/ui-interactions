@@ -11,7 +11,6 @@ import Animated, {
   FadeInDown,
   FadeOut,
   FadeOutDown,
-  FadeOutUp,
   interpolate,
   runOnJS,
   useAnimatedReaction,
@@ -41,6 +40,7 @@ type ACTION_TYPE = "Refresh" | "Search" | "Cancel";
 const ACTIONS_LIST: ACTION_TYPE[] = ["Refresh", "Search", "Cancel"];
 
 const SEGMENT_WIDTH = (SCREEN_WIDTH - PADDING * 2) / ACTIONS;
+const REFRESH_TRANSLATE = (SCREEN_WIDTH - 24) / 2 - 122 / 2;
 
 const getCurrentSegment = (gestureX: number) => {
   "worklet";
@@ -148,6 +148,8 @@ const CancelAction = () => {
 
 export const PullToAction = () => {
   const translateValue = useSharedValue(0);
+  const refreshTranslateValue = useSharedValue(0);
+
   const currentSegment = useSharedValue(-1);
   const translateX = useSharedValue(0);
   const refreshRotationValue = useSharedValue(0);
@@ -184,7 +186,18 @@ export const PullToAction = () => {
         );
       }
       setTimeout(() => {
-        setCurrentShareTarget("");
+        refreshTranslateValue.value = withTiming(
+          0,
+          {
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+          },
+          finished => {
+            if (finished) {
+              runOnJS(setCurrentShareTarget)("");
+            }
+          },
+        );
         refreshRotationValue.value = 0;
       }, 3000);
     }
@@ -210,6 +223,8 @@ export const PullToAction = () => {
     })
     .onChange(event => {
       translateValue.value = event.translationY > 0 ? event.translationY : 0;
+      refreshTranslateValue.value = translateValue.value;
+
       const activatePullToAction = interpolate(
         translateValue.value,
         [0, 80],
@@ -244,19 +259,34 @@ export const PullToAction = () => {
       if (selectionActive.value) {
         runOnJS(setAction)(ACTIONS_LIST[currentSegment.value]);
       }
+      if (ACTIONS_LIST[currentSegment.value] === "Refresh") {
+        refreshTranslateValue.value = withTiming(80, {
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+        });
+      } else {
+        refreshTranslateValue.value = withTiming(0, {
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+        });
+      }
       currentSegment.value = -1;
       selectionActive.value = 0;
       translateValue.value = withTiming(0, {
-        duration: 300,
-        easing: Easing.inOut(Easing.ease),
+        duration: 350,
+        easing: Easing.linear,
       });
-    });
+    })
+    .enabled(currentShareTarget === "");
 
   const scrollViewGesture = Gesture.Native();
 
   const animatedViewStyle = useAnimatedStyle(() => {
     return {
-      height: translateValue.value,
+      height:
+        currentShareTarget === "Refresh"
+          ? refreshTranslateValue.value
+          : translateValue.value,
     };
   });
 
@@ -287,20 +317,27 @@ export const PullToAction = () => {
   const refreshIconAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: interpolate(
-        translateValue.value,
+        refreshTranslateValue.value,
         [40, 70],
         [0, 1],
         Extrapolation.CLAMP,
       ),
       transform: [
         {
-          translateX: interpolate(
-            translateValue.value,
-            [0, 80],
-            [80, 0],
-            Extrapolation.CLAMP,
-          ),
+          translateX:
+            currentShareTarget === "Refresh"
+              ? withTiming(REFRESH_TRANSLATE, {
+                  duration: 300,
+                  easing: Easing.linear,
+                })
+              : interpolate(
+                  refreshTranslateValue.value,
+                  [0, 80],
+                  [80, 0],
+                  Extrapolation.CLAMP,
+                ),
         },
+        { rotate: `${refreshRotationValue.value}deg` },
       ],
     };
   });
@@ -339,7 +376,7 @@ export const PullToAction = () => {
           rotate: `${interpolate(
             translateValue.value,
             [0, 80],
-            [-90, 0],
+            [-30, 0],
             Extrapolation.CLAMP,
           )}deg`,
         },
@@ -355,25 +392,30 @@ export const PullToAction = () => {
     };
   });
 
-  const refreshingStateStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ rotate: `${refreshRotationValue.value}deg` }],
-    };
-  });
-
   return (
     <View style={tailwind.style("flex-1 bg-white", `pt-[${top}px]`)}>
+      <Animated.View style={tailwind.style("absolute inset-0 z-0")}>
+        <Image
+          style={tailwind.style("h-full w-full")}
+          source={require("../assets/pull-action-bg.jpg")}
+        />
+      </Animated.View>
       {currentShareTarget === "Search" ? (
         <AnimatedBlurView
           entering={FadeInDown}
-          exiting={FadeOut.duration(250)}
+          exiting={FadeOut}
           intensity={100}
           style={[tailwind.style("absolute inset-0 z-10")]}
         >
+          <Pressable
+            style={[tailwind.style("absolute inset-0 z-10")]}
+            onPress={() => setCurrentShareTarget("")}
+          />
           <Animated.View
             entering={FadeInDown.springify().damping(18).stiffness(140)}
+            exiting={FadeOutDown.springify().damping(18).stiffness(140)}
             style={tailwind.style(
-              "bg-white py-2 mx-4 rounded-xl h-[310px]",
+              "bg-white py-2 mx-4 rounded-xl h-[310px] z-20",
               `mt-[${top}px]`,
             )}
           >
@@ -394,7 +436,7 @@ export const PullToAction = () => {
                 placeholder="Search"
                 placeholderTextColor={tailwind.color("bg-gray-800")}
                 style={tailwind.style(
-                  "bg-gray-300 py-[7px] px-2.5 text-base leading-5 rounded-lg flex-1 pl-8 h-9",
+                  "bg-gray-100 py-[7px] px-2.5 text-base leading-5 rounded-lg flex-1 pl-8 h-9",
                 )}
               />
               <Pressable
@@ -456,17 +498,11 @@ export const PullToAction = () => {
           </Animated.View>
         </AnimatedBlurView>
       ) : null}
-      <Animated.View style={tailwind.style("absolute inset-0 z-0")}>
-        <Image
-          style={tailwind.style("h-full w-full")}
-          source={require("../assets/radialbg.jpg")}
-        />
-      </Animated.View>
       <GestureDetector
         gesture={Gesture.Simultaneous(panGesture, scrollViewGesture)}
       >
         <Animated.ScrollView
-          style={tailwind.style("overflow-visible")}
+          style={tailwind.style("flex-1 overflow-visible")}
           scrollEventThrottle={16}
         >
           <Animated.View
@@ -510,19 +546,7 @@ export const PullToAction = () => {
               <CancelAction />
             </Animated.View>
           </Animated.View>
-          {currentShareTarget === "Refresh" ? (
-            <Animated.View
-              style={[
-                tailwind.style("absolute w-full justify-center items-center"),
-                refreshingStateStyle,
-              ]}
-              entering={FadeInDown}
-              exiting={FadeOutUp.duration(500)}
-            >
-              <RefreshIcon />
-            </Animated.View>
-          ) : null}
-          <Animated.View>
+          <Animated.View style={tailwind.style("")}>
             <Text style={tailwind.style("text-3xl font-bold px-4")}>
               Contacts
             </Text>
