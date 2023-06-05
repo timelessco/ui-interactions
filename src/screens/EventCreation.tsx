@@ -126,15 +126,46 @@ const timeline = [
 ];
 
 const week = ["S", "M", "T", "W", "T", "F", "S"];
-const days = [
-  "2023-10-23",
-  "2023-10-24",
-  "2023-10-25",
-  "2023-10-26",
-  "2023-10-27",
-  "2023-10-28",
-  "2023-10-29",
-];
+
+// ChatGPT Generated Functions
+function getCurrentWeekDates() {
+  const currentDate = new Date(); // Get the current date
+  const currentDay = currentDate.getDay(); // Get the current day of the week (0 - Sunday, 1 - Monday, ..., 6 - Saturday)
+
+  // Calculate the start and end dates of the current week
+  const startDate = new Date(currentDate);
+  startDate.setDate(currentDate.getDate() - currentDay); // Subtract current day of the week to get the start date (Sunday)
+
+  const endDate = new Date(currentDate);
+  endDate.setDate(startDate.getDate() + 6); // Add 6 days to the start date to get the end date (Saturday)
+
+  // Create an array to store the dates
+  const weekDates = [];
+
+  // Loop from the start date to the end date and add each formatted date to the array
+  for (
+    let date = startDate;
+    date <= endDate;
+    date.setDate(date.getDate() + 1)
+  ) {
+    const formattedDate = date.toISOString().slice(0, 10); // Format the date as "YYYY-MM-DD"
+    weekDates.push(formattedDate);
+  }
+
+  return weekDates;
+}
+
+// ChatGPT Generated Functions
+function getFormattedTodayDate() {
+  const today = new Date(); // Get the current date
+
+  const year = today.getFullYear(); // Get the year (YYYY)
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // Get the month (MM) and pad with leading zero if needed
+  const day = String(today.getDate()).padStart(2, "0"); // Get the day (DD) and pad with leading zero if needed
+
+  return `${year}-${month}-${day}`; // Return the formatted date
+}
+const days = getCurrentWeekDates();
 
 const SEGMENT_HEIGHT = 72;
 const SEGMENT_WIDTH = Dimensions.get("screen").width - (16 + 16 + 44);
@@ -328,7 +359,7 @@ const EventComponent = (props: EventComponentProps) => {
 
 export const EventCreation = () => {
   const hapticSelection = useHaptic();
-  const [selectedDate, setSelectedDate] = useState(days[2]);
+  const [selectedDate, setSelectedDate] = useState(getFormattedTodayDate());
   const eventStore = useEventStore();
   const [currentEvent, setCurrentEvent] = useState<CalendarEvent | null>(null);
   const [startTime, setStartTime] = useState("");
@@ -345,8 +376,8 @@ export const EventCreation = () => {
   const marginTop = useSharedValue(0);
   const textScale = useSharedValue(0);
   const selectionHeight = useSharedValue(INIT_POINTER_HEIGHT);
-  const movingSegmentBackground = useSharedValue<ColorComboType>(
-    COLORS_COMBO.blue,
+  const movingSegmentBackgroundColor = useSharedValue<string>(
+    COLORS_COMBO.blue.bg,
   );
 
   const inputRef = useRef<TextInput>(null);
@@ -383,18 +414,19 @@ export const EventCreation = () => {
     },
   );
 
-  const getRandomColor = (): ColorComboType => {
-    "worklet";
-    const colors = Object.values(COLORS_COMBO);
-    const randomIndex = Math.floor(Math.random() * colors.length);
-    return colors[randomIndex];
-  };
-
   const panGesture = Gesture.Pan()
+    .maxPointers(1)
     .shouldCancelWhenOutside(true)
     .activateAfterLongPress(400)
     .onBegin(() => {
-      movingSegmentBackground.value = getRandomColor();
+      const getRandomColor = (): ColorComboType => {
+        "worklet";
+        const colors = Object.values(COLORS_COMBO);
+        const randomIndex = Math.floor(Math.random() * colors.length);
+        return colors[randomIndex];
+      };
+      const randomColor = getRandomColor();
+      movingSegmentBackgroundColor.value = randomColor.bg;
     })
     .onStart(event => {
       if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * MINS_MULTIPLIER) {
@@ -457,10 +489,22 @@ export const EventCreation = () => {
     })
     .onEnd(event => {
       runOnJS(setGestureState)(event.state);
+      const getObjectByColor = (color: string): ColorComboType | undefined => {
+        const colorKeys = Object.keys(COLORS_COMBO) as COLORS[];
+        const foundColor = colorKeys.find(
+          key => COLORS_COMBO[key].bg === color,
+        );
+        if (foundColor) {
+          return COLORS_COMBO[foundColor];
+        }
+        return undefined;
+      };
       if (currentEvent === null) {
         runOnJS(setCurrentEvent)({
           id: new Date().getTime(),
-          color: movingSegmentBackground.value,
+          color:
+            getObjectByColor(movingSegmentBackgroundColor.value) ||
+            COLORS_COMBO.blue,
           date: selectedDate,
           startTime,
           endTime,
@@ -477,7 +521,7 @@ export const EventCreation = () => {
           endTime,
         });
       }
-      movingSegmentBackground.value = COLORS_COMBO.blue;
+      movingSegmentBackgroundColor.value = COLORS_COMBO.blue.bg;
       hapticSelection && runOnJS(hapticSelection)();
       panActive.value = 0;
       selectionHeight.value = INIT_POINTER_HEIGHT;
@@ -490,7 +534,7 @@ export const EventCreation = () => {
 
   const movingSegmentStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: movingSegmentBackground.value?.bg,
+      backgroundColor: movingSegmentBackgroundColor.value,
       top: startPoint.value + 2,
       height: withSpring(selectionHeight.value - 4, {
         mass: 1,
@@ -500,7 +544,7 @@ export const EventCreation = () => {
       opacity: interpolate(
         panActive.value,
         [0, 1],
-        [0, 1],
+        [1, 1],
         Extrapolation.CLAMP,
       ),
       borderRadius: interpolate(
@@ -522,7 +566,7 @@ export const EventCreation = () => {
       }),
       zIndex: 99999,
     };
-  }, [movingSegmentBackground.value]);
+  }, []);
 
   const textContainerStyle = useAnimatedStyle(() => {
     return {
@@ -632,10 +676,10 @@ export const EventCreation = () => {
   );
 
   return (
-    <SafeAreaView style={tailwind.style("flex-1 bg-white pb-5")}>
+    <SafeAreaView style={tailwind.style("flex-1 bg-white pb-10")}>
       <StatusBar barStyle={"dark-content"} />
       <View style={tailwind.style("px-4")}>
-        <Animated.View style={[tailwind.style("flex-row items-center")]}>
+        <Animated.View style={[tailwind.style("flex-row items-center pt-2.5")]}>
           <Text style={tailwind.style("text-3xl font-bold text-black")}>
             Today
           </Text>
