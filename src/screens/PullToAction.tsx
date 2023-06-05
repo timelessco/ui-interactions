@@ -38,7 +38,6 @@ import { useHaptic } from "../utils/useHaptic";
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 const SCREEN_WIDTH = Dimensions.get("screen").width;
-const SCREEN_HEIGHT = Dimensions.get("screen").height;
 
 const PADDING = 12;
 
@@ -313,6 +312,10 @@ export const PullToAction = () => {
 
   const setAction = (action: ACTION_TYPE) => {
     setCurrentShareTarget(action);
+    if (action === "Cancel") {
+      runOnJS(setCurrentShareTarget)("");
+      return;
+    }
     if (action !== "Search") {
       if (action === "Refresh") {
         refreshRotationValue.value = withRepeat(
@@ -533,11 +536,12 @@ export const PullToAction = () => {
       <Animated.View style={tailwind.style("absolute inset-0 z-0")}>
         <Image
           style={tailwind.style("h-full w-full")}
-          source={require("../assets/pull-action-bg.jpg")}
+          source={require("../assets/pull-action-bg-2.jpg")}
         />
       </Animated.View>
       {currentShareTarget === "Search" ? (
-        <Animated.View
+        <AnimatedBlurView
+          intensity={10}
           entering={FadeIn}
           exiting={FadeOut}
           style={[tailwind.style("absolute inset-0 z-10")]}
@@ -569,18 +573,15 @@ export const PullToAction = () => {
                 <SearchIcon />
               </Animated.View>
               <TextInput
-                returnKeyType="done"
+                autoFocus
+                returnKeyType="go"
                 onSubmitEditing={() => setCurrentShareTarget("")}
                 placeholder="Search"
                 placeholderTextColor={"#707070"}
                 style={[styles.textInputStyle]}
               />
             </Animated.View>
-            <Animated.ScrollView
-              contentContainerStyle={tailwind.style(
-                `h-[${SCREEN_HEIGHT / 2}px] pb-10`,
-              )}
-            >
+            <Animated.ScrollView>
               <Animated.View style={tailwind.style("mt-3 mx-1.5")}>
                 <Text
                   style={tailwind.style(
@@ -600,7 +601,9 @@ export const PullToAction = () => {
                       >
                         {value.icon}
                         <Text
-                          style={tailwind.style("px-2 text-lg text-[#171717]")}
+                          style={tailwind.style(
+                            "px-2 text-[16px] text-[#171717]",
+                          )}
                         >
                           {value.title}
                         </Text>
@@ -643,7 +646,7 @@ export const PullToAction = () => {
                           </Animated.View>
                           <Text
                             style={tailwind.style(
-                              "px-2 text-lg text-[#171717]",
+                              "px-2 text-[16px] text-[#171717]",
                             )}
                           >
                             {value.name}
@@ -668,7 +671,7 @@ export const PullToAction = () => {
               </Animated.View>
             </Animated.ScrollView>
           </Animated.View>
-        </Animated.View>
+        </AnimatedBlurView>
       ) : null}
       <GestureDetector
         gesture={Gesture.Simultaneous(panGesture, scrollViewGesture)}
@@ -718,8 +721,8 @@ export const PullToAction = () => {
             </Animated.View>
           </Animated.View>
           <Animated.View style={tailwind.style("")}>
-            <Text style={tailwind.style("text-3xl font-bold px-4")}>
-              Discussions
+            <Text style={tailwind.style("text-3xl font-bold px-5 pt-[18px]")}>
+              Discussion
             </Text>
           </Animated.View>
         </Animated.ScrollView>
