@@ -9,7 +9,8 @@
     "resizeMode": "cover"
   },
   "android": {
-    "package": "com.timelessco.uiinteractions"
+    "package": "com.timelessco.uiinteractions",
+    "jsEngine": "hermes"
   },
   "ios": {
     "bundleIdentifier": "com.timelessco.uiinteractions"
