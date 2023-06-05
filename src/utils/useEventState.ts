@@ -17,12 +17,12 @@ export type COLORS =
 
 const COLORS_COMBO: Record<COLORS, ColorComboType> = {
   purple: { bg: "#8B32FC", text: "#ffffff" },
-  pink: { bg: "#FF5391", text: "#ffffff" },
+  plum: { bg: "#00ACEB", text: "#ffffff" },
   blue: { bg: "#315EFD", text: "#ffffff" },
+  pink: { bg: "#FF5391", text: "#ffffff" },
   green: { bg: "#30a46c", text: "#ffffff" },
   black: { bg: "#000000", text: "#ffffff" },
   red: { bg: "#e5484d", text: "#ffffff" },
-  plum: { bg: "#00ACEB", text: "#ffffff" },
   orange: { bg: "#FF5C28", text: "#ffffff" },
 };
 
