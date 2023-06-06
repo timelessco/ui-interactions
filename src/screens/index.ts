@@ -3,6 +3,7 @@ export * from "./AllocationSlider";
 export * from "./DynamicTabBar";
 export * from "./EventCreation";
 export * from "./HorizontalDialInteraction";
+export * from "./ImageLightBox";
 export * from "./ImageUpload";
 export * from "./InputPasswordCheck";
 export * from "./MenuInteraction";

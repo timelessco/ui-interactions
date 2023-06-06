@@ -26,6 +26,7 @@ import {
   DynamicTabBar,
   EventCreation,
   HorizontalDialInteraction,
+  ImageLightBox,
   ImageUpload,
   InputPasswordCheck,
   MenuInteraction,
@@ -71,6 +72,7 @@ export type UIInteractionParamList = {
   "Allocation Slider": undefined;
   "Portfolio Health Card": undefined;
   "Radial Menu": undefined;
+  "Light Box": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -120,6 +122,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Light Box",
+    component: ImageLightBox,
+  },
   {
     name: "Pull To Action",
     component: PullToAction,
@@ -270,6 +276,7 @@ const App = () => {
             />
             <Stack.Screen name="Radial Menu" component={RadialMenu} />
             <Stack.Screen name="Pull To Action" component={PullToAction} />
+            <Stack.Screen name="Light Box" component={ImageLightBox} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
