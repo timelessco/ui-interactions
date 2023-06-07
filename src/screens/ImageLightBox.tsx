@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Dimensions, Pressable } from "react-native";
-import Animated from "react-native-reanimated";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MasonryFlashList } from "@shopify/flash-list";
 import { BlurView } from "expo-blur";
@@ -86,6 +91,34 @@ const PhotoCell = ({ item, index, setActiveImage }: PhotoCellProps) => {
 
 export const ImageLightBox = () => {
   const [activeImage, setActiveImage] = useState(-1);
+
+  const translationX = useSharedValue(0);
+  const translationY = useSharedValue(0);
+  const gesture = Gesture.Pan()
+    .onChange(event => {
+      translationX.value = withSpring(event.translationX, {
+        damping: 24,
+        stiffness: 240,
+      });
+      translationY.value = withSpring(event.translationY, {
+        damping: 24,
+        stiffness: 240,
+      });
+    })
+    .onEnd(() => {
+      translationX.value = withSpring(0, { damping: 24, stiffness: 240 });
+      translationY.value = withSpring(0, { damping: 24, stiffness: 240 });
+    });
+
+  const animatedImageStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translationX.value },
+        { translateY: translationY.value },
+      ],
+    };
+  });
+
   const imageData = useMemo(() => {
     return photosList[activeImage];
   }, [activeImage]);
@@ -114,19 +147,21 @@ export const ImageLightBox = () => {
             style={[tailwind.style("absolute inset-0 z-10")]}
             onPress={() => setActiveImage(-1)}
           />
-          <Animated.View style={tailwind.style("z-20")}>
-            <Animated.View
-              style={[
-                tailwind.style(`w-[${WIDTH - 32}px]`),
-                { aspectRatio: imageData.ar },
-              ]}
-            >
-              <Animated.Image
-                style={tailwind.style("h-full w-full rounded-xl bg-gray-300")}
-                source={{ uri: imageData.image }}
-              />
+          <GestureDetector gesture={gesture}>
+            <Animated.View style={[tailwind.style("z-20"), animatedImageStyle]}>
+              <Animated.View
+                style={[
+                  tailwind.style(`w-[${WIDTH - 32}px]`),
+                  { aspectRatio: imageData.ar },
+                ]}
+              >
+                <Animated.Image
+                  style={tailwind.style("h-full w-full rounded-xl bg-gray-300")}
+                  source={{ uri: imageData.image }}
+                />
+              </Animated.View>
             </Animated.View>
-          </Animated.View>
+          </GestureDetector>
         </AnimatedBlurView>
       ) : null}
     </SafeAreaView>
