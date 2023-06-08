@@ -29,6 +29,7 @@ import {
   ImageLightBox,
   ImageUpload,
   InputPasswordCheck,
+  LinkPreviewLookup,
   MenuInteraction,
   PhotoCollection,
   PortfolioHealthCard,
@@ -73,6 +74,7 @@ export type UIInteractionParamList = {
   "Portfolio Health Card": undefined;
   "Radial Menu": undefined;
   "Light Box": undefined;
+  "LinkPreview Lookup": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -125,6 +127,10 @@ const rootStackScreens: screenType[] = [
   {
     name: "Light Box",
     component: ImageLightBox,
+  },
+  {
+    name: "LinkPreview Lookup",
+    component: LinkPreviewLookup,
   },
   {
     name: "Pull To Action",
@@ -277,6 +283,10 @@ const App = () => {
             <Stack.Screen name="Radial Menu" component={RadialMenu} />
             <Stack.Screen name="Pull To Action" component={PullToAction} />
             <Stack.Screen name="Light Box" component={ImageLightBox} />
+            <Stack.Screen
+              name="LinkPreview Lookup"
+              component={LinkPreviewLookup}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
