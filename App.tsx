@@ -23,6 +23,7 @@ import { ChevronRight } from "./src/icons/ChevronRight";
 import {
   AlignInteraction1,
   AllocationSlider,
+  AssetAllocation,
   DynamicTabBar,
   EventCreation,
   HorizontalDialInteraction,
@@ -75,6 +76,7 @@ export type UIInteractionParamList = {
   "Radial Menu": undefined;
   "Light Box": undefined;
   "LinkPreview Lookup": undefined;
+  "Asset Allocation": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -125,6 +127,10 @@ type screenType = {
 
 const rootStackScreens: screenType[] = [
   {
+    name: "Asset Allocation",
+    component: AssetAllocation,
+  },
+  {
     name: "Light Box",
     component: ImageLightBox,
   },
@@ -140,10 +146,7 @@ const rootStackScreens: screenType[] = [
     name: "Allocation Slider",
     component: AllocationSlider,
   },
-  {
-    name: "Portfolio Health Card",
-    component: PortfolioHealthCard,
-  },
+
   {
     name: "Radial Menu",
     component: RadialMenu,
@@ -216,6 +219,10 @@ const rootStackScreens: screenType[] = [
     name: "Vault Interaction",
     component: VaultInteraction,
   },
+  {
+    name: "Portfolio Health Card",
+    component: PortfolioHealthCard,
+  },
 ];
 
 const App = () => {
@@ -287,6 +294,7 @@ const App = () => {
               name="LinkPreview Lookup"
               component={LinkPreviewLookup}
             />
+            <Stack.Screen name="Asset Allocation" component={AssetAllocation} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
