@@ -48,6 +48,7 @@ type ACTION_TYPE = "Refresh" | "Search" | "Cancel";
 const ACTIONS_LIST: ACTION_TYPE[] = ["Refresh", "Search", "Cancel"];
 
 const SEGMENT_WIDTH = (SCREEN_WIDTH - PADDING * 2) / ACTIONS;
+// The translation applied to Refresh Icon to move to the center of the screen
 const REFRESH_TRANSLATE = (SCREEN_WIDTH - 24) / 2 - 122 / 2;
 
 const getCurrentSegment = (gestureX: number) => {
@@ -156,6 +157,8 @@ type ActionsListType = {
   icon: JSX.Element;
   title: string;
 };
+
+// Actions under the search command
 const actionsList: ActionsListType[] = [
   {
     icon: <Calendar />,
@@ -394,11 +397,14 @@ export const PullToAction = () => {
         }
       }
     })
-    .onEnd(() => {
+    .onEnd(event => {
       if (selectionActive.value) {
         runOnJS(setAction)(ACTIONS_LIST[currentSegment.value]);
       }
-      if (ACTIONS_LIST[currentSegment.value] === "Refresh") {
+      if (
+        ACTIONS_LIST[currentSegment.value] === "Refresh" &&
+        event.translationY >= 80
+      ) {
         refreshTranslateValue.value = withTiming(80, {
           duration: 300,
           easing: Easing.inOut(Easing.ease),
