@@ -39,7 +39,7 @@ const DoubleSideArrow = () => {
 
 function roundToNearestPart(value: number, overallValue: number) {
   "worklet";
-  var partSize = overallValue / 4;
+  var partSize = overallValue / 3;
   var nearestPart = Math.round(value / partSize) * partSize;
 
   // Adjust the nearest part if value is closer to the next part
@@ -59,18 +59,19 @@ export const AssetAllocation = () => {
 
   const debt = useSharedValue(0);
   const equity = useSharedValue(0);
+  const gold = useSharedValue(0);
 
   const equityAssetStyle = useAnimatedStyle(() => {
     return {
       width: interpolate(
         equity.value,
-        [25, 50, 100],
+        [33, 66, 100],
         [CIRCLE_WIDTH * 0.15, CIRCLE_WIDTH * 0.4, CIRCLE_WIDTH * 0.65],
         Extrapolation.CLAMP,
       ),
       height: interpolate(
         equity.value,
-        [25, 50, 100],
+        [33, 66, 100],
         [CIRCLE_WIDTH * 0.15, CIRCLE_WIDTH * 0.4, CIRCLE_WIDTH * 0.65],
         Extrapolation.CLAMP,
       ),
@@ -80,7 +81,7 @@ export const AssetAllocation = () => {
   const equityShare = useDerivedValue(() => {
     return interpolate(
       equity.value,
-      [0, 25, 50, 100],
+      [0, 33, 66, 100],
       [0, 15, 40, 65],
       Extrapolation.CLAMP,
     );
@@ -94,24 +95,24 @@ export const AssetAllocation = () => {
   const goldAssetStyle = useAnimatedStyle(() => {
     return {
       width: interpolate(
-        equity.value,
-        [25, 50, 100],
+        gold.value,
+        [33, 66, 100],
         [CIRCLE_WIDTH * 0.15, CIRCLE_WIDTH * 0.3, CIRCLE_WIDTH * 0.15],
         Extrapolation.CLAMP,
       ),
       height: interpolate(
-        equity.value,
-        [25, 50, 100],
+        gold.value,
+        [33, 66, 100],
         [CIRCLE_WIDTH * 0.15, CIRCLE_WIDTH * 0.3, CIRCLE_WIDTH * 0.15],
         Extrapolation.CLAMP,
       ),
-      opacity: interpolate(equity.value, [20, 25], [0, 1], Extrapolation.CLAMP),
+      opacity: interpolate(gold.value, [20, 25], [0, 1], Extrapolation.CLAMP),
     };
   });
   const goldShare = useDerivedValue(() => {
     return interpolate(
-      equity.value,
-      [0, 25, 50, 100],
+      gold.value,
+      [0, 33, 66, 100],
       [0, 15, 30, 15],
       Extrapolation.CLAMP,
     );
@@ -126,7 +127,7 @@ export const AssetAllocation = () => {
     return {
       width: interpolate(
         debt.value,
-        [0, 25, 50, 100],
+        [0, 33, 66, 100],
         [
           CIRCLE_WIDTH,
           CIRCLE_WIDTH * 0.7,
@@ -137,7 +138,7 @@ export const AssetAllocation = () => {
       ),
       height: interpolate(
         debt.value,
-        [0, 25, 50, 100],
+        [0, 33, 66, 100],
         [
           CIRCLE_WIDTH,
           CIRCLE_WIDTH * 0.7,
@@ -151,7 +152,7 @@ export const AssetAllocation = () => {
   const debtShare = useDerivedValue(() => {
     return interpolate(
       debt.value,
-      [0, 25, 50, 100],
+      [0, 33, 66, 100],
       [100, 70, 30, 20],
       Extrapolation.CLAMP,
     );
@@ -191,6 +192,10 @@ export const AssetAllocation = () => {
         damping: 20,
         stiffness: 180,
       });
+      gold.value = withSpring(draggingWRT100, {
+        damping: 20,
+        stiffness: 180,
+      });
     })
     .onFinalize(() => {
       const nearestPart = roundToNearestPart(
@@ -203,11 +208,15 @@ export const AssetAllocation = () => {
         mass: 1,
       });
       markerPosition.value = nearestPart;
-      const draggingWRT100 = Math.round(
+      const draggingWRT100 = Math.floor(
         (nearestPart / sliderWidth.value) * 100,
       );
       debt.value = withSpring(draggingWRT100, { damping: 20, stiffness: 180 });
       equity.value = withSpring(draggingWRT100, {
+        damping: 20,
+        stiffness: 180,
+      });
+      gold.value = withSpring(draggingWRT100, {
         damping: 20,
         stiffness: 180,
       });
