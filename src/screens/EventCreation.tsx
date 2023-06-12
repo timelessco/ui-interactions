@@ -92,11 +92,6 @@ const LocationIcon = () => {
   );
 };
 
-type TimeSegementRenderProps = {
-  item: string;
-  index: number;
-};
-
 const timeline = [
   "12 AM",
   "1 AM",
@@ -282,6 +277,11 @@ const getSectionMeasurements = (startTime: string, endTime: string) => {
   };
 };
 
+type TimeSegementRenderProps = {
+  item: string;
+  index: number;
+};
+
 const TimeSegmentRender = memo((props: TimeSegementRenderProps) => {
   const { item, index } = props;
   return (
@@ -309,6 +309,7 @@ const TimeSegmentRender = memo((props: TimeSegementRenderProps) => {
     </Animated.View>
   );
 });
+
 type EventComponentProps = {
   event: CalendarEvent;
 };
@@ -446,10 +447,10 @@ export const EventCreation = () => {
     })
     .onChange(event => {
       /*
-       ** Checking if the event.y is less than or equal to 0 or greater than or equal to 1440.
+       ** Checking if the event.y is less than or equal to 0 or greater than or equal to (24 * SEGMENT_HEIGHT).
        ** If it is, it will not perform any gesture related changes.
        */
-      if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * 60) {
+      if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * 24) {
         return;
       }
       runOnJS(setGestureState)(event.state);
