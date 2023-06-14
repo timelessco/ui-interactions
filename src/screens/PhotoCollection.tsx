@@ -95,7 +95,7 @@ const getActiveIndex = (
     }
   }
   if (value < 0) {
-    if (activeIndex !== maxValue) {
+    if (activeIndex !== maxValue - 1) {
       newActiveIndex++;
     }
   }
