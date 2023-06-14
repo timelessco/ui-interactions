@@ -30,9 +30,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ClipPath, Defs, G, Path, Rect, Svg } from "react-native-svg";
+import { StackScreenProps } from "@react-navigation/stack";
 import { BlurView } from "expo-blur";
 import tailwind from "twrnc";
 
+import { UIInteractionParamList } from "../../App";
 import { useHaptic } from "../utils/useHaptic";
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
@@ -284,7 +286,12 @@ const CancelAction = () => {
   );
 };
 
-export const PullToAction = () => {
+type PullToActionProps = StackScreenProps<
+  UIInteractionParamList,
+  "Pull To Action"
+>;
+
+export const PullToAction = (props: PullToActionProps) => {
   const translateValue = useSharedValue(0);
   const refreshTranslateValue = useSharedValue(0);
 
@@ -317,6 +324,7 @@ export const PullToAction = () => {
     setCurrentShareTarget(action);
     if (action === "Cancel") {
       runOnJS(setCurrentShareTarget)("");
+      props.navigation.pop();
       return;
     }
     if (action !== "Search") {
