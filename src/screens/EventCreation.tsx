@@ -430,19 +430,21 @@ export const EventCreation = () => {
       movingSegmentBackgroundColor.value = randomColor.bg;
     })
     .onStart(event => {
-      if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * MINS_MULTIPLIER) {
+      if (event.y <= 0 || event.y >= SEGMENT_HEIGHT * 24) {
         return;
       }
       runOnJS(setGestureState)(event.state);
       panActive.value = withSpring(1);
+
       const panStartPos = event.y;
       const nearestTimePos =
         Math.floor(panStartPos / MINS_MULTIPLIER) * MINS_MULTIPLIER;
 
       startPoint.value = nearestTimePos;
-      currentPoint.value = startPoint.value;
       startIndex.value = startPoint.value;
       endIndex.value = startPoint.value + INIT_POINTER_HEIGHT;
+      currentPoint.value = startPoint.value;
+      // Haptics
       hapticSelection && runOnJS(hapticSelection)();
     })
     .onChange(event => {
@@ -545,7 +547,7 @@ export const EventCreation = () => {
       opacity: interpolate(
         panActive.value,
         [0, 1],
-        [1, 1],
+        [0, 1],
         Extrapolation.CLAMP,
       ),
       borderRadius: interpolate(
