@@ -24,6 +24,7 @@ import {
   AlignInteraction1,
   AllocationSlider,
   AssetAllocation,
+  CalendarAgenda,
   DynamicTabBar,
   EventCreation,
   HorizontalDialInteraction,
@@ -77,6 +78,7 @@ export type UIInteractionParamList = {
   "Light Box": undefined;
   "LinkPreview Lookup": undefined;
   "Asset Allocation": undefined;
+  "Calendar Agenda": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -126,6 +128,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Calendar Agenda",
+    component: CalendarAgenda,
+  },
   {
     name: "Asset Allocation",
     component: AssetAllocation,
@@ -295,6 +301,7 @@ const App = () => {
               component={LinkPreviewLookup}
             />
             <Stack.Screen name="Asset Allocation" component={AssetAllocation} />
+            <Stack.Screen name="Calendar Agenda" component={CalendarAgenda} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
