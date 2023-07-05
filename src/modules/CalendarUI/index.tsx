@@ -27,6 +27,11 @@ const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 
 const week = ["S", "M", "T", "W", "T", "F", "S"];
 
+function previousMultipleOfSeven(value: number) {
+  var previousMultiple = Math.floor(value / 7) * 7;
+  return previousMultiple;
+}
+
 const CalendarDay = (props: any) => {
   const { selectedDate } = props;
   const [isSelected, setIsSelectedState] = useState(
@@ -49,11 +54,14 @@ const CalendarDay = (props: any) => {
     selectedDate.value = props.data.item;
   }, [props.data.item, selectedDate]);
 
+  const previousLowestValue = previousMultipleOfSeven(SCREEN_WIDTH);
+  const padding = SCREEN_WIDTH - previousLowestValue + 14;
+
   return (
     <Pressable
       style={tailwind.style(
         "flex-row items-center justify-center",
-        `w-[${SCREEN_WIDTH / 7}px] h-9`,
+        `w-[${Math.floor((SCREEN_WIDTH - padding) / 7)}px] h-9`,
       )}
       onPress={handleDayPress}
     >
@@ -87,7 +95,6 @@ type WeekStripProps = {
 const WeekStrip = (props: WeekStripProps) => {
   const aref = useRef<FlashList<string>>(null);
   const { selectedDate } = props;
-
   const pages = calculateDates(
     DEFAULT_PROPS.FIRST_DAY,
     DEFAULT_PROPS.MIN_DATE,
@@ -136,18 +143,18 @@ const WeekStrip = (props: WeekStripProps) => {
     },
   );
 
+  const previousLowestValue = previousMultipleOfSeven(SCREEN_WIDTH);
+  const padding = SCREEN_WIDTH - previousLowestValue + 14;
+
   return (
     <View style={tailwind.style("border-b border-[#EEEEEE] pb-4")}>
-      <View
-        style={tailwind.style(
-          "flex flex-row items-center justify-around pt-10",
-        )}
-      >
+      <View style={tailwind.style("flex flex-row justify-center pb-1.5")}>
         {week.map((day, index) => {
           return (
             <View
               style={tailwind.style(
-                "flex flex-row items-center justify-center",
+                "flex items-center justify-center",
+                `w-[${(SCREEN_WIDTH - padding) / 7}px]`,
               )}
               key={day + index}
             >
@@ -162,18 +169,18 @@ const WeekStrip = (props: WeekStripProps) => {
           );
         })}
       </View>
-      <Animated.View style={tailwind.style("h-9", `w-[${SCREEN_WIDTH}px]`)}>
+      <Animated.View style={tailwind.style("h-9", `px-[${padding / 2}px]`)}>
         <AnimatedFlashList
           // @ts-ignore
           ref={aref}
           data={pages.day.data}
           initialScrollIndex={pages.day.index - dayjs().day()}
           horizontal
-          showsHorizontalScrollIndicator={false}
           pagingEnabled
+          showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
-          estimatedItemSize={SCREEN_WIDTH / 7}
-          estimatedListSize={{ width: SCREEN_WIDTH, height: 36 }}
+          estimatedItemSize={(SCREEN_WIDTH - padding) / 7}
+          estimatedListSize={{ width: SCREEN_WIDTH - padding, height: 36 }}
           renderItem={value => {
             return <CalendarDay data={value} selectedDate={selectedDate} />;
           }}
@@ -216,6 +223,8 @@ type CalendarAgendaProps = {
 const CalendarAgenda = (props: CalendarAgendaProps) => {
   const aref = useRef<FlashList<string>>(null);
   const { selectedDate } = props;
+  const [isManualScrolling, setIsManualScrolling] = useState(false);
+  const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
 
   const pages = calculateDates(
     DEFAULT_PROPS.FIRST_DAY,
@@ -234,40 +243,61 @@ const CalendarAgenda = (props: CalendarAgendaProps) => {
     return convertedDates;
   }
 
-  // const manualScroll = (newSelectedDate: string) => {
-  //   let newIndex = transformedDatesList.filter(
-  //     value => value.date === newSelectedDate,
-  //   )[0].index;
-  //   aref.current?.scrollToOffset({
-  //     offset: newIndex * SECTION_HEADER_HEIGHT,
-  //     animated: false,
-  //   });
-  // };
-
-  // useAnimatedReaction(
-  //   () => selectedDate.value,
-  //   (next, _prev) => {
-  //     runOnJS(manualScroll)(next);
-  //   },
-  // );
-
   const transformedDatesList = transformDates(pages.day.data) as ListItemType[];
+
+  // This is the code which triggers the two way linking [Scroll Blocking Required]
+  const manualScroll = (newSelectedDate: string) => {
+    if (!isManualScrolling) {
+      let newOffset = transformedDatesList.filter(
+        value => value.date === newSelectedDate,
+      )[0].offsetY;
+      setIsManualScrolling(true);
+      aref.current?.scrollToOffset({
+        offset: newOffset,
+        animated: false,
+      });
+      setTimeout(() => {
+        setIsManualScrolling(false);
+      }, 300);
+    }
+  };
+
+  useAnimatedReaction(
+    () => selectedDate.value,
+    (next, prev) => {
+      if (next !== prev) {
+        if (!isManualScrolling && !isDateSetOnScroll) {
+          runOnJS(manualScroll)(next);
+        }
+      }
+    },
+  );
+
   const _onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset } = event.nativeEvent;
-    scroll.value = contentOffset.y;
-    const closestScrollIndex = Math.round(scroll.value / 40) * 40;
-    selectedDate.value = pages.day.data[closestScrollIndex / 40];
+    if (!isManualScrolling) {
+      const { contentOffset } = event.nativeEvent;
+      scroll.value = contentOffset.y;
+      const closestScrollIndex = Math.round(scroll.value / 40) * 40;
+      selectedDate.value = pages.day.data[closestScrollIndex / 40];
+      setIsDateSetOnScroll(true);
+    }
   };
 
   const _onMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset } = event.nativeEvent;
-    scroll.value = contentOffset.y;
-    const closestScrollIndex = Math.round(scroll.value / 40) * 40;
+    if (!isManualScrolling) {
+      const { contentOffset } = event.nativeEvent;
+      scroll.value = contentOffset.y;
+      const closestScrollIndex = Math.round(scroll.value / 40) * 40;
+      aref.current?.scrollToOffset({
+        offset: closestScrollIndex,
+        animated: true,
+      });
+      setIsDateSetOnScroll(false);
+    }
+  };
 
-    aref.current?.scrollToOffset({
-      offset: closestScrollIndex,
-      animated: true,
-    });
+  const _onScrollAnimationEnd = () => {
+    setIsDateSetOnScroll(false);
   };
 
   return (
@@ -277,6 +307,7 @@ const CalendarAgenda = (props: CalendarAgendaProps) => {
         ref={aref}
         onScroll={_onScroll}
         onMomentumScrollEnd={_onMomentumEnd}
+        onScrollAnimationEnd={_onScrollAnimationEnd}
         data={transformedDatesList}
         initialScrollIndex={pages.day.index}
         estimatedItemSize={40}
@@ -294,6 +325,13 @@ export const CalendarUI = () => {
 
   return (
     <View style={tailwind.style("flex-1")}>
+      <Animated.View
+        style={[tailwind.style("flex-row items-center py-2.5 px-4")]}
+      >
+        <Text style={tailwind.style("text-3xl font-bold text-black")}>
+          Calendar
+        </Text>
+      </Animated.View>
       <WeekStrip {...{ selectedDate }} />
       <CalendarAgenda {...{ selectedDate }} />
     </View>
