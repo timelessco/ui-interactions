@@ -32,6 +32,7 @@ import {
   ImageUpload,
   InputPasswordCheck,
   LinkPreviewLookup,
+  MapsScreen,
   MenuInteraction,
   PhotoCollection,
   PortfolioHealthCard,
@@ -79,6 +80,7 @@ export type UIInteractionParamList = {
   "LinkPreview Lookup": undefined;
   "Asset Allocation": undefined;
   "Calendar Agenda": undefined;
+  "Maps Screen": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -128,6 +130,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Maps Screen",
+    component: MapsScreen,
+  },
   {
     name: "Calendar Agenda",
     component: CalendarAgenda,
@@ -302,6 +308,7 @@ const App = () => {
             />
             <Stack.Screen name="Asset Allocation" component={AssetAllocation} />
             <Stack.Screen name="Calendar Agenda" component={CalendarAgenda} />
+            <Stack.Screen name="Maps Screen" component={MapsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
