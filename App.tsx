@@ -27,6 +27,7 @@ import {
   CalendarAgenda,
   DynamicTabBar,
   EventCreation,
+  GalleryCarousel,
   HorizontalDialInteraction,
   ImageLightBox,
   ImageUpload,
@@ -81,6 +82,7 @@ export type UIInteractionParamList = {
   "Asset Allocation": undefined;
   "Calendar Agenda": undefined;
   "Maps Screen": undefined;
+  "Gallery Carousel": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -130,6 +132,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Gallery Carousel",
+    component: GalleryCarousel,
+  },
   {
     name: "Maps Screen",
     component: MapsScreen,
@@ -309,6 +315,7 @@ const App = () => {
             <Stack.Screen name="Asset Allocation" component={AssetAllocation} />
             <Stack.Screen name="Calendar Agenda" component={CalendarAgenda} />
             <Stack.Screen name="Maps Screen" component={MapsScreen} />
+            <Stack.Screen name="Gallery Carousel" component={GalleryCarousel} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

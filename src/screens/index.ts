@@ -4,6 +4,7 @@ export * from "./AssetAllocation";
 export * from "./CalendarAgenda";
 export * from "./DynamicTabBar";
 export * from "./EventCreation";
+export * from "./GalleryCarousel";
 export * from "./HorizontalDialInteraction";
 export * from "./ImageLightBox";
 export * from "./ImageUpload";
