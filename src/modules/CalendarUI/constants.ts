@@ -39,3 +39,7 @@ export const DEFAULT_PROPS = {
 export const COLUMNS = { week: 7, threeDays: 3, workWeek: 5, day: 1 };
 
 export const SECONDS_IN_DAY = 86400;
+
+export const week = ["S", "M", "T", "W", "T", "F", "S"];
+
+export const SECTION_HEADER_HEIGHT = 40;

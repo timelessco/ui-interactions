@@ -459,3 +459,8 @@ export const roundTo = (hour: number, step: number, type: "up" | "down") => {
   const nextMinutes = Math.floor(totalMinutes / step) * step;
   return nextMinutes / 60;
 };
+
+export const previousMultipleOfSeven = (value: number) => {
+  var previousMultiple = Math.floor(value / 7) * 7;
+  return previousMultiple;
+};
