@@ -187,7 +187,7 @@ const CustomBackground: React.FC<BottomSheetBackgroundProps> = () => {
     <AnimatedBlurView
       intensity={100}
       tint={"light"}
-      style={tailwind.style("absolute inset-0 rounded-t-lg")}
+      style={tailwind.style("absolute inset-0 rounded-t-xl overflow-hidden")}
     />
   );
 };
@@ -203,7 +203,7 @@ const CustomBackdrop: React.FC<BottomSheetBackgroundProps> = ({
   return (
     <AnimatedBlurView
       animatedProps={animatedProps}
-      style={tailwind.style("absolute inset-0 rounded-t-lg")}
+      style={tailwind.style("absolute inset-0")}
     />
   );
 };
@@ -230,7 +230,7 @@ export const MapsScreen = () => {
         snapPoints={snapPoints}
         backgroundComponent={CustomBackground}
         backdropComponent={CustomBackdrop}
-        handleStyle={tailwind.style("rounded-t-xl overflow-hidden")}
+        handleStyle={tailwind.style("overflow-hidden")}
       >
         <BottomSheetScrollView
           showsVerticalScrollIndicator={false}
