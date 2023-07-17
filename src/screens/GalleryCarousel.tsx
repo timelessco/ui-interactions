@@ -1,6 +1,8 @@
-import { Image } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { Dimensions, Image, Pressable } from "react-native";
 import Animated, {
   interpolate,
+  runOnJS,
   SharedValue,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -9,7 +11,10 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
 
+import { ArrowLeft, ArrowRight } from "../icons";
+
 const CARD_WIDTH = 300;
+const SCREEN_WIDTH = Dimensions.get("screen").width;
 
 const carouselItems = [
   {
@@ -48,15 +53,23 @@ type GalleryCarouselItemProps = {
   item: (typeof carouselItems)[0];
   index: number;
   scrollXOffset: SharedValue<number>;
+  handleCarouselItemPress: (scrollOffset: number) => void;
+  scrollViewWidth: number;
 };
 
 const GalleryCarouselItem = (props: GalleryCarouselItemProps) => {
-  const { item, index, scrollXOffset } = props;
+  const {
+    item,
+    index,
+    scrollXOffset,
+    handleCarouselItemPress,
+    scrollViewWidth,
+  } = props;
   const inputRange = [
     (index - 1) * CARD_WIDTH,
-    // The number is pre-calculated, could not figure a mathematical to arrive at the number,
-    // The value is the scrollOffset which is not the CARD_WIDTH * no. of items
-    index === carouselItems.length - 1 ? 1439 : index * CARD_WIDTH,
+    index === carouselItems.length - 1
+      ? scrollViewWidth - SCREEN_WIDTH
+      : index * CARD_WIDTH,
     (index + 1) * CARD_WIDTH,
   ];
 
@@ -84,35 +97,107 @@ const GalleryCarouselItem = (props: GalleryCarouselItemProps) => {
       ],
     };
   });
-
+  const handlePress = useCallback(() => {
+    handleCarouselItemPress(inputRange[1]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
-    <Animated.View
-      key={item.image}
-      style={[
-        tailwind.style(`w-[${CARD_WIDTH}px]`, "h-[430px]"),
-        animatedStyle,
-      ]}
-    >
-      <Image
-        source={{ uri: item.image }}
-        style={[tailwind.style("h-full w-full rounded-xl")]}
-      />
-    </Animated.View>
+    <Pressable onPress={handlePress}>
+      <Animated.View
+        key={item.image}
+        style={[
+          tailwind.style(`w-[${CARD_WIDTH}px]`, "h-[430px]"),
+          animatedStyle,
+        ]}
+      >
+        <Image
+          source={{ uri: item.image }}
+          style={[tailwind.style("h-full w-full rounded-xl")]}
+        />
+      </Animated.View>
+    </Pressable>
   );
 };
 
 export const GalleryCarousel = () => {
   const scrollXOffset = useSharedValue(0);
+  const [isFirstCard, setIsFirstCard] = useState(scrollXOffset.value === 0);
+  const [isLastCard, setIsLastCard] = useState(false);
+  const [scrollViewWidth, setScrollViewWidth] = useState(0);
+
+  const scrollRef = useRef<Animated.ScrollView>(null);
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
       scrollXOffset.value = event.contentOffset.x;
     },
+    onMomentumEnd: event => {
+      const scrollOffset = event.contentOffset.x;
+      if (scrollOffset === 0) {
+        runOnJS(setIsFirstCard)(true);
+      } else {
+        runOnJS(setIsFirstCard)(false);
+      }
+      if (scrollOffset === scrollViewWidth - SCREEN_WIDTH) {
+        runOnJS(setIsLastCard)(true);
+      } else {
+        runOnJS(setIsLastCard)(false);
+      }
+    },
   });
+
+  const findNextNearestMultiple = (
+    targetNumber: number,
+    multiple: number,
+  ): number => {
+    const quotient = Math.ceil((targetNumber + 1) / multiple);
+    const nextNearestMultiple = multiple * quotient;
+    return nextNearestMultiple;
+  };
+
+  const findPreviousMultiple = (
+    targetNumber: number,
+    multiple: number,
+  ): number => {
+    const quotient = Math.floor((targetNumber - 1) / multiple);
+    const previousMultiple = multiple * quotient;
+    return previousMultiple;
+  };
+
+  const goToNext = () => {
+    if (scrollXOffset.value < scrollViewWidth - SCREEN_WIDTH) {
+      const nextMultiple = findNextNearestMultiple(
+        scrollXOffset.value,
+        CARD_WIDTH,
+      );
+
+      scrollRef.current?.scrollTo({ x: nextMultiple, animated: true });
+    }
+  };
+
+  const goToPrevious = () => {
+    if (scrollXOffset.value !== 0) {
+      const nextMultiple = findPreviousMultiple(
+        scrollXOffset.value,
+        CARD_WIDTH,
+      );
+
+      scrollRef.current?.scrollTo({ x: nextMultiple, animated: true });
+    }
+  };
+
+  const handleCarouselItemPress = (scrollOffset: number) => {
+    scrollRef.current?.scrollTo({ x: scrollOffset, animated: true });
+  };
+
+  const handleContentSizeChange = (width: number, _height: number) => {
+    setScrollViewWidth(width);
+  };
 
   return (
     <SafeAreaView style={tailwind.style("flex-1 justify-center bg-white")}>
       <Animated.View style={tailwind.style("overflow-visible")}>
         <Animated.ScrollView
+          ref={scrollRef}
           horizontal
           onScroll={scrollHandler}
           showsHorizontalScrollIndicator={false}
@@ -121,14 +206,55 @@ export const GalleryCarousel = () => {
           decelerationRate={0}
           style={tailwind.style("overflow-visible")}
           contentContainerStyle={tailwind.style("overflow-visible pl-4 pr-4")}
+          onContentSizeChange={handleContentSizeChange}
         >
           {carouselItems.map((item, index) => (
             <GalleryCarouselItem
               key={index}
-              {...{ item, index, scrollXOffset }}
+              {...{
+                item,
+                index,
+                scrollXOffset,
+                handleCarouselItemPress,
+                scrollViewWidth,
+              }}
             />
           ))}
         </Animated.ScrollView>
+        <Animated.View style={tailwind.style("px-4 flex flex-row pt-5")}>
+          <Pressable
+            disabled={isFirstCard}
+            onPress={goToPrevious}
+            style={({ pressed }) =>
+              tailwind.style(
+                pressed ? "bg-gray-100 rounded-xl" : "",
+                "mr-2 p-2",
+              )
+            }
+          >
+            <Animated.View style={tailwind.style("")}>
+              <ArrowLeft
+                stroke={isFirstCard ? tailwind.color("bg-gray-400") : "black"}
+              />
+            </Animated.View>
+          </Pressable>
+          <Pressable
+            disabled={isLastCard}
+            onPress={goToNext}
+            style={({ pressed }) =>
+              tailwind.style(
+                pressed ? "bg-gray-100 rounded-xl" : "",
+                "mr-2 p-2",
+              )
+            }
+          >
+            <Animated.View style={tailwind.style("")}>
+              <ArrowRight
+                stroke={isLastCard ? tailwind.color("bg-gray-400") : "black"}
+              />
+            </Animated.View>
+          </Pressable>
+        </Animated.View>
       </Animated.View>
     </SafeAreaView>
   );
