@@ -36,7 +36,7 @@
     "@react-native-community/masked-view": "^0.1.11",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/stack": "^6.3.16",
-    "@shopify/flash-list": "1.4.0",
+    "@shopify/flash-list": "1.5.0",
     "@shopify/react-native-skia": "0.1.172",
     "@types/lodash": "^4.14.195",
     "dayjs": "^1.11.7",
