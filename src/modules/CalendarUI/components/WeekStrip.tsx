@@ -104,7 +104,7 @@ export const WeekStrip = (props: WeekStripProps) => {
     let prevIndex = transformedDatesList.filter(
       value => value.date === startDateOfPrevSelectedWeek.format("YYYY-MM-DD"),
     )[0].index;
-
+    // If the date is present in the same week, we don't do a manual scroll
     if (newIndex !== prevIndex) {
       aref.current?.scrollToIndex({
         index: newIndex - 1,
@@ -179,7 +179,6 @@ export const WeekStrip = (props: WeekStripProps) => {
               />
             );
           }}
-          extraData={selectedDate.value}
         />
       </Animated.View>
     </View>
