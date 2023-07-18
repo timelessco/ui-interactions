@@ -1,13 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Text,
-  View,
-} from "react-native";
+import { Text, View } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedReaction,
+  useAnimatedScrollHandler,
   useSharedValue,
 } from "react-native-reanimated";
 import { FlashList } from "@shopify/flash-list";
@@ -75,19 +71,17 @@ export const CAgenda = (props: CalendarAgendaProps) => {
 
   // This is the code which triggers the two way linking [Scroll Blocking Required]
   const manualScroll = (newSelectedDate: string) => {
-    if (!isManualScrolling) {
-      let newOffset = transformedDatesList.filter(
-        value => value.date === newSelectedDate,
-      )[0].offsetY;
-      setIsManualScrolling(true);
-      aref.current?.scrollToIndex({
-        index: newOffset / LIST_ITEM_HEIGHT,
-        animated: true,
-      });
-      setTimeout(() => {
-        setIsManualScrolling(false);
-      }, 1000);
-    }
+    let newOffset = transformedDatesList.filter(
+      value => value.date === newSelectedDate,
+    )[0].offsetY;
+    setIsManualScrolling(true);
+    aref.current?.scrollToIndex({
+      index: newOffset / LIST_ITEM_HEIGHT,
+      animated: false,
+    });
+    setTimeout(() => {
+      setIsManualScrolling(false);
+    }, 500);
   };
 
   useAnimatedReaction(
@@ -106,56 +100,60 @@ export const CAgenda = (props: CalendarAgendaProps) => {
     },
   );
 
-  const _onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!isManualScrolling) {
-      const { contentOffset } = event.nativeEvent;
-      scroll.value = contentOffset.y;
-      const closestScrollIndex =
-        Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
-      selectedDate.value =
-        pages.day.data[closestScrollIndex / LIST_ITEM_HEIGHT];
-      setIsDateSetOnScroll(true);
-    }
-  };
-
-  const _onMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!isManualScrolling) {
-      setIsDateSetOnScroll(false);
-      const { contentOffset } = event.nativeEvent;
-      scroll.value = contentOffset.y;
-      const closestScrollIndex =
-        Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
-      aref.current?.scrollToOffset({
-        offset: closestScrollIndex,
-        animated: true,
-      });
-    }
-  };
-
-  const _onMomentumScrollBegin = () => {
-    setIsDateSetOnScroll(true);
-  };
-  const _onScrollAnimationEnd = () => {
-    setIsDateSetOnScroll(false);
-  };
-
   const handleOnLayout = () => {
     setTimeout(() => {
       setIsManualScrolling(false);
+      setIsDateSetOnScroll(false);
     }, 300);
   };
+
+  const findClosestScrollIndex = () => {
+    const closestScrollIndex =
+      Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
+    aref.current?.scrollToOffset({
+      offset: closestScrollIndex,
+      animated: true,
+    });
+  };
+
+  const changeDateOnScroll = () => {
+    const closestScrollIndex =
+      Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
+    selectedDate.value = pages.day.data[closestScrollIndex / LIST_ITEM_HEIGHT];
+  };
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onBeginDrag: () => runOnJS(setIsDateSetOnScroll)(true),
+    onScroll: event => {
+      if (!isManualScrolling) {
+        const { contentOffset } = event;
+        scroll.value = contentOffset.y;
+        runOnJS(changeDateOnScroll)();
+        runOnJS(setIsDateSetOnScroll)(true);
+      }
+    },
+    onMomentumEnd: event => {
+      if (!isManualScrolling) {
+        runOnJS(setIsDateSetOnScroll)(false);
+        const { contentOffset } = event;
+        scroll.value = contentOffset.y;
+        runOnJS(findClosestScrollIndex)();
+      }
+    },
+  });
 
   return (
     <Animated.View style={tailwind.style("flex-1", `w-[${SCREEN_WIDTH}px]`)}>
       <AnimatedFlashList
         // @ts-ignore
         ref={aref}
+        onScroll={scrollHandler}
         onLayout={handleOnLayout}
-        onScroll={_onScroll}
-        onMomentumScrollBegin={_onMomentumScrollBegin}
-        onMomentumScrollEnd={_onMomentumEnd}
-        onScrollEndDrag={_onScrollAnimationEnd}
-        onScrollAnimationEnd={_onScrollAnimationEnd}
+        // onScroll={_onScroll}
+        // onMomentumScrollBegin={_onMomentumScrollBegin}
+        // onMomentumScrollEnd={_onMomentumEnd}
+        // onScrollEndDrag={_onScrollAnimationEnd}
+        // onScrollAnimationEnd={_onScrollAnimationEnd}
         data={transformedDatesList}
         initialScrollIndex={pages.day.index}
         estimatedItemSize={LIST_ITEM_HEIGHT}
