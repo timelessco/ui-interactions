@@ -10,6 +10,7 @@ import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import tailwind from "twrnc";
 
+import { useHaptic } from "../../../utils/useHaptic";
 import {
   DEFAULT_PROPS,
   SCREEN_WIDTH,
@@ -45,6 +46,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
   const { selectedDate } = props;
   const [isManualScrolling, setIsManualScrolling] = useState(true);
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
+  const hapticSelection = useHaptic("heavy");
 
   const pages = calculateDates(
     DEFAULT_PROPS.FIRST_DAY,
@@ -90,6 +92,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       // Check if prev is null preventing a manual scroll on initial render
       if (prev) {
         if (next !== prev) {
+          hapticSelection && runOnJS(hapticSelection)();
           // Checking the case where date is changing but its not from the scrolling
           // and it is not manual scrolling because the date changed in week strip
           if (!isDateSetOnScroll && !isManualScrolling) {
