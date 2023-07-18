@@ -135,7 +135,8 @@ export const GalleryCarousel = () => {
       });
     },
     onMomentumEnd: event => {
-      const scrollOffset = withSpring(event.contentOffset.x, {
+      const scrollOffset = event.contentOffset.x;
+      scrollXOffset.value = withSpring(event.contentOffset.x, {
         damping: 18,
         stiffness: 120,
       });
