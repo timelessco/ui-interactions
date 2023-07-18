@@ -7,6 +7,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tailwind from "twrnc";
@@ -128,10 +129,16 @@ export const GalleryCarousel = () => {
   const scrollRef = useRef<Animated.ScrollView>(null);
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
-      scrollXOffset.value = event.contentOffset.x;
+      scrollXOffset.value = withSpring(event.contentOffset.x, {
+        damping: 18,
+        stiffness: 120,
+      });
     },
     onMomentumEnd: event => {
-      const scrollOffset = event.contentOffset.x;
+      const scrollOffset = withSpring(event.contentOffset.x, {
+        damping: 18,
+        stiffness: 120,
+      });
       if (scrollOffset === 0) {
         runOnJS(setIsFirstCard)(true);
       } else {
