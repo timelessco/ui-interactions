@@ -28,6 +28,8 @@ import { calculateDates } from "../utils";
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 
+const LIST_ITEM_HEIGHT = 40;
+
 const CalendarListItem = ({ item }: CalendarListItemProps) => {
   return (
     <View
@@ -79,12 +81,12 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       )[0].offsetY;
       setIsManualScrolling(true);
       aref.current?.scrollToIndex({
-        index: newOffset / 40,
-        animated: false,
+        index: newOffset / LIST_ITEM_HEIGHT,
+        animated: true,
       });
       setTimeout(() => {
         setIsManualScrolling(false);
-      }, 300);
+      }, 1000);
     }
   };
 
@@ -108,8 +110,10 @@ export const CAgenda = (props: CalendarAgendaProps) => {
     if (!isManualScrolling) {
       const { contentOffset } = event.nativeEvent;
       scroll.value = contentOffset.y;
-      const closestScrollIndex = Math.round(scroll.value / 40) * 40;
-      selectedDate.value = pages.day.data[closestScrollIndex / 40];
+      const closestScrollIndex =
+        Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
+      selectedDate.value =
+        pages.day.data[closestScrollIndex / LIST_ITEM_HEIGHT];
       setIsDateSetOnScroll(true);
     }
   };
@@ -119,7 +123,8 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       setIsDateSetOnScroll(false);
       const { contentOffset } = event.nativeEvent;
       scroll.value = contentOffset.y;
-      const closestScrollIndex = Math.round(scroll.value / 40) * 40;
+      const closestScrollIndex =
+        Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
       aref.current?.scrollToOffset({
         offset: closestScrollIndex,
         animated: true,
@@ -139,6 +144,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       setIsManualScrolling(false);
     }, 300);
   };
+
   return (
     <Animated.View style={tailwind.style("flex-1", `w-[${SCREEN_WIDTH}px]`)}>
       <AnimatedFlashList
@@ -152,12 +158,11 @@ export const CAgenda = (props: CalendarAgendaProps) => {
         onScrollAnimationEnd={_onScrollAnimationEnd}
         data={transformedDatesList}
         initialScrollIndex={pages.day.index}
-        estimatedItemSize={40}
+        estimatedItemSize={LIST_ITEM_HEIGHT}
         scrollEventThrottle={16}
         renderItem={({ item, index }) => (
           <CalendarListItem index={index} item={item as ListItemType} />
         )}
-        extraData={selectedDate.value}
       />
     </Animated.View>
   );
