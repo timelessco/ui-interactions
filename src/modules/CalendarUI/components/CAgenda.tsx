@@ -28,6 +28,10 @@ export const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 
 const LIST_ITEM_HEIGHT = 60;
 
+var isToday = require("dayjs/plugin/isToday");
+
+dayjs.extend(isToday);
+
 const CalendarListItem = React.memo(
   ({ calendarItem }: CalendarListItemProps) => {
     return (
@@ -37,8 +41,14 @@ const CalendarListItem = React.memo(
           `h-[${SECTION_HEADER_HEIGHT}px]`,
         )}
       >
-        <Text style={tailwind.style("font-semibold text-base")}>
+        <Text
+          style={tailwind.style(
+            calendarItem.hasItems ? "font-bold" : "font-normal",
+            "text-base",
+          )}
+        >
           {dayjs(calendarItem.date).format("MMM DD")} ・{" "}
+          {dayjs(calendarItem.date).isSame(dayjs()) ? "Today" : ""}
           {dayjs(calendarItem.date).format("dddd")}
         </Text>
       </View>
@@ -75,6 +85,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
             index,
             offsetY: index * SECTION_HEADER_HEIGHT + currentOffset,
             type: "HeaderItem",
+            hasItems: dateItems.length > 0,
           },
           ...dateItems,
         ];
@@ -239,7 +250,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
                 `h-[${LIST_ITEM_HEIGHT}px]`,
               )}
             >
-              <Text style={tailwind.style("text-base font-medium text-black")}>
+              <Text style={tailwind.style("text-lg font-medium text-black")}>
                 {item.title}
               </Text>
               <Text style={tailwind.style("text-sm text-gray-600")}>

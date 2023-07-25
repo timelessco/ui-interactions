@@ -9,6 +9,7 @@ export type ListItemType = {
   index: number;
   offsetY: number;
   type: "HeaderItem";
+  hasItems: boolean;
 };
 
 export type CalendarListItemProps = {
