@@ -8,10 +8,11 @@ export type ListItemType = {
   date: string;
   index: number;
   offsetY: number;
+  type: "HeaderItem";
 };
 
 export type CalendarListItemProps = {
-  item: ListItemType;
+  calendarItem: ListItemType;
   index: number;
 };
 

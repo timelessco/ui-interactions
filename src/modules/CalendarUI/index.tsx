@@ -1,14 +1,16 @@
 import { Text, View } from "react-native";
-import Animated, { useSharedValue } from "react-native-reanimated";
-import dayjs from "dayjs";
+import Animated, { SharedValue } from "react-native-reanimated";
 import tailwind from "twrnc";
 
-import { CAgenda } from "./components/CalendarAgenda";
+import { CAgenda } from "./components/CAgenda";
 import { WeekStrip } from "./components/WeekStrip";
 
-export const CalendarUI = () => {
-  const selectedDate = useSharedValue(dayjs().format("YYYY-MM-DD"));
+type CalendarUIProps = {
+  selectedDate: SharedValue<string>;
+};
 
+export const CalendarUI = (props: CalendarUIProps) => {
+  const { selectedDate } = props;
   return (
     <View style={tailwind.style("flex-1")}>
       <Animated.View
