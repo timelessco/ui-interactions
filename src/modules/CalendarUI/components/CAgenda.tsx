@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import Animated, {
   runOnJS,
@@ -26,22 +26,25 @@ import { calculateDates } from "../utils";
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 
-const LIST_ITEM_HEIGHT = 40;
+const LIST_ITEM_HEIGHT = 60;
 
-const CalendarListItem = ({ calendarItem }: CalendarListItemProps) => {
-  return (
-    <View
-      style={tailwind.style(
-        "w-full h-10 border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white",
-      )}
-    >
-      <Text style={tailwind.style("font-semibold text-base")}>
-        {dayjs(calendarItem.date).format("MMM DD")} ・{" "}
-        {dayjs(calendarItem.date).format("dddd")}
-      </Text>
-    </View>
-  );
-};
+const CalendarListItem = React.memo(
+  ({ calendarItem }: CalendarListItemProps) => {
+    return (
+      <View
+        style={tailwind.style(
+          "w-full border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white",
+          `h-[${SECTION_HEADER_HEIGHT}px]`,
+        )}
+      >
+        <Text style={tailwind.style("font-semibold text-base")}>
+          {dayjs(calendarItem.date).format("MMM DD")} ・{" "}
+          {dayjs(calendarItem.date).format("dddd")}
+        </Text>
+      </View>
+    );
+  },
+);
 
 export const CAgenda = (props: CalendarAgendaProps) => {
   const aref = useRef<FlashList<string>>(null);
@@ -156,7 +159,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
 
   const changeDateOnScroll = () => {
     const closestScrollIndex =
-      Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
+      Math.floor(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
     const scrollIndex = closestScrollIndex / LIST_ITEM_HEIGHT;
     selectedDate.value = transformedDatesList[scrollIndex].date;
   };
@@ -171,9 +174,6 @@ export const CAgenda = (props: CalendarAgendaProps) => {
         runOnJS(setIsDateSetOnScroll)(true);
       }
     },
-    // onEndDrag: event => {
-    //   console.log("%c⧭", "color: #73998c", event);
-    // },
     onMomentumEnd: event => {
       if (!isManualScrolling) {
         runOnJS(setIsDateSetOnScroll)(false);
