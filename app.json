@@ -1,6 +1,6 @@
 {
   "name": "UI Interactions",
-  "version": "1.0",
+  "version": "1.0.0",
   "userInterfaceStyle": "light",
   "icon": "src/assets/appIcon.png",
   "splash": {
