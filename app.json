@@ -1,17 +1,28 @@
 {
-  "name": "UI Interactions",
-  "version": "1.0.0",
-  "userInterfaceStyle": "light",
-  "icon": "src/assets/appIcon.png",
-  "splash": {
-    "image": "src/assets/splash.png",
-    "resizeMode": "cover"
-  },
-  "android": {
-    "package": "com.timelessco.uiinteractions",
-    "jsEngine": "hermes"
-  },
-  "ios": {
-    "bundleIdentifier": "com.timelessco.uiinteractions"
+  "expo": {
+    "owner": "timelessco",
+    "name": "UI Interactions",
+    "slug": "ui-interactions",
+    "scheme": "ui-interactions",
+    "version": "1.0.0",
+    "userInterfaceStyle": "light",
+    "icon": "src/assets/appIcon.png",
+    "splash": {
+      "image": "src/assets/splash.png",
+      "resizeMode": "cover"
+    },
+    "android": {
+      "package": "com.timelessco.uiinteractions",
+      "jsEngine": "hermes"
+    },
+    "ios": {
+      "simulator": true,
+      "bundleIdentifier": "com.timelessco.uiinteractions"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f9ed7001-5aa8-419c-b462-1b1b3d8e9035"
+      }
+    }
   }
 }
