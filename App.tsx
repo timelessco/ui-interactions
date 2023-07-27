@@ -36,7 +36,6 @@ import {
   MapsScreen,
   MenuInteraction,
   PhotoCollection,
-  PortfolioHealthCard,
   PullToAction,
   RadialControl,
   RadialMenu,
@@ -237,10 +236,6 @@ const rootStackScreens: screenType[] = [
     name: "Vault Interaction",
     component: VaultInteraction,
   },
-  {
-    name: "Portfolio Health Card",
-    component: PortfolioHealthCard,
-  },
 ];
 
 const App = () => {
@@ -301,10 +296,7 @@ const App = () => {
               name="Allocation Slider"
               component={AllocationSlider}
             />
-            <Stack.Screen
-              name="Portfolio Health Card"
-              component={PortfolioHealthCard}
-            />
+
             <Stack.Screen name="Radial Menu" component={RadialMenu} />
             <Stack.Screen name="Pull To Action" component={PullToAction} />
             <Stack.Screen name="Light Box" component={ImageLightBox} />

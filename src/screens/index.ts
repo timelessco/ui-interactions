@@ -13,7 +13,6 @@ export * from "./LinkPreviewLookup";
 export * from "./MapsScreen";
 export * from "./MenuInteraction";
 export * from "./PhotoCollection";
-export * from "./PortfolioHealthCard";
 export * from "./PullToAction";
 export * from "./RadialControl";
 export * from "./RadialMenu";
