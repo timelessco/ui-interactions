@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { NativeScrollEvent, Text, View } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedReaction,
   useAnimatedScrollHandler,
+  useEvent,
   useSharedValue,
 } from "react-native-reanimated";
 import { FlashList } from "@shopify/flash-list";
@@ -114,9 +115,6 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       index: selectedDateIndex,
       animated: true,
     });
-    setTimeout(() => {
-      setIsManualScrolling(false);
-    }, 200);
   };
 
   useAnimatedReaction(
@@ -128,7 +126,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
           hapticSelection && runOnJS(hapticSelection)();
           // Checking the case where date is changing but its not from the scrolling
           // and it is not manual scrolling because the date changed in week strip
-          if (!isDateSetOnScroll && !isManualScrolling) {
+          if (!isDateSetOnScroll) {
             runOnJS(manualScroll)(next);
           }
         }
@@ -176,8 +174,13 @@ export const CAgenda = (props: CalendarAgendaProps) => {
   };
 
   const scrollHandler = useAnimatedScrollHandler({
-    onBeginDrag: () => runOnJS(setIsDateSetOnScroll)(true),
+    onBeginDrag: () => {
+      console.log("%c⧭", "color: #733d00", "onBeginDrag");
+      runOnJS(setIsDateSetOnScroll)(true);
+      runOnJS(setIsManualScrolling)(false);
+    },
     onScroll: event => {
+      console.log("%c⧭", "color: #733d00", "onScroll");
       if (!isManualScrolling) {
         const { contentOffset } = event;
         scroll.value = contentOffset.y;
@@ -186,6 +189,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       }
     },
     onMomentumEnd: event => {
+      console.log("%c⧭", "color: #733d00", "onMomentumEnd");
       if (!isManualScrolling) {
         runOnJS(setIsDateSetOnScroll)(false);
         const { contentOffset } = event;
@@ -206,6 +210,22 @@ export const CAgenda = (props: CalendarAgendaProps) => {
     return scrollIndex;
   }, [selectedDate.value, transformedDatesList]);
 
+  const _onScrollEndDrag = useEvent((event: NativeScrollEvent) => {
+    "worklet";
+    console.log("%c⧭", "color: #733d00", "_onScrollEndDrag");
+    if (event.velocity?.y === 0) {
+      runOnJS(setIsDateSetOnScroll)(false);
+      const { contentOffset } = event;
+      scroll.value = contentOffset.y;
+      runOnJS(findClosestScrollIndex)();
+    }
+  });
+
+  const _onMomentumScrollBegin = useEvent(() => {
+    "worklet";
+    console.log("%c⧭", "color: #00a3cc", "_onMomentumScrollBegin");
+  });
+
   return (
     <Animated.View style={tailwind.style("flex-1", `w-[${SCREEN_WIDTH}px]`)}>
       <AnimatedFlashList
@@ -214,6 +234,9 @@ export const CAgenda = (props: CalendarAgendaProps) => {
         // Write case for negative scroll-y and set it to true
         bounces={false}
         onScroll={scrollHandler}
+        onScrollEndDrag={_onScrollEndDrag}
+        onMomentumScrollBegin={_onMomentumScrollBegin}
+        showsVerticalScrollIndicator={false}
         onLayout={handleOnLayout}
         data={transformedDatesList}
         initialScrollIndex={initialScrollIndex}
