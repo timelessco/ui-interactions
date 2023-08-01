@@ -299,12 +299,10 @@ export const PullToAction = (props: PullToActionProps) => {
   const translateX = useSharedValue(0);
   const refreshRotationValue = useSharedValue(0);
 
-  const startXDistance = useSharedValue(0);
-
   const selectionActive = useSharedValue(0);
 
   const { bottom, top } = useSafeAreaInsets();
-  const [currentShareTarget, setCurrentShareTarget] = useState<
+  const [currentActionTarget, setCurrentActionTarget] = useState<
     ACTION_TYPE | ""
   >("");
 
@@ -321,9 +319,9 @@ export const PullToAction = (props: PullToActionProps) => {
   );
 
   const setAction = (action: ACTION_TYPE) => {
-    setCurrentShareTarget(action);
+    setCurrentActionTarget(action);
     if (action === "Cancel") {
-      runOnJS(setCurrentShareTarget)("");
+      setCurrentActionTarget("");
       props.navigation.pop();
       return;
     }
@@ -344,7 +342,7 @@ export const PullToAction = (props: PullToActionProps) => {
           },
           finished => {
             if (finished) {
-              runOnJS(setCurrentShareTarget)("");
+              runOnJS(setCurrentActionTarget)("");
             }
           },
         );
@@ -363,13 +361,13 @@ export const PullToAction = (props: PullToActionProps) => {
   );
 
   const panGesture = Gesture.Pan()
-    .onBegin(event => {
+    .onBegin(() => {
       const segment = 2;
       const calculatedTranslateValue =
+        // The current segment container width is 60, so to center the container we subtract half the value
         SEGMENT_WIDTH * (segment - 1) + SEGMENT_WIDTH / 2 + PADDING - 60 / 2;
       currentSegment.value = segment - 1;
       translateX.value = calculatedTranslateValue;
-      startXDistance.value = event.x;
     })
     .onChange(event => {
       translateValue.value = event.translationY > 0 ? event.translationY : 0;
@@ -430,14 +428,14 @@ export const PullToAction = (props: PullToActionProps) => {
         easing: Easing.linear,
       });
     })
-    .enabled(currentShareTarget === "");
+    .enabled(currentActionTarget === "");
 
   const scrollViewGesture = Gesture.Native();
 
   const animatedViewStyle = useAnimatedStyle(() => {
     return {
       height:
-        currentShareTarget === "Refresh"
+        currentActionTarget === "Refresh"
           ? refreshTranslateValue.value
           : translateValue.value,
     };
@@ -478,7 +476,7 @@ export const PullToAction = (props: PullToActionProps) => {
       transform: [
         {
           translateX:
-            currentShareTarget === "Refresh"
+            currentActionTarget === "Refresh"
               ? withTiming(REFRESH_TRANSLATE, {
                   duration: 300,
                   easing: Easing.linear,
@@ -553,7 +551,7 @@ export const PullToAction = (props: PullToActionProps) => {
           source={require("../assets/pull-action-bg-2.jpg")}
         />
       </Animated.View>
-      {currentShareTarget === "Search" ? (
+      {currentActionTarget === "Search" ? (
         <AnimatedBlurView
           intensity={10}
           entering={FadeIn}
@@ -566,7 +564,7 @@ export const PullToAction = (props: PullToActionProps) => {
           />
           <Pressable
             style={[tailwind.style("absolute inset-0 z-20")]}
-            onPress={() => setCurrentShareTarget("")}
+            onPress={() => setCurrentActionTarget("")}
           />
           <Animated.View
             entering={FadeInDown.springify().damping(18).stiffness(140)}
@@ -589,7 +587,7 @@ export const PullToAction = (props: PullToActionProps) => {
               <TextInput
                 autoFocus
                 returnKeyType="go"
-                onSubmitEditing={() => setCurrentShareTarget("")}
+                onSubmitEditing={() => setCurrentActionTarget("")}
                 placeholder="Search"
                 placeholderTextColor={"#707070"}
                 style={[styles.textInputStyle]}
@@ -700,8 +698,8 @@ export const PullToAction = (props: PullToActionProps) => {
               animatedViewStyle,
             ]}
           >
-            <AnimatedBlurView
-              intensity={100}
+            <Animated.View
+              // intensity={100}
               style={[
                 tailwind.style(
                   "absolute h-15 w-15 overflow-hidden bg-white rounded-full",
@@ -741,7 +739,7 @@ export const PullToAction = (props: PullToActionProps) => {
           </Animated.View>
         </Animated.ScrollView>
       </GestureDetector>
-      {currentShareTarget !== "" ? (
+      {currentActionTarget !== "" ? (
         <Animated.View
           style={tailwind.style(
             `absolute w-full bottom-${
@@ -754,7 +752,7 @@ export const PullToAction = (props: PullToActionProps) => {
           <Animated.Text
             style={tailwind.style("text-base text-white font-medium")}
           >
-            Selected Action is {currentShareTarget}
+            Selected Action is {currentActionTarget}
           </Animated.Text>
         </Animated.View>
       ) : null}
