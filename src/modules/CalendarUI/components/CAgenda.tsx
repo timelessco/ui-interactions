@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { NativeScrollEvent, Text, View } from "react-native";
 import Animated, {
   runOnJS,
@@ -58,8 +58,8 @@ const CalendarListItem = React.memo(
 );
 
 export const CAgenda = (props: CalendarAgendaProps) => {
-  const aref = useRef<FlashList<string>>(null);
-  const { selectedDate } = props;
+  const { selectedDate, aref } = props;
+
   const [isManualScrolling, setIsManualScrolling] = useState(true);
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
   const hapticSelection = useHaptic();
@@ -148,6 +148,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
     const currentSection = transformedDatesList[scrollIndex];
 
     if (currentSection.type === "HeaderItem") {
+      setIsManualScrolling(true);
       aref.current?.scrollToOffset({
         offset: closestScrollIndex,
         animated: true,
@@ -159,6 +160,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       const headerItemIndex = transformedDatesList.findIndex(
         value => value.date === currentHeaderItem[0].date,
       );
+      setIsManualScrolling(true);
       aref.current?.scrollToIndex({
         index: headerItemIndex,
         animated: true,
@@ -175,12 +177,10 @@ export const CAgenda = (props: CalendarAgendaProps) => {
 
   const scrollHandler = useAnimatedScrollHandler({
     onBeginDrag: () => {
-      console.log("%c⧭", "color: #733d00", "onBeginDrag");
       runOnJS(setIsDateSetOnScroll)(true);
       runOnJS(setIsManualScrolling)(false);
     },
     onScroll: event => {
-      console.log("%c⧭", "color: #733d00", "onScroll");
       if (!isManualScrolling) {
         const { contentOffset } = event;
         scroll.value = contentOffset.y;
@@ -189,7 +189,7 @@ export const CAgenda = (props: CalendarAgendaProps) => {
       }
     },
     onMomentumEnd: event => {
-      console.log("%c⧭", "color: #733d00", "onMomentumEnd");
+      // It is called twice while fixing the bug, need to check
       if (!isManualScrolling) {
         runOnJS(setIsDateSetOnScroll)(false);
         const { contentOffset } = event;
@@ -212,18 +212,12 @@ export const CAgenda = (props: CalendarAgendaProps) => {
 
   const _onScrollEndDrag = useEvent((event: NativeScrollEvent) => {
     "worklet";
-    console.log("%c⧭", "color: #733d00", "_onScrollEndDrag");
     if (event.velocity?.y === 0) {
       runOnJS(setIsDateSetOnScroll)(false);
       const { contentOffset } = event;
       scroll.value = contentOffset.y;
       runOnJS(findClosestScrollIndex)();
     }
-  });
-
-  const _onMomentumScrollBegin = useEvent(() => {
-    "worklet";
-    console.log("%c⧭", "color: #00a3cc", "_onMomentumScrollBegin");
   });
 
   return (
@@ -235,7 +229,6 @@ export const CAgenda = (props: CalendarAgendaProps) => {
         bounces={false}
         onScroll={scrollHandler}
         onScrollEndDrag={_onScrollEndDrag}
-        onMomentumScrollBegin={_onMomentumScrollBegin}
         showsVerticalScrollIndicator={false}
         onLayout={handleOnLayout}
         data={transformedDatesList}
