@@ -1,16 +1,13 @@
-import { useRef } from "react";
 import { Pressable, Text, View } from "react-native";
-import Animated, { SharedValue } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { Path, Svg } from "react-native-svg";
-import { FlashList } from "@shopify/flash-list";
+import dayjs from "dayjs";
 import tailwind from "twrnc";
 
 import { CAgenda } from "./components/CAgenda";
 import { WeekStrip } from "./components/WeekStrip";
-
-type CalendarUIProps = {
-  selectedDate: SharedValue<string>;
-};
+import { useCalendarContext } from "./context/CalendarProvider";
+import { ListItemType } from "./types/calendarTypes";
 
 export const CalendarIcon = () => {
   return (
@@ -23,11 +20,36 @@ export const CalendarIcon = () => {
   );
 };
 
-export const CalendarUI = (props: CalendarUIProps) => {
-  const { selectedDate } = props;
-  const aref = useRef<FlashList<string>>(null);
+export const CalendarUI = () => {
+  const {
+    agendaListRef,
+    transformedDatesList,
+    setIsManualScrolling,
+    weekListRef,
+    selectedDate,
+  } = useCalendarContext();
+  const handlePress = () => {
+    const todayIndex = transformedDatesList.findIndex(
+      value => value.date === dayjs().format("YYYY-MM-DD"),
+    );
 
-  // const goToToday = () => {};
+    const todayData = transformedDatesList[todayIndex] as ListItemType;
+
+    setIsManualScrolling(true);
+    agendaListRef.current?.scrollToOffset({
+      offset: todayData.offsetY,
+      animated: true,
+    });
+    selectedDate.value = dayjs().format("YYYY-MM-DD");
+    const startDateOfSelectedWeek = dayjs().startOf("week").add(1, "day");
+    let newIndex = transformedDatesList.filter(
+      value => value.date === startDateOfSelectedWeek.format("YYYY-MM-DD"),
+    )[0] as ListItemType;
+    weekListRef.current?.scrollToIndex({
+      index: newIndex.index - 1,
+      animated: true,
+    });
+  };
 
   return (
     <View style={tailwind.style("flex-1")}>
@@ -39,14 +61,14 @@ export const CalendarUI = (props: CalendarUIProps) => {
         <Text style={tailwind.style("text-3xl font-bold text-black")}>
           Calendar
         </Text>
-        <Pressable>
+        <Pressable onPress={handlePress}>
           <Animated.View style={[tailwind.style("p-2 shadow-xl z-50")]}>
             <CalendarIcon />
           </Animated.View>
         </Pressable>
       </Animated.View>
-      <WeekStrip {...{ selectedDate }} />
-      <CAgenda {...{ selectedDate, aref }} />
+      <WeekStrip />
+      <CAgenda />
     </View>
   );
 };

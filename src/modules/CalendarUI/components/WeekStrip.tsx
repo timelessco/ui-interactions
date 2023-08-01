@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, {
   runOnJS,
@@ -14,7 +14,8 @@ import {
   SECTION_HEADER_HEIGHT,
   week,
 } from "../constants";
-import { ListItemType, WeekStripProps } from "../types/calendarTypes";
+import { useCalendarContext } from "../context/CalendarProvider";
+import { ListItemType } from "../types/calendarTypes";
 import { calculateDates, previousMultipleOfSeven } from "../utils";
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
@@ -71,9 +72,8 @@ const CalendarDay = (props: any) => {
   );
 };
 
-export const WeekStrip = (props: WeekStripProps) => {
-  const aref = useRef<FlashList<string>>(null);
-  const { selectedDate } = props;
+export const WeekStrip = () => {
+  const { selectedDate, weekListRef: wref } = useCalendarContext();
   const pages = calculateDates(
     DEFAULT_PROPS.FIRST_DAY,
     DEFAULT_PROPS.MIN_DATE,
@@ -106,7 +106,7 @@ export const WeekStrip = (props: WeekStripProps) => {
     )[0].index;
     // If the date is present in the same week, we don't do a manual scroll
     if (newIndex !== prevIndex) {
-      aref.current?.scrollToIndex({
+      wref.current?.scrollToIndex({
         index: newIndex - 1,
         animated: true,
       });
@@ -161,7 +161,7 @@ export const WeekStrip = (props: WeekStripProps) => {
       <Animated.View style={tailwind.style("h-9", `px-[${padding / 2}px]`)}>
         <AnimatedFlashList
           // @ts-ignore
-          ref={aref}
+          ref={wref}
           data={pages.day.data}
           initialScrollIndex={pages.day.index - dayjs().day()}
           horizontal

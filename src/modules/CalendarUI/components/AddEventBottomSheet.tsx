@@ -7,7 +7,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import BottomSheet, {
@@ -19,6 +18,7 @@ import BottomSheet, {
 import tailwind from "twrnc";
 
 import { AddIcon } from "../../../icons/maps";
+import { useCalendarContext } from "../context/CalendarProvider";
 import { CalendarItem, useCalendarState } from "../context/useCalendarState";
 
 /**
@@ -53,12 +53,8 @@ const CalendarIcon = () => {
   );
 };
 
-type AddEventBottomSheetProps = {
-  selectedDate: SharedValue<string>;
-};
-
-export const AddEventBottomSheet = (props: AddEventBottomSheetProps) => {
-  const { selectedDate } = props;
+export const AddEventBottomSheet = () => {
+  const { selectedDate } = useCalendarContext();
   const { bottom } = useSafeAreaInsets();
   // const { animatedStyle, handlers } = useScaleAnimation();
 
