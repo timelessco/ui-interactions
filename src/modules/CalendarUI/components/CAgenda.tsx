@@ -12,11 +12,12 @@ import dayjs from "dayjs";
 import tailwind from "twrnc";
 
 import { useHaptic } from "../../../utils/useHaptic";
-import { SCREEN_WIDTH, SECTION_HEADER_HEIGHT } from "../constants";
 import {
   LIST_ITEM_HEIGHT,
-  useCalendarContext,
-} from "../context/CalendarProvider";
+  SCREEN_WIDTH,
+  SECTION_HEADER_HEIGHT,
+} from "../constants";
+import { useCalendarContext } from "../context/CalendarProvider";
 import { CalendarItem, useCalendarState } from "../context/useCalendarState";
 import { CalendarListItemProps, ListItemType } from "../types/calendarTypes";
 

@@ -3,13 +3,15 @@ import { SharedValue, useSharedValue } from "react-native-reanimated";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 
-import { DEFAULT_PROPS, SECTION_HEADER_HEIGHT } from "../constants";
+import {
+  DEFAULT_PROPS,
+  LIST_ITEM_HEIGHT,
+  SECTION_HEADER_HEIGHT,
+} from "../constants";
 import { ListItemType } from "../types/calendarTypes";
 import { calculateDates } from "../utils";
 
 import { CalendarItem, useCalendarState } from "./useCalendarState";
-
-export const LIST_ITEM_HEIGHT = 60;
 
 interface CalendarContextType {
   selectedDate: SharedValue<string>;
