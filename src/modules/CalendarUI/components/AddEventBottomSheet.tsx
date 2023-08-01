@@ -7,11 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {
-  SharedValue,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
+import { SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 import BottomSheet, {
@@ -23,7 +19,6 @@ import BottomSheet, {
 import tailwind from "twrnc";
 
 import { AddIcon } from "../../../icons/maps";
-import { useScaleAnimation } from "../../../utils/useScaleAnimation";
 import { CalendarItem, useCalendarState } from "../context/useCalendarState";
 
 /**
@@ -65,8 +60,7 @@ type AddEventBottomSheetProps = {
 export const AddEventBottomSheet = (props: AddEventBottomSheetProps) => {
   const { selectedDate } = props;
   const { bottom } = useSafeAreaInsets();
-  const { animatedStyle, handlers } = useScaleAnimation();
-  const sheetOpen = useSharedValue(-1);
+  // const { animatedStyle, handlers } = useScaleAnimation();
 
   const eventTitle = useRef<TextInput>(null);
   const descRef = useRef<TextInput>(null);
@@ -112,8 +106,8 @@ export const AddEventBottomSheet = (props: AddEventBottomSheetProps) => {
   );
 
   const handleOnCloseSheet = useCallback(() => {
-    descRef.current?.blur();
-    eventTitle.current?.blur();
+    descRef?.current?.blur();
+    eventTitle?.current?.blur();
   }, []);
 
   const handleAddTodoPress = () => {
@@ -160,20 +154,15 @@ export const AddEventBottomSheet = (props: AddEventBottomSheetProps) => {
     }
   };
 
-  const handleSheetChange = (index: number) => {
-    sheetOpen.value = withSpring(index);
-  };
-
   return (
     <>
-      <Pressable onPress={handleAddTodoPress} {...handlers}>
+      <Pressable onPress={handleAddTodoPress}>
         <Animated.View
           style={[
             tailwind.style(
               "absolute right-4 bg-black p-2 rounded-full shadow-xl z-50",
               `bottom-[${bottom}px]`,
             ),
-            animatedStyle,
           ]}
         >
           <AddIcon stroke="#FFF" />
@@ -189,7 +178,6 @@ export const AddEventBottomSheet = (props: AddEventBottomSheetProps) => {
         handleIndicatorStyle={styles.handleIndicatorStyle}
         backgroundStyle={tailwind.style("bg-white")}
         onClose={handleOnCloseSheet}
-        onChange={handleSheetChange}
       >
         <BottomSheetView style={tailwind.style("flex-1 bg-white px-5")}>
           <BottomSheetTextInput
