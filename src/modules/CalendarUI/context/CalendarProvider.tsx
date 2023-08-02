@@ -20,6 +20,8 @@ interface CalendarContextType {
   transformedDatesList: (CalendarItem | ListItemType)[];
   isManualScrolling: boolean;
   setIsManualScrolling: React.Dispatch<React.SetStateAction<boolean>>;
+  isMomentumScrollBegin: boolean;
+  setIsMomentumScrollBegin: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CalendarContext = React.createContext<CalendarContextType | undefined>(
@@ -46,6 +48,7 @@ const CalendarProvider: React.FC<
 
   const today = useSharedValue(dayjs().format("YYYY-MM-DD"));
   const [isManualScrolling, setIsManualScrolling] = useState(true);
+  const [isMomentumScrollBegin, setIsMomentumScrollBegin] = useState(true);
 
   const { items } = useCalendarState();
 
@@ -97,6 +100,8 @@ const CalendarProvider: React.FC<
         transformedDatesList,
         isManualScrolling,
         setIsManualScrolling,
+        isMomentumScrollBegin,
+        setIsMomentumScrollBegin,
       }}
     >
       {children}

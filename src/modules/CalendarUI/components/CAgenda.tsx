@@ -58,6 +58,7 @@ export const CAgenda = () => {
     transformedDatesList,
     isManualScrolling,
     setIsManualScrolling,
+    setIsMomentumScrollBegin,
   } = useCalendarContext();
 
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
@@ -100,6 +101,7 @@ export const CAgenda = () => {
     setTimeout(() => {
       setIsManualScrolling(false);
       setIsDateSetOnScroll(false);
+      setIsMomentumScrollBegin(false);
     }, 300);
   };
 
@@ -146,6 +148,7 @@ export const CAgenda = () => {
         runOnJS(setIsDateSetOnScroll)(true);
       }
     },
+
     onMomentumEnd: event => {
       // It is called twice while fixing the bug, need to check
       if (!isManualScrolling) {
@@ -154,6 +157,7 @@ export const CAgenda = () => {
         scroll.value = contentOffset.y;
         runOnJS(findClosestScrollIndex)();
       }
+      runOnJS(setIsMomentumScrollBegin)(false);
     },
   });
 
@@ -179,6 +183,11 @@ export const CAgenda = () => {
     }
   });
 
+  const _onMomentumBegin = useEvent(() => {
+    "worklet";
+    runOnJS(setIsMomentumScrollBegin)(true);
+  });
+
   return (
     <Animated.View style={tailwind.style("flex-1", `w-[${SCREEN_WIDTH}px]`)}>
       <AnimatedFlashList
@@ -188,6 +197,7 @@ export const CAgenda = () => {
         bounces={false}
         onScroll={scrollHandler}
         onScrollEndDrag={_onScrollEndDrag}
+        onMomentumScrollBegin={_onMomentumBegin}
         showsVerticalScrollIndicator={false}
         onLayout={handleOnLayout}
         data={transformedDatesList}
