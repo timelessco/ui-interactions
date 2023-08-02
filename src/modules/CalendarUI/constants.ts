@@ -42,6 +42,6 @@ export const SECONDS_IN_DAY = 86400;
 
 export const week = ["S", "M", "T", "W", "T", "F", "S"];
 
-export const SECTION_HEADER_HEIGHT = 60;
+export const SECTION_HEADER_HEIGHT = 40;
 
 export const LIST_ITEM_HEIGHT = 60;

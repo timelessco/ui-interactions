@@ -28,7 +28,7 @@ var isToday = require("dayjs/plugin/isToday");
 dayjs.extend(isToday);
 
 const CalendarListItem = React.memo(
-  ({ calendarItem }: CalendarListItemProps) => {
+  ({ calendarItem, index }: CalendarListItemProps) => {
     return (
       <View
         style={tailwind.style(
@@ -44,7 +44,7 @@ const CalendarListItem = React.memo(
         >
           {dayjs(calendarItem.date).format("MMM DD")} ・{" "}
           {dayjs(calendarItem.date).isSame(dayjs()) ? "Today" : ""}
-          {dayjs(calendarItem.date).format("dddd")}
+          {dayjs(calendarItem.date).format("dddd")}・ {index}
         </Text>
       </View>
     );
@@ -104,37 +104,33 @@ export const CAgenda = () => {
   };
 
   const findClosestScrollIndex = () => {
-    const closestScrollIndex =
-      Math.round(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
-    const scrollIndex = closestScrollIndex / LIST_ITEM_HEIGHT;
-    const currentSection = transformedDatesList[scrollIndex];
-
-    if (currentSection.type === "HeaderItem") {
-      setIsManualScrolling(true);
-      aref.current?.scrollToOffset({
-        offset: closestScrollIndex,
-        animated: true,
-      });
-    } else {
-      const currentHeaderItem = transformedDatesList
-        .filter(item => item.type === "HeaderItem")
-        .filter(item => item.date === currentSection.date);
-      const headerItemIndex = transformedDatesList.findIndex(
-        value => value.date === currentHeaderItem[0].date,
-      );
-      setIsManualScrolling(true);
-      aref.current?.scrollToIndex({
-        index: headerItemIndex,
-        animated: true,
-      });
-    }
+    const offsets = transformedDatesList.map(
+      value => value.type === "HeaderItem" && value.offsetY,
+    ) as number[];
+    const nearestValue = findNearestValue(offsets, scroll.value);
+    setIsManualScrolling(true);
+    const item =
+      transformedDatesList[offsets.findIndex(value => value === nearestValue)];
+    aref.current?.scrollToIndex({
+      index: offsets.findIndex(value => value === nearestValue),
+      animated: true,
+    });
+    selectedDate.value = item.date;
   };
 
+  function findNearestValue(arr: number[], target: number) {
+    return arr.reduce((prev, curr) => {
+      return Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev;
+    });
+  }
   const changeDateOnScroll = () => {
-    const closestScrollIndex =
-      Math.floor(scroll.value / LIST_ITEM_HEIGHT) * LIST_ITEM_HEIGHT;
-    const scrollIndex = closestScrollIndex / LIST_ITEM_HEIGHT;
-    selectedDate.value = transformedDatesList[scrollIndex].date;
+    const offsets = transformedDatesList.map(
+      value => value.type === "HeaderItem" && value.offsetY,
+    ) as number[];
+    const nearestValue = findNearestValue(offsets, scroll.value);
+    const item =
+      transformedDatesList[offsets.findIndex(value => value === nearestValue)];
+    selectedDate.value = item.date;
   };
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -169,6 +165,7 @@ export const CAgenda = () => {
     const scrollIndex = transformedDatesList.findIndex(
       value => value.date === currentIndex[0].date,
     );
+
     return scrollIndex;
   }, [selectedDate.value, transformedDatesList]);
 
@@ -198,6 +195,17 @@ export const CAgenda = () => {
         estimatedItemSize={SECTION_HEADER_HEIGHT}
         scrollEventThrottle={16}
         // stickyHeaderIndices={stickyHeaderIndices}
+        overrideItemLayout={(layout, item) => {
+          const listItem = item as ListItemType | CalendarItem;
+          switch (listItem.type) {
+            case "HeaderItem":
+              layout.size = SECTION_HEADER_HEIGHT;
+              break;
+            case "CalendarItem":
+              layout.size = LIST_ITEM_HEIGHT;
+              break;
+          }
+        }}
         getItemType={item => {
           // To achieve better performance, specify the type based on the item
           const sectionListItem = item as ListItemType | CalendarItem;
