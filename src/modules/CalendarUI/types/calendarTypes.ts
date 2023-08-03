@@ -1,4 +1,4 @@
-export type ListItemType = {
+export type SectionHeaderType = {
   date: string;
   index: number;
   offsetY: number;
@@ -6,7 +6,24 @@ export type ListItemType = {
   hasItems: boolean;
 };
 
-export type CalendarListItemProps = {
-  calendarItem: ListItemType;
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  desc: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  height: number;
+  location: string;
+  type: "CalendarEvent";
+};
+
+export type CalendarSectionItemProps = {
+  calendarSection: SectionHeaderType;
+  index: number;
+};
+
+export type CalendarEventItemProps = {
+  calendarItem: CalendarEvent;
   index: number;
 };

@@ -18,8 +18,13 @@ import {
   SECTION_HEADER_HEIGHT,
 } from "../constants";
 import { useCalendarContext } from "../context/CalendarProvider";
-import { CalendarItem, useCalendarState } from "../context/useCalendarState";
-import { CalendarListItemProps, ListItemType } from "../types/calendarTypes";
+import { useCalendarState } from "../context/useCalendarState";
+import {
+  CalendarEvent,
+  CalendarEventItemProps,
+  CalendarSectionItemProps,
+  SectionHeaderType,
+} from "../types/calendarTypes";
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
 
@@ -27,8 +32,8 @@ var isToday = require("dayjs/plugin/isToday");
 
 dayjs.extend(isToday);
 
-const CalendarListItem = React.memo(
-  ({ calendarItem }: CalendarListItemProps) => {
+const CalendarSectionHeader = React.memo(
+  ({ calendarSection }: CalendarSectionItemProps) => {
     return (
       <View
         style={tailwind.style(
@@ -38,13 +43,33 @@ const CalendarListItem = React.memo(
       >
         <Text
           style={tailwind.style(
-            calendarItem.hasItems ? "font-bold" : "font-normal",
+            calendarSection.hasItems ? "font-bold" : "font-normal",
             "text-base",
           )}
         >
-          {dayjs(calendarItem.date).format("MMM DD")} ・{" "}
-          {dayjs(calendarItem.date).isSame(dayjs()) ? "Today" : ""}
-          {dayjs(calendarItem.date).format("dddd")}
+          {dayjs(calendarSection.date).format("MMM DD")} ・{" "}
+          {dayjs(calendarSection.date).isSame(dayjs()) ? "Today" : ""}
+          {dayjs(calendarSection.date).format("dddd")}
+        </Text>
+      </View>
+    );
+  },
+);
+
+const CalendarEventItem = React.memo(
+  ({ calendarItem }: CalendarEventItemProps) => {
+    return (
+      <View
+        style={tailwind.style(
+          "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
+          `h-[${LIST_ITEM_HEIGHT}px]`,
+        )}
+      >
+        <Text style={tailwind.style("text-lg font-medium text-black")}>
+          {calendarItem.title}
+        </Text>
+        <Text style={tailwind.style("text-sm text-gray-600")}>
+          {calendarItem.desc}
         </Text>
       </View>
     );
@@ -206,19 +231,19 @@ export const CAgenda = () => {
         scrollEventThrottle={16}
         // stickyHeaderIndices={stickyHeaderIndices}
         overrideItemLayout={(layout, item) => {
-          const listItem = item as ListItemType | CalendarItem;
+          const listItem = item as SectionHeaderType | CalendarEvent;
           switch (listItem.type) {
             case "HeaderItem":
               layout.size = SECTION_HEADER_HEIGHT;
               break;
-            case "CalendarItem":
+            case "CalendarEvent":
               layout.size = LIST_ITEM_HEIGHT;
               break;
           }
         }}
         getItemType={item => {
           // To achieve better performance, specify the type based on the item
-          const sectionListItem = item as ListItemType | CalendarItem;
+          const sectionListItem = item as SectionHeaderType | CalendarEvent;
           return (
             sectionListItem.type === "HeaderItem" ? "sectionHeader" : "row"
           ) as string;
@@ -228,31 +253,22 @@ export const CAgenda = () => {
           item,
           index,
         }: {
-          item: ListItemType | CalendarItem;
+          item: SectionHeaderType | CalendarEvent;
           index: number;
         }) => {
           if (item.type === "HeaderItem") {
             return (
-              <CalendarListItem
+              <CalendarSectionHeader
                 index={index}
-                calendarItem={item as ListItemType}
+                calendarSection={item as SectionHeaderType}
               />
             );
           }
           return (
-            <View
-              style={tailwind.style(
-                "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
-                `h-[${LIST_ITEM_HEIGHT}px]`,
-              )}
-            >
-              <Text style={tailwind.style("text-lg font-medium text-black")}>
-                {item.title}
-              </Text>
-              <Text style={tailwind.style("text-sm text-gray-600")}>
-                {item.desc}
-              </Text>
-            </View>
+            <CalendarEventItem
+              index={index}
+              calendarItem={item as CalendarEvent}
+            />
           );
         }}
         extraData={items.length}

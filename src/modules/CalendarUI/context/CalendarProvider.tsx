@@ -8,16 +8,16 @@ import {
   LIST_ITEM_HEIGHT,
   SECTION_HEADER_HEIGHT,
 } from "../constants";
-import { ListItemType } from "../types/calendarTypes";
+import { CalendarEvent, SectionHeaderType } from "../types/calendarTypes";
 import { calculateDates } from "../utils";
 
-import { CalendarItem, useCalendarState } from "./useCalendarState";
+import { useCalendarState } from "./useCalendarState";
 
 interface CalendarContextType {
   selectedDate: SharedValue<string>;
   agendaListRef: React.RefObject<FlashList<string>>;
   weekListRef: React.RefObject<FlashList<string>>;
-  transformedDatesList: (CalendarItem | ListItemType)[];
+  transformedDatesList: (CalendarEvent | SectionHeaderType)[];
   isManualScrolling: boolean;
   setIsManualScrolling: React.Dispatch<React.SetStateAction<boolean>>;
   isMomentumScrollBegin: boolean;
@@ -87,8 +87,8 @@ const CalendarProvider: React.FC<
   );
 
   const transformedDatesList = transformDates(pages.day.data) as (
-    | ListItemType
-    | CalendarItem
+    | SectionHeaderType
+    | CalendarEvent
   )[];
 
   return (

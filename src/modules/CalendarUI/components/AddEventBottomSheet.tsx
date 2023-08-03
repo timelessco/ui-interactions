@@ -19,7 +19,8 @@ import tailwind from "twrnc";
 
 import { AddIcon } from "../../../icons/maps";
 import { useCalendarContext } from "../context/CalendarProvider";
-import { CalendarItem, useCalendarState } from "../context/useCalendarState";
+import { useCalendarState } from "../context/useCalendarState";
+import { CalendarEvent } from "../types/calendarTypes";
 
 /**
  * "If you pass a string to this function, it will return a string."
@@ -61,7 +62,7 @@ export const AddEventBottomSheet = () => {
   const eventTitle = useRef<TextInput>(null);
   const descRef = useRef<TextInput>(null);
 
-  const [currentItem, setCurrentItem] = useState<CalendarItem | null>(null);
+  const [currentItem, setCurrentItem] = useState<CalendarEvent | null>(null);
   const { addItem } = useCalendarState();
 
   // Bottomsheet related props
@@ -118,7 +119,7 @@ export const AddEventBottomSheet = () => {
       endTime: "",
       height: 0,
       location: "",
-      type: "CalendarItem",
+      type: "CalendarEvent",
     });
   };
 
@@ -144,7 +145,7 @@ export const AddEventBottomSheet = () => {
           endTime: "",
           height: 0,
           location: "",
-          type: "CalendarItem",
+          type: "CalendarEvent",
         });
       }
     }

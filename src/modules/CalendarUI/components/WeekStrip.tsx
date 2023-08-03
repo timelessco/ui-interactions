@@ -15,7 +15,7 @@ import {
   week,
 } from "../constants";
 import { useCalendarContext } from "../context/CalendarProvider";
-import { ListItemType } from "../types/calendarTypes";
+import { SectionHeaderType } from "../types/calendarTypes";
 import { calculateDates, previousMultipleOfSeven } from "../utils";
 
 export const AnimatedFlashList = Animated.createAnimatedComponent(FlashList);
@@ -90,7 +90,9 @@ export const WeekStrip = () => {
     return convertedDates;
   }
 
-  const transformedDatesList = transformDates(pages.day.data) as ListItemType[];
+  const transformedDatesList = transformDates(
+    pages.day.data,
+  ) as SectionHeaderType[];
 
   const manualScroll = (next: string, prev: string) => {
     const startDateOfSelectedWeek = dayjs(next).startOf("week").add(1, "day");
