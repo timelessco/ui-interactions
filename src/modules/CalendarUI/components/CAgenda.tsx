@@ -28,7 +28,7 @@ var isToday = require("dayjs/plugin/isToday");
 dayjs.extend(isToday);
 
 const CalendarListItem = React.memo(
-  ({ calendarItem, index }: CalendarListItemProps) => {
+  ({ calendarItem }: CalendarListItemProps) => {
     return (
       <View
         style={tailwind.style(
@@ -44,7 +44,7 @@ const CalendarListItem = React.memo(
         >
           {dayjs(calendarItem.date).format("MMM DD")} ・{" "}
           {dayjs(calendarItem.date).isSame(dayjs()) ? "Today" : ""}
-          {dayjs(calendarItem.date).format("dddd")}・ {index}
+          {dayjs(calendarItem.date).format("dddd")}
         </Text>
       </View>
     );
