@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Dimensions, Image, Pressable } from "react-native";
 import Animated, {
   interpolate,
@@ -66,13 +66,15 @@ const GalleryCarouselItem = (props: GalleryCarouselItemProps) => {
     handleCarouselItemPress,
     scrollViewWidth,
   } = props;
-  const inputRange = [
-    (index - 1) * CARD_WIDTH,
-    index === carouselItems.length - 1
-      ? scrollViewWidth - SCREEN_WIDTH
-      : index * CARD_WIDTH,
-    (index + 1) * CARD_WIDTH,
-  ];
+  const inputRange = useMemo(() => {
+    return [
+      (index - 1) * CARD_WIDTH,
+      index === carouselItems.length - 1
+        ? scrollViewWidth - SCREEN_WIDTH
+        : index * CARD_WIDTH,
+      (index + 1) * CARD_WIDTH,
+    ];
+  }, [index, scrollViewWidth]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -97,9 +99,13 @@ const GalleryCarouselItem = (props: GalleryCarouselItemProps) => {
         },
       ],
     };
-  });
+  }, [inputRange, scrollViewWidth]);
   const handlePress = useCallback(() => {
-    handleCarouselItemPress(inputRange[1]);
+    handleCarouselItemPress(
+      index === carouselItems.length - 1
+        ? scrollViewWidth - SCREEN_WIDTH
+        : index * CARD_WIDTH,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
