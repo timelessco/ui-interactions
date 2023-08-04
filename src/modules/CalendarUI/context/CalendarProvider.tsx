@@ -1,5 +1,7 @@
 import React, { useCallback, useRef, useState } from "react";
+import { TextInput } from "react-native";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 
@@ -22,6 +24,12 @@ interface CalendarContextType {
   setIsManualScrolling: React.Dispatch<React.SetStateAction<boolean>>;
   isMomentumScrollBegin: boolean;
   setIsMomentumScrollBegin: React.Dispatch<React.SetStateAction<boolean>>;
+  editItem: CalendarEvent | null;
+  setEditItem: React.Dispatch<React.SetStateAction<CalendarEvent | null>>;
+  sheetRef: React.RefObject<any>;
+  sheetTriggerAction: "EDIT" | "ADD";
+  setSheetTriggerAction: React.Dispatch<React.SetStateAction<"EDIT" | "ADD">>;
+  eventTitleTextInputRef: React.RefObject<TextInput>;
 }
 
 const CalendarContext = React.createContext<CalendarContextType | undefined>(
@@ -45,10 +53,16 @@ const CalendarProvider: React.FC<
 > = props => {
   const aref = useRef<FlashList<string>>(null);
   const wref = useRef<FlashList<string>>(null);
+  const sheetRef = useRef<BottomSheet>(null);
+  const eventTitleTextInputRef = useRef<TextInput>(null);
 
   const today = useSharedValue(dayjs().format("YYYY-MM-DD"));
   const [isManualScrolling, setIsManualScrolling] = useState(true);
   const [isMomentumScrollBegin, setIsMomentumScrollBegin] = useState(true);
+  const [editItem, setEditItem] = useState<CalendarEvent | null>(null);
+  const [sheetTriggerAction, setSheetTriggerAction] = useState<"EDIT" | "ADD">(
+    "ADD",
+  );
 
   const { items } = useCalendarState();
 
@@ -97,11 +111,17 @@ const CalendarProvider: React.FC<
         selectedDate: today,
         agendaListRef: aref,
         weekListRef: wref,
+        sheetRef,
+        eventTitleTextInputRef,
         transformedDatesList,
         isManualScrolling,
         setIsManualScrolling,
         isMomentumScrollBegin,
         setIsMomentumScrollBegin,
+        editItem,
+        setEditItem,
+        setSheetTriggerAction,
+        sheetTriggerAction,
       }}
     >
       {children}

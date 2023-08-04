@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import {
   Animated,
   Pressable,
@@ -20,7 +20,6 @@ import tailwind from "twrnc";
 import { AddIcon } from "../../../icons/maps";
 import { useCalendarContext } from "../context/CalendarProvider";
 import { useCalendarState } from "../context/useCalendarState";
-import { CalendarEvent } from "../types/calendarTypes";
 
 /**
  * "If you pass a string to this function, it will return a string."
@@ -55,38 +54,40 @@ const CalendarIcon = () => {
 };
 
 export const AddEventBottomSheet = () => {
-  const { selectedDate } = useCalendarContext();
+  const {
+    selectedDate,
+    editItem,
+    sheetRef,
+    setEditItem,
+    eventTitleTextInputRef,
+    sheetTriggerAction,
+    setSheetTriggerAction,
+  } = useCalendarContext();
   const { bottom } = useSafeAreaInsets();
   // const { animatedStyle, handlers } = useScaleAnimation();
 
-  const eventTitle = useRef<TextInput>(null);
   const descRef = useRef<TextInput>(null);
 
-  const [currentItem, setCurrentItem] = useState<CalendarEvent | null>(null);
-  const { addItem } = useCalendarState();
-
-  // Bottomsheet related props
-  // hooks
-  const sheetRef = useRef<BottomSheet>(null);
+  const { addItem, updateItem } = useCalendarState();
 
   // variables
   const snapPoints = useMemo(() => ["20%"], []);
 
   const handleChangeTitle = useCallback(
     (text: string) => {
-      if (currentItem) {
-        setCurrentItem({ ...currentItem, title: text });
+      if (editItem) {
+        setEditItem({ ...editItem, title: text });
       }
     },
-    [currentItem],
+    [editItem, setEditItem],
   );
   const handleChangeDesc = useCallback(
     (text: string) => {
-      if (currentItem) {
-        setCurrentItem({ ...currentItem, desc: text });
+      if (editItem) {
+        setEditItem({ ...editItem, desc: text });
       }
     },
-    [currentItem],
+    [editItem, setEditItem],
   );
 
   const renderBackdrop = useCallback(
@@ -104,14 +105,15 @@ export const AddEventBottomSheet = () => {
 
   const handleOnCloseSheet = useCallback(() => {
     descRef?.current?.blur();
-    eventTitle?.current?.blur();
+    eventTitleTextInputRef?.current?.blur();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddTodoPress = () => {
     sheetRef?.current?.snapToIndex(0);
-    eventTitle?.current?.focus();
-    setCurrentItem({
-      id: new Date(selectedDate.value).toDateString(),
+    eventTitleTextInputRef?.current?.focus();
+    setEditItem({
+      id: Date.now(),
       title: "",
       desc: "",
       date: selectedDate.value,
@@ -128,27 +130,21 @@ export const AddEventBottomSheet = () => {
   };
 
   const handleAddItem = () => {
-    if (currentItem) {
-      if (currentItem.title) {
-        addItem(currentItem);
-        descRef.current?.blur();
-        sheetRef.current?.close();
+    if (editItem) {
+      if (editItem.title) {
+        if (sheetTriggerAction === "EDIT") {
+          updateItem(editItem.id, editItem);
+          setEditItem(null);
+        } else {
+          addItem(editItem);
+        }
       } else {
-        descRef.current?.blur();
-        sheetRef.current?.close();
-        setCurrentItem({
-          id: new Date(selectedDate.value).toDateString(),
-          title: "",
-          desc: "",
-          date: selectedDate.value,
-          startTime: "",
-          endTime: "",
-          height: 0,
-          location: "",
-          type: "CalendarEvent",
-        });
+        setEditItem(null);
       }
+      descRef.current?.blur();
     }
+    setSheetTriggerAction("ADD");
+    sheetRef.current?.close();
   };
 
   return (
@@ -187,9 +183,9 @@ export const AddEventBottomSheet = () => {
             onBlur={() => sheetRef?.current?.snapToIndex(-1)}
             returnKeyType="next"
             onSubmitEditing={goToDesc}
-            value={currentItem?.title}
+            value={editItem?.title}
             // @ts-ignore Avoid textinput props
-            ref={eventTitle}
+            ref={eventTitleTextInputRef}
           />
           <BottomSheetTextInput
             onChangeText={handleChangeDesc}
@@ -199,7 +195,7 @@ export const AddEventBottomSheet = () => {
             onBlur={() => sheetRef?.current?.snapToIndex(-1)}
             returnKeyType="done"
             onSubmitEditing={handleAddItem}
-            value={currentItem?.desc}
+            value={editItem?.desc}
             // @ts-ignore Avoid textinput props
             ref={descRef}
           />

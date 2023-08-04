@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { NativeScrollEvent, Text, View } from "react-native";
+import { NativeScrollEvent, Pressable, Text, View } from "react-native";
 import Animated, {
   runOnJS,
   useAnimatedReaction,
@@ -56,9 +56,21 @@ const CalendarSectionHeader = React.memo(
   },
 );
 
-const CalendarEventItem = React.memo(
-  ({ calendarItem }: CalendarEventItemProps) => {
-    return (
+const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
+  const {
+    sheetRef,
+    setEditItem,
+    eventTitleTextInputRef,
+    setSheetTriggerAction,
+  } = useCalendarContext();
+  const handlePress = (item: typeof calendarItem) => {
+    setEditItem(item);
+    setSheetTriggerAction("EDIT");
+    eventTitleTextInputRef?.current?.focus();
+    sheetRef?.current?.snapToIndex(0);
+  };
+  return (
+    <Pressable onPress={() => handlePress(calendarItem)}>
       <View
         style={tailwind.style(
           "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
@@ -72,9 +84,9 @@ const CalendarEventItem = React.memo(
           {calendarItem.desc}
         </Text>
       </View>
-    );
-  },
-);
+    </Pressable>
+  );
+};
 
 export const CAgenda = () => {
   const {

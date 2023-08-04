@@ -7,7 +7,7 @@ export type SectionHeaderType = {
 };
 
 export type CalendarEvent = {
-  id: string;
+  id: number;
   title: string;
   desc: string;
   date: string;

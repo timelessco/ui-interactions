@@ -9,7 +9,8 @@ export interface ColorComboType {
 interface CalendarEventsStore {
   items: CalendarEvent[];
   addItem: (item: CalendarEvent) => void;
-  removeItem: (id: string) => void;
+  removeItem: (id: number) => void;
+  updateItem: (id: number, updatedItem: CalendarEvent) => void;
 }
 
 const useCalendarState = create<CalendarEventsStore>(set => ({
@@ -18,9 +19,15 @@ const useCalendarState = create<CalendarEventsStore>(set => ({
     set((state: CalendarEventsStore) => ({
       items: [...state.items, item],
     })),
-  removeItem: (id: string) =>
+  removeItem: (id: number) =>
     set((state: CalendarEventsStore) => ({
       items: state.items.filter(item => item.id !== id),
+    })),
+  updateItem: (id: number, updatedItem: CalendarEvent) =>
+    set(state => ({
+      items: state.items.map(item =>
+        item.id === id ? { ...item, ...updatedItem } : item,
+      ),
     })),
 }));
 
