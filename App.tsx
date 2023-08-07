@@ -25,6 +25,7 @@ import {
   AllocationSlider,
   AssetAllocation,
   CalendarAgenda,
+  DynamicGrids,
   DynamicTabBar,
   EventCreation,
   GalleryCarousel,
@@ -82,6 +83,7 @@ export type UIInteractionParamList = {
   "Calendar Agenda": undefined;
   "Maps Screen": undefined;
   "Gallery Carousel": undefined;
+  "Dynamic Grids": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -131,6 +133,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Dynamic Grids",
+    component: DynamicGrids,
+  },
   {
     name: "Gallery Carousel",
     component: GalleryCarousel,
@@ -307,6 +313,7 @@ const App = () => {
             <Stack.Screen name="Asset Allocation" component={AssetAllocation} />
             <Stack.Screen name="Calendar Agenda" component={CalendarAgenda} />
             <Stack.Screen name="Maps Screen" component={MapsScreen} />
+            <Stack.Screen name="Dynamic Grids" component={DynamicGrids} />
             <Stack.Screen name="Gallery Carousel" component={GalleryCarousel} />
           </Stack.Navigator>
         </NavigationContainer>

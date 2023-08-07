@@ -2,6 +2,7 @@ export * from "./AlignInteraction1";
 export * from "./AllocationSlider";
 export * from "./AssetAllocation";
 export * from "./CalendarAgenda";
+export * from "./DynamicGrids";
 export * from "./DynamicTabBar";
 export * from "./EventCreation";
 export * from "./GalleryCarousel";
