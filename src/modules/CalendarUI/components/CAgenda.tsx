@@ -239,6 +239,7 @@ export const CAgenda = () => {
         onLayout={handleOnLayout}
         data={transformedDatesList}
         initialScrollIndex={initialScrollIndex}
+        contentContainerStyle={tailwind.style("pb-40")}
         estimatedItemSize={SECTION_HEADER_HEIGHT}
         scrollEventThrottle={16}
         // stickyHeaderIndices={stickyHeaderIndices}

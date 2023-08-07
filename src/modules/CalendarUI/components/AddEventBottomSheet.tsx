@@ -73,22 +73,16 @@ export const AddEventBottomSheet = () => {
   // variables
   const snapPoints = useMemo(() => ["20%"], []);
 
-  const handleChangeTitle = useCallback(
-    (text: string) => {
-      if (editItem) {
-        setEditItem({ ...editItem, title: text });
-      }
-    },
-    [editItem, setEditItem],
-  );
-  const handleChangeDesc = useCallback(
-    (text: string) => {
-      if (editItem) {
-        setEditItem({ ...editItem, desc: text });
-      }
-    },
-    [editItem, setEditItem],
-  );
+  const handleChangeTitle = (text: string) => {
+    if (editItem) {
+      setEditItem({ ...editItem, title: text });
+    }
+  };
+  const handleChangeDesc = (text: string) => {
+    if (editItem) {
+      setEditItem({ ...editItem, desc: text });
+    }
+  };
 
   const renderBackdrop = useCallback(
     (renderBackdropProps: BottomSheetBackdropProps) => (
@@ -109,7 +103,7 @@ export const AddEventBottomSheet = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAddTodoPress = () => {
+  const handleAddTodoPress = useCallback(() => {
     sheetRef?.current?.snapToIndex(0);
     eventTitleTextInputRef?.current?.focus();
     setEditItem({
@@ -123,7 +117,8 @@ export const AddEventBottomSheet = () => {
       location: "",
       type: "CalendarEvent",
     });
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goToDesc = () => {
     descRef?.current?.focus();
@@ -183,7 +178,7 @@ export const AddEventBottomSheet = () => {
             onBlur={() => sheetRef?.current?.snapToIndex(-1)}
             returnKeyType="next"
             onSubmitEditing={goToDesc}
-            value={editItem?.title}
+            defaultValue={editItem?.title}
             // @ts-ignore Avoid textinput props
             ref={eventTitleTextInputRef}
           />
@@ -195,7 +190,7 @@ export const AddEventBottomSheet = () => {
             onBlur={() => sheetRef?.current?.snapToIndex(-1)}
             returnKeyType="done"
             onSubmitEditing={handleAddItem}
-            value={editItem?.desc}
+            defaultValue={editItem?.desc}
             // @ts-ignore Avoid textinput props
             ref={descRef}
           />
