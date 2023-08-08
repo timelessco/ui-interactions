@@ -13,6 +13,7 @@ export * from "./InputPasswordCheck";
 export * from "./LinkPreviewLookup";
 export * from "./MapsScreen";
 export * from "./MenuInteraction";
+export * from "./OnboardingScreen";
 export * from "./PhotoCollection";
 export * from "./PullToAction";
 export * from "./RadialControl";

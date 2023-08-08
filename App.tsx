@@ -36,6 +36,7 @@ import {
   LinkPreviewLookup,
   MapsScreen,
   MenuInteraction,
+  OnboardingScreen,
   PhotoCollection,
   PullToAction,
   RadialControl,
@@ -84,6 +85,7 @@ export type UIInteractionParamList = {
   "Maps Screen": undefined;
   "Gallery Carousel": undefined;
   "Dynamic Grids": undefined;
+  "Onboarding Screen": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -133,6 +135,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "Onboarding Screen",
+    component: OnboardingScreen,
+  },
   {
     name: "Dynamic Grids",
     component: DynamicGrids,
@@ -315,6 +321,10 @@ const App = () => {
             <Stack.Screen name="Maps Screen" component={MapsScreen} />
             <Stack.Screen name="Dynamic Grids" component={DynamicGrids} />
             <Stack.Screen name="Gallery Carousel" component={GalleryCarousel} />
+            <Stack.Screen
+              name="Onboarding Screen"
+              component={OnboardingScreen}
+            />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
