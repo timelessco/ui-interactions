@@ -1,11 +1,17 @@
 import React, { useMemo, useState } from "react";
-import { NativeScrollEvent, Pressable, Text, View } from "react-native";
+import { NativeScrollEvent, Pressable, Text } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  interpolate,
+  interpolateColor,
   runOnJS,
   useAnimatedReaction,
   useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useDerivedValue,
   useEvent,
   useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
@@ -35,9 +41,9 @@ dayjs.extend(isToday);
 const CalendarSectionHeader = React.memo(
   ({ calendarSection }: CalendarSectionItemProps) => {
     return (
-      <View
+      <Animated.View
         style={tailwind.style(
-          "w-full border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white",
+          "w-full border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white z-0",
           `h-[${SECTION_HEADER_HEIGHT}px]`,
         )}
       >
@@ -51,7 +57,7 @@ const CalendarSectionHeader = React.memo(
           {dayjs(calendarSection.date).isSame(dayjs()) ? "Today" : ""}
           {dayjs(calendarSection.date).format("dddd")}
         </Text>
-      </View>
+      </Animated.View>
     );
   },
 );
@@ -63,28 +69,114 @@ const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
     eventTitleTextInputRef,
     setSheetTriggerAction,
   } = useCalendarContext();
-  const handlePress = (item: typeof calendarItem) => {
-    setEditItem(item);
+  const handlePress = () => {
+    setEditItem(calendarItem);
     setSheetTriggerAction("EDIT");
     eventTitleTextInputRef?.current?.focus();
     sheetRef?.current?.snapToIndex(0);
   };
+
+  const selection = useHaptic();
+  const [moving, setMoving] = useState(false);
+  const top = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  const dragGesture = Gesture.Pan()
+    .activateAfterLongPress(350)
+    .onStart(event => {
+      runOnJS(setMoving)(true);
+      if (selection && !moving) {
+        runOnJS(selection)();
+      }
+      top.value = event.absoluteY;
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
+      console.log("%c⧭", "color: #d0bfff", "Gesture Begin");
+    })
+    .onUpdate(event => {
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
+      console.log("%c⧭", "color: #cc0036", "Gesture Update");
+    })
+    .onEnd(() => {
+      runOnJS(setMoving)(false);
+      top.value = 0;
+      translateX.value = withSpring(0, {
+        damping: 18,
+        stiffness: 120,
+        mass: 1,
+      });
+      translateY.value = withSpring(0, {
+        damping: 18,
+        stiffness: 120,
+        mass: 1,
+      });
+      console.log("%c⧭", "color: #cc0036", "Gesture End");
+    });
+
+  const derivedValue = useDerivedValue(() =>
+    moving ? withSpring(1) : withSpring(0),
+  );
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      position: moving ? "absolute" : "relative",
+      left: 0,
+      right: 0,
+      // top: top.value,
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+      ],
+      backgroundColor: "white",
+      zIndex: interpolate(derivedValue.value, [0, 1], [-10, 9999]),
+      borderRadius: interpolate(derivedValue.value, [0, 1], [0, 12]),
+      width: `${interpolate(derivedValue.value, [0, 1], [100, 80])}%`,
+      shadowColor: interpolateColor(
+        derivedValue.value,
+        [0, 1],
+        ["transparent", "#000"],
+      ),
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.23,
+      shadowRadius: 2.62,
+      elevation: 4,
+    };
+  });
+
+  const tileSelectedStyle = useAnimatedStyle(() => {
+    return {
+      borderBottomWidth: interpolate(derivedValue.value, [0, 1], [1, 0]),
+    };
+  });
+
   return (
-    <Pressable onPress={() => handlePress(calendarItem)}>
-      <View
-        style={tailwind.style(
-          "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
-          `h-[${LIST_ITEM_HEIGHT}px]`,
-        )}
-      >
-        <Text style={tailwind.style("text-lg font-medium text-black")}>
-          {calendarItem.title}
-        </Text>
-        <Text style={tailwind.style("text-sm text-gray-600")}>
-          {calendarItem.desc}
-        </Text>
-      </View>
-    </Pressable>
+    <Animated.View style={animatedStyle}>
+      <GestureDetector gesture={dragGesture}>
+        <Pressable onPress={handlePress}>
+          <Animated.View
+            style={[
+              tailwind.style(
+                "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
+                `h-[${LIST_ITEM_HEIGHT}px]`,
+              ),
+              tileSelectedStyle,
+            ]}
+          >
+            <Text style={tailwind.style("text-lg font-medium text-black")}>
+              {calendarItem.title}
+            </Text>
+            <Text style={tailwind.style("text-sm text-gray-600")}>
+              {calendarItem.desc}
+            </Text>
+          </Animated.View>
+        </Pressable>
+      </GestureDetector>
+    </Animated.View>
   );
 };
 
@@ -239,7 +331,7 @@ export const CAgenda = () => {
         onLayout={handleOnLayout}
         data={transformedDatesList}
         initialScrollIndex={initialScrollIndex}
-        contentContainerStyle={tailwind.style("pb-40")}
+        contentContainerStyle={tailwind.style("pb-10")}
         estimatedItemSize={SECTION_HEADER_HEIGHT}
         scrollEventThrottle={16}
         // stickyHeaderIndices={stickyHeaderIndices}
