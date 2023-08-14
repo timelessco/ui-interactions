@@ -13,6 +13,7 @@ import tailwind from "twrnc";
 import { CAgenda } from "./components/CAgenda";
 import { WeekStrip } from "./components/WeekStrip";
 import { useCalendarContext } from "./context/CalendarProvider";
+import { DraggableProvider } from "./context/DraggableProvider";
 
 type CalendarIconProps = {
   state: SharedValue<number>;
@@ -66,7 +67,9 @@ export const CalendarUI = () => {
         </Pressable>
       </Animated.View>
       <WeekStrip />
-      <CAgenda />
+      <DraggableProvider>
+        <CAgenda />
+      </DraggableProvider>
     </View>
   );
 };

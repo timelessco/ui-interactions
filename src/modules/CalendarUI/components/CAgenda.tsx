@@ -2,8 +2,10 @@ import React, { useMemo, useState } from "react";
 import { NativeScrollEvent, Pressable, Text } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  FadeInLeft,
+  FadeOut,
+  FadeOutRight,
   interpolate,
-  interpolateColor,
   runOnJS,
   useAnimatedReaction,
   useAnimatedScrollHandler,
@@ -13,6 +15,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import tailwind from "twrnc";
@@ -24,6 +27,7 @@ import {
   SECTION_HEADER_HEIGHT,
 } from "../constants";
 import { useCalendarContext } from "../context/CalendarProvider";
+import { useDraggableContext } from "../context/DraggableProvider";
 import { useCalendarState } from "../context/useCalendarState";
 import {
   CalendarEvent,
@@ -69,93 +73,55 @@ const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
     eventTitleTextInputRef,
     setSheetTriggerAction,
   } = useCalendarContext();
+
   const handlePress = () => {
     setEditItem(calendarItem);
     setSheetTriggerAction("EDIT");
     eventTitleTextInputRef?.current?.focus();
     sheetRef?.current?.snapToIndex(0);
   };
+  const { top } = useSafeAreaInsets();
+  const { setDraggingItem, dragY, positionY } = useDraggableContext();
 
   const selection = useHaptic();
-  const [moving, setMoving] = useState(false);
-  const top = useSharedValue(0);
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
 
-  const dragGesture = Gesture.Pan()
-    .activateAfterLongPress(350)
-    .onStart(event => {
-      runOnJS(setMoving)(true);
-      if (selection && !moving) {
-        runOnJS(selection)();
-      }
-      top.value = event.absoluteY;
-      translateX.value = event.translationX;
-      translateY.value = event.translationY;
-      console.log("%c⧭", "color: #d0bfff", "Gesture Begin");
-    })
-    .onUpdate(event => {
-      translateX.value = event.translationX;
-      translateY.value = event.translationY;
-      console.log("%c⧭", "color: #cc0036", "Gesture Update");
-    })
-    .onEnd(() => {
-      runOnJS(setMoving)(false);
-      top.value = 0;
-      translateX.value = withSpring(0, {
-        damping: 18,
-        stiffness: 120,
-        mass: 1,
-      });
-      translateY.value = withSpring(0, {
-        damping: 18,
-        stiffness: 120,
-        mass: 1,
-      });
-      console.log("%c⧭", "color: #cc0036", "Gesture End");
-    });
+  const [moving, setMoving] = useState(false);
 
   const derivedValue = useDerivedValue(() =>
     moving ? withSpring(1) : withSpring(0),
   );
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      position: moving ? "absolute" : "relative",
-      left: 0,
-      right: 0,
-      // top: top.value,
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-      ],
-      backgroundColor: "white",
-      zIndex: interpolate(derivedValue.value, [0, 1], [-10, 9999]),
-      borderRadius: interpolate(derivedValue.value, [0, 1], [0, 12]),
-      width: `${interpolate(derivedValue.value, [0, 1], [100, 80])}%`,
-      shadowColor: interpolateColor(
-        derivedValue.value,
-        [0, 1],
-        ["transparent", "#000"],
-      ),
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.23,
-      shadowRadius: 2.62,
-      elevation: 4,
-    };
-  });
+  const dragGesture = Gesture.Pan()
+    .activateAfterLongPress(350)
+    .onStart(event => {
+      runOnJS(setMoving)(true);
+      runOnJS(setDraggingItem)(calendarItem);
+      if (selection && !moving) {
+        runOnJS(selection)();
+      }
+      dragY.value = event.translationY;
+      positionY.value = event.absoluteY - (top + 60 + 79) - event.y;
+    })
+    .onUpdate(event => {
+      dragY.value = event.translationY;
+    })
+    .onEnd(() => {
+      runOnJS(setMoving)(false);
+      runOnJS(setDraggingItem)(null);
+    });
 
-  const tileSelectedStyle = useAnimatedStyle(() => {
+  const draggingItemFixedStyle = useAnimatedStyle(() => {
     return {
-      borderBottomWidth: interpolate(derivedValue.value, [0, 1], [1, 0]),
+      opacity: interpolate(derivedValue.value, [0, 1], [1, 0.4]),
     };
   });
 
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View
+      entering={FadeInLeft}
+      exiting={FadeOutRight}
+      style={draggingItemFixedStyle}
+    >
       <GestureDetector gesture={dragGesture}>
         <Pressable onPress={handlePress}>
           <Animated.View
@@ -164,7 +130,6 @@ const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
                 "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
                 `h-[${LIST_ITEM_HEIGHT}px]`,
               ),
-              tileSelectedStyle,
             ]}
           >
             <Text style={tailwind.style("text-lg font-medium text-black")}>
@@ -194,6 +159,7 @@ export const CAgenda = () => {
   const hapticSelection = useHaptic();
   const scroll = useSharedValue(0);
 
+  const { draggingItem, dragY, positionY } = useDraggableContext();
   const { items } = useCalendarState();
 
   // This is the code which triggers the two way linking [Scroll Blocking Required
@@ -317,8 +283,63 @@ export const CAgenda = () => {
     runOnJS(setIsMomentumScrollBegin)(true);
   });
 
+  const derivedValue = useDerivedValue(() =>
+    draggingItem !== null
+      ? withSpring(1, { damping: 25, stiffness: 120 })
+      : withSpring(0, { damping: 25, stiffness: 120 }),
+  );
+
+  const animatedDraggingStyle = useAnimatedStyle(() => {
+    return {
+      top: positionY.value,
+      left: 0,
+      right: 0,
+      transform: [{ translateY: dragY.value }],
+      backgroundColor: "rgba(255,255,255,1)",
+      zIndex: 99,
+      opacity: interpolate(derivedValue.value, [0, 1], [0, 1]),
+      paddingHorizontal: 16,
+      marginHorizontal: interpolate(derivedValue.value, [0, 1], [0, 16]),
+      width: interpolate(
+        derivedValue.value,
+        [0, 1],
+        [SCREEN_WIDTH, SCREEN_WIDTH - 16 * 2],
+      ),
+      borderRadius: interpolate(derivedValue.value, [0, 1], [0, 12]),
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.23,
+      shadowRadius: 2.62,
+      elevation: 4,
+    };
+  });
+
   return (
-    <Animated.View style={tailwind.style("flex-1", `w-[${SCREEN_WIDTH}px]`)}>
+    <Animated.View
+      style={[tailwind.style("flex-1 relative", `w-[${SCREEN_WIDTH}px]`)]}
+    >
+      {draggingItem ? (
+        <Animated.View
+          exiting={FadeOut.springify().damping(25).stiffness(120)}
+          style={[
+            tailwind.style(
+              "absolute w-full justify-center",
+              `h-[${LIST_ITEM_HEIGHT}px]`,
+            ),
+            animatedDraggingStyle,
+          ]}
+        >
+          <Text style={tailwind.style("text-lg font-medium text-black")}>
+            {draggingItem.title}
+          </Text>
+          <Text style={tailwind.style("text-sm text-gray-600")}>
+            {draggingItem.desc}
+          </Text>
+        </Animated.View>
+      ) : null}
       <AnimatedFlashList
         // @ts-ignore
         ref={aref}
