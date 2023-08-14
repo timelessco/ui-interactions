@@ -1,19 +1,19 @@
-import { useRef, useState } from "react";
 import {
   Dimensions,
   Pressable,
-  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolate,
   interpolate,
-  runOnJS,
-  useAnimatedScrollHandler,
+  SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  WithSpringConfig,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import tailwind from "twrnc";
@@ -21,12 +21,32 @@ import tailwind from "twrnc";
 const SCREEN_HEIGHT = Dimensions.get("screen").height;
 const SCREEN_WIDTH = Dimensions.get("screen").width;
 
-const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const DEFAULT_SPRING_CONFIG: WithSpringConfig = {
+  velocity: 10,
+  mass: 1,
+  damping: 50,
+  stiffness: 520,
+  overshootClamping: false,
+  restSpeedThreshold: 0.001,
+  restDisplacementThreshold: 0.001,
+};
+type GettingStartedProps = {
+  translateX: SharedValue<number>;
+};
 
-const GettingStarted = () => {
+const GettingStarted = (props: GettingStartedProps) => {
+  const { translateX } = props;
   return (
-    <Animated.View style={tailwind.style(`w-[${SCREEN_WIDTH}px]`, "h-full")}>
+    <Animated.View
+      style={[
+        {
+          ...StyleSheet.absoluteFillObject,
+        },
+        tailwind.style(`w-[${SCREEN_WIDTH}px] pt-10`, "h-full"),
+        { transform: [{ translateX }] },
+      ]}
+    >
       <Animated.View style={tailwind.style("px-4")}>
         <Animated.Image
           style={tailwind.style("h-20 w-20")}
@@ -43,24 +63,33 @@ const GettingStarted = () => {
   );
 };
 
-interface CreateAccountProps {
-  handleFocus: () => void;
-  handleBlur: () => void;
-}
+type CreateAccountProps = {
+  translateX: SharedValue<number>;
+};
 
 const CreateAccount = (props: CreateAccountProps) => {
-  const { handleBlur, handleFocus } = props;
   const { bottom } = useSafeAreaInsets();
+  const { translateX } = props;
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value + SCREEN_WIDTH }],
+    };
+  });
 
   return (
     <Animated.View
-      style={tailwind.style(`w-[${SCREEN_WIDTH}px]`, "relative h-full")}
+      style={[
+        {
+          ...StyleSheet.absoluteFillObject,
+        },
+        tailwind.style(`w-[${SCREEN_WIDTH}px] pt-10`, "relative h-full"),
+        animatedStyle,
+      ]}
     >
       <Animated.View style={tailwind.style("px-4")}>
         <Text style={tailwind.style("text-2xl font-bold")}>Get Started!</Text>
         <TextInput
-          onFocus={handleFocus}
-          onBlur={handleBlur}
           style={tailwind.style(
             "text-lg leading-[21px] mt-2 py-3 border-b-[1px] border-b-[#E3E9ED]",
           )}
@@ -68,8 +97,6 @@ const CreateAccount = (props: CreateAccountProps) => {
           returnKeyType="next"
         />
         <TextInput
-          onFocus={handleFocus}
-          onBlur={handleBlur}
           style={tailwind.style(
             "text-lg leading-[21px] mt-2 py-3 border-b-[1px] border-b-[#E3E9ED]",
           )}
@@ -78,8 +105,6 @@ const CreateAccount = (props: CreateAccountProps) => {
           inputMode="email"
         />
         <TextInput
-          onFocus={handleFocus}
-          onBlur={handleBlur}
           style={tailwind.style(
             "text-lg leading-[21px] mt-2 py-3 border-b-[1px] border-b-[#E3E9ED]",
           )}
@@ -105,43 +130,60 @@ const CreateAccount = (props: CreateAccountProps) => {
 
 export const OnboardingScreen = () => {
   const { bottom } = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
-  const scrollX = useSharedValue(0);
-  const sheetHeight = useSharedValue(0);
+  const translateX = useSharedValue(0);
+  const startTranslation = useSharedValue(0);
+  const offset = useSharedValue(0);
 
-  const [textInputFocussed, setIsTextInputFocussed] = useState(false);
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: event => {
-      scrollX.value = event.contentOffset.x;
-      if (!textInputFocussed) {
-        sheetHeight.value = event.contentOffset.x;
+  const panGesture = Gesture.Pan()
+    .onBegin(() => {
+      startTranslation.value = translateX.value;
+    })
+    .onUpdate(event => {
+      translateX.value = event.translationX + startTranslation.value;
+    })
+    .onEnd(event => {
+      if (offset.value === 0) {
+        if (event.velocityX < 0 && Math.abs(event.velocityX) > 1500) {
+          translateX.value = withSpring(-SCREEN_WIDTH, DEFAULT_SPRING_CONFIG);
+          offset.value = 1;
+          return;
+        }
+        if (event.translationX > 0) {
+          translateX.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+        } else {
+          if (Math.abs(event.translationX) > SCREEN_WIDTH / 2) {
+            translateX.value = withSpring(-SCREEN_WIDTH, DEFAULT_SPRING_CONFIG);
+            offset.value = 1;
+          } else {
+            translateX.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+          }
+        }
+      } else if (offset.value === 1) {
+        if (event.velocityX > 0 && Math.abs(event.velocityX) > 1500) {
+          translateX.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+          offset.value = 0;
+          return;
+        }
+        if (event.translationX < 0) {
+          translateX.value = withSpring(-SCREEN_WIDTH, DEFAULT_SPRING_CONFIG);
+        } else {
+          if (Math.abs(event.translationX) > SCREEN_WIDTH / 2) {
+            translateX.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+            offset.value = 0;
+          } else {
+            translateX.value = withSpring(-SCREEN_WIDTH, DEFAULT_SPRING_CONFIG);
+          }
+        }
       }
-    },
-  });
+    });
 
   const animatedSheetStyle = useAnimatedStyle(() => {
     return {
       height: interpolate(
-        sheetHeight.value,
-        [0, SCREEN_WIDTH, SCREEN_WIDTH * 2],
-        [SCREEN_HEIGHT * 0.45, SCREEN_HEIGHT * 0.55, SCREEN_HEIGHT * 0.9],
-      ),
-    };
-  });
-
-  const continueAnimatingStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(scrollX.value, [0, SCREEN_WIDTH / 2], [1, 0]),
-    };
-  });
-
-  const createAccountAnimatingStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(
-        scrollX.value,
-        [SCREEN_WIDTH / 2, SCREEN_WIDTH],
-        [0, 1],
+        translateX.value,
+        [0, -SCREEN_WIDTH],
+        [SCREEN_HEIGHT * 0.45, SCREEN_HEIGHT * 0.55],
+        Extrapolate.CLAMP,
       ),
     };
   });
@@ -149,52 +191,44 @@ export const OnboardingScreen = () => {
   const animatingButtonStyle = useAnimatedStyle(() => {
     return {
       width: interpolate(
-        sheetHeight.value,
-        [0, SCREEN_WIDTH],
+        translateX.value,
+        [0, -SCREEN_WIDTH],
         [SCREEN_WIDTH * 0.3, SCREEN_WIDTH * 0.5],
         Extrapolate.CLAMP,
       ),
       bottom: interpolate(
-        sheetHeight.value,
-        [0, SCREEN_WIDTH, SCREEN_WIDTH * 2],
-        [bottom, bottom * 3.9 + 10, bottom * 13],
+        translateX.value,
+        [0, -SCREEN_WIDTH],
+        [bottom, bottom * 3.9 + 10],
+        Extrapolate.CLAMP,
+      ),
+    };
+  });
+
+  const continueAnimatingStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(translateX.value, [0, -SCREEN_WIDTH / 2], [1, 0]),
+    };
+  });
+
+  const createAccountAnimatingStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(
+        translateX.value,
+        [-SCREEN_WIDTH / 2, -SCREEN_WIDTH],
+        [0, 1],
       ),
     };
   });
 
   const handlePress = () => {
-    if (scrollX.value === 0) {
-      scrollRef.current?.scrollTo({ x: SCREEN_WIDTH, animated: true });
-      scrollX.value = withSpring(SCREEN_WIDTH, { damping: 20, stiffness: 150 });
-      setIsTextInputFocussed(true);
-      sheetHeight.value = withSpring(
-        SCREEN_WIDTH,
-        {
-          damping: 20,
-          stiffness: 120,
-        },
-        () => {
-          runOnJS(setIsTextInputFocussed)(false);
-        },
-      );
+    if (offset.value === 0) {
+      translateX.value = withSpring(-SCREEN_WIDTH, DEFAULT_SPRING_CONFIG);
+      offset.value = 1;
+    } else if (offset.value === 1) {
+      translateX.value = withSpring(0, DEFAULT_SPRING_CONFIG);
+      offset.value = 0;
     }
-  };
-
-  const handleFocus = () => {
-    setIsTextInputFocussed(true);
-    scrollRef.current?.scrollTo({ x: SCREEN_WIDTH, animated: true });
-    sheetHeight.value = withSpring(SCREEN_WIDTH * 2, {
-      damping: 20,
-      stiffness: 150,
-    });
-  };
-
-  const handleBlur = () => {
-    setIsTextInputFocussed(false);
-    sheetHeight.value = withSpring(SCREEN_WIDTH, {
-      damping: 20,
-      stiffness: 150,
-    });
   };
 
   return (
@@ -213,21 +247,12 @@ export const OnboardingScreen = () => {
           animatedSheetStyle,
         ]}
       >
-        <AnimatedScrollView
-          ref={scrollRef}
-          directionalLockEnabled
-          bounces={false}
-          style={tailwind.style("pt-8")}
-          showsHorizontalScrollIndicator={false}
-          horizontal
-          snapToInterval={SCREEN_WIDTH}
-          decelerationRate={0}
-          scrollEventThrottle={16}
-          onScroll={scrollHandler}
-        >
-          <GettingStarted />
-          <CreateAccount handleBlur={handleBlur} handleFocus={handleFocus} />
-        </AnimatedScrollView>
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={tailwind.style("flex-1 flex-row")}>
+            <GettingStarted translateX={translateX} />
+            <CreateAccount translateX={translateX} />
+          </Animated.View>
+        </GestureDetector>
         <AnimatedPressable
           onPress={handlePress}
           style={[
