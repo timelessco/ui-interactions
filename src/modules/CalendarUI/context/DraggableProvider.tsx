@@ -7,7 +7,9 @@ interface DraggableContextType {
   draggingItem: CalendarEvent | null;
   setDraggingItem: React.Dispatch<React.SetStateAction<CalendarEvent | null>>;
   dragY: SharedValue<number>;
+  dragX: SharedValue<number>;
   positionY: SharedValue<number>;
+  currentDraggingItem: SharedValue<number>;
 }
 
 const DraggableContext = React.createContext<DraggableContextType | undefined>(
@@ -30,8 +32,11 @@ const DraggableProvider: React.FC<
 > = props => {
   const { children } = props;
   const [draggingItem, setDraggingItem] = useState<CalendarEvent | null>(null);
+
   const dragY = useSharedValue(0);
+  const dragX = useSharedValue(0);
   const positionY = useSharedValue(0);
+  const currentDraggingItem = useSharedValue(0);
 
   return (
     <DraggableContext.Provider
@@ -39,7 +44,9 @@ const DraggableProvider: React.FC<
         draggingItem,
         setDraggingItem,
         dragY,
+        dragX,
         positionY,
+        currentDraggingItem,
       }}
     >
       {children}

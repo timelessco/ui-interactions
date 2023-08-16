@@ -1,3 +1,5 @@
+import { SharedValue } from "react-native-reanimated";
+
 export type SectionHeaderType = {
   date: string;
   index: number;
@@ -21,9 +23,12 @@ export type CalendarEvent = {
 export type CalendarSectionItemProps = {
   calendarSection: SectionHeaderType;
   index: number;
+  dropIndex: SharedValue<number>;
 };
 
 export type CalendarEventItemProps = {
   calendarItem: CalendarEvent;
   index: number;
+  scroll: SharedValue<number>;
+  dropIndex: SharedValue<number>;
 };

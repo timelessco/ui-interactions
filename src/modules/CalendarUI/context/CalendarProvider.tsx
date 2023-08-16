@@ -4,6 +4,7 @@ import { SharedValue, useSharedValue } from "react-native-reanimated";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
+import { useDeepCompareMemo } from "use-deep-compare";
 
 import {
   DEFAULT_PROPS,
@@ -30,6 +31,8 @@ interface CalendarContextType {
   sheetTriggerAction: "EDIT" | "ADD";
   setSheetTriggerAction: React.Dispatch<React.SetStateAction<"EDIT" | "ADD">>;
   eventTitleTextInputRef: React.RefObject<TextInput>;
+  flatlistOffsets: number[];
+  moveItem: (fromIndex: number, toIndex: number) => void;
 }
 
 const CalendarContext = React.createContext<CalendarContextType | undefined>(
@@ -105,6 +108,36 @@ const CalendarProvider: React.FC<
     | CalendarEvent
   )[];
 
+  const moveItem = (fromIndex: number, toIndex: number) => {
+    if (
+      fromIndex === toIndex ||
+      fromIndex < 0 ||
+      fromIndex >= transformedDatesList.length ||
+      toIndex < 0 ||
+      toIndex >= transformedDatesList.length
+    ) {
+      // Invalid indices or no movement needed
+      return;
+    }
+
+    const itemToMove = transformedDatesList.splice(fromIndex, 1)[0];
+    transformedDatesList.splice(toIndex, 0, itemToMove);
+  };
+
+  const flatlistOffsets = useDeepCompareMemo(() => {
+    let cumulativeOffset = 0;
+    const offsets = transformedDatesList.map(item => {
+      if (item.type === "HeaderItem") {
+        cumulativeOffset = item.offsetY;
+        return item.offsetY;
+      } else {
+        cumulativeOffset += LIST_ITEM_HEIGHT;
+        return cumulativeOffset;
+      }
+    });
+    return offsets;
+  }, [transformedDatesList, items]);
+
   return (
     <CalendarContext.Provider
       value={{
@@ -122,6 +155,8 @@ const CalendarProvider: React.FC<
         setEditItem,
         setSheetTriggerAction,
         sheetTriggerAction,
+        flatlistOffsets,
+        moveItem,
       }}
     >
       {children}

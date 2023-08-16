@@ -2,10 +2,9 @@ import React, { useMemo, useState } from "react";
 import { NativeScrollEvent, Pressable, Text } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
-  FadeInLeft,
   FadeOut,
-  FadeOutRight,
   interpolate,
+  Layout,
   runOnJS,
   useAnimatedReaction,
   useAnimatedScrollHandler,
@@ -23,6 +22,7 @@ import tailwind from "twrnc";
 import { useHaptic } from "../../../utils/useHaptic";
 import {
   LIST_ITEM_HEIGHT,
+  SCREEN_HEIGHT,
   SCREEN_WIDTH,
   SECTION_HEADER_HEIGHT,
 } from "../constants";
@@ -43,11 +43,33 @@ var isToday = require("dayjs/plugin/isToday");
 dayjs.extend(isToday);
 
 const CalendarSectionHeader = React.memo(
-  ({ calendarSection }: CalendarSectionItemProps) => {
+  ({ calendarSection, index, dropIndex }: CalendarSectionItemProps) => {
+    const selection = useHaptic();
+    const { currentDraggingItem } = useDraggableContext();
+
+    const derivedPositionValue = useDerivedValue(() => {
+      const isDropIndexSame =
+        index !== currentDraggingItem.value &&
+        dropIndex.value === index &&
+        currentDraggingItem.value !== dropIndex.value - 1;
+
+      if (isDropIndexSame && selection) {
+        runOnJS(selection)();
+      }
+      return isDropIndexSame ? withSpring(1) : withSpring(0);
+    });
+
+    const animatedDropPositionStyle = useAnimatedStyle(() => {
+      return {
+        opacity: interpolate(derivedPositionValue.value, [0, 1], [0, 1]),
+      };
+    });
+
     return (
       <Animated.View
+        key={calendarSection.date}
         style={tailwind.style(
-          "w-full border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white z-0",
+          "relative w-full border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white z-0",
           `h-[${SECTION_HEADER_HEIGHT}px]`,
         )}
       >
@@ -61,17 +83,79 @@ const CalendarSectionHeader = React.memo(
           {dayjs(calendarSection.date).isSame(dayjs()) ? "Today" : ""}
           {dayjs(calendarSection.date).format("dddd")}
         </Text>
+        <Animated.View
+          style={[
+            tailwind.style(
+              "absolute left-0 right-0 top-[-1px] h-[1px] bg-black ml-4 z-10",
+            ),
+            animatedDropPositionStyle,
+          ]}
+        >
+          <Animated.View
+            style={[
+              tailwind.style("absolute -top-1 h-2 w-2 rounded-full bg-black"),
+            ]}
+          />
+        </Animated.View>
       </Animated.View>
     );
   },
 );
 
-const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
+function customAbs(x: number) {
+  "worklet";
+
+  return x < 0 ? -x : x;
+}
+
+function customFloor(x: number) {
+  "worklet";
+
+  return x - (x % 1);
+}
+
+function findClosestOffsetIndex(scrollY: number, offsets: number[]) {
+  "worklet";
+  let left = 0;
+  let right = offsets.length - 1;
+  let closestIndex = 0;
+  let closestDifference = customAbs(scrollY - offsets[0]);
+
+  while (left <= right) {
+    const mid = customFloor((left + right) / 2);
+    const difference = customAbs(scrollY - offsets[mid]);
+
+    if (difference < closestDifference) {
+      closestDifference = difference;
+      closestIndex = mid;
+    }
+
+    if (scrollY < offsets[mid]) {
+      right = mid - 1;
+    } else if (scrollY > offsets[mid]) {
+      left = mid + 1;
+    } else {
+      // Found an exact match, no need to search further
+      return mid;
+    }
+  }
+
+  return closestIndex;
+}
+
+const CalendarEventItem = ({
+  calendarItem,
+  scroll,
+  index,
+  dropIndex,
+}: CalendarEventItemProps) => {
   const {
     sheetRef,
     setEditItem,
     eventTitleTextInputRef,
     setSheetTriggerAction,
+    flatlistOffsets,
+    moveItem,
   } = useCalendarContext();
 
   const handlePress = () => {
@@ -80,8 +164,9 @@ const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
     eventTitleTextInputRef?.current?.focus();
     sheetRef?.current?.snapToIndex(0);
   };
-  const { top } = useSafeAreaInsets();
-  const { setDraggingItem, dragY, positionY } = useDraggableContext();
+  const { top, bottom } = useSafeAreaInsets();
+  const { setDraggingItem, currentDraggingItem, dragY, dragX, positionY } =
+    useDraggableContext();
 
   const selection = useHaptic();
 
@@ -92,42 +177,90 @@ const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
   );
 
   const dragGesture = Gesture.Pan()
+    .maxPointers(1)
     .activateAfterLongPress(350)
     .onStart(event => {
+      currentDraggingItem.value = index;
       runOnJS(setMoving)(true);
       runOnJS(setDraggingItem)(calendarItem);
       if (selection && !moving) {
         runOnJS(selection)();
       }
       dragY.value = event.translationY;
+      dragX.value = event.translationX;
       positionY.value = event.absoluteY - (top + 60 + 79) - event.y;
     })
     .onUpdate(event => {
-      dragY.value = event.translationY;
+      const dragFactor = event.absoluteY - (top + 60 + 79);
+      const visibleHeight = SCREEN_HEIGHT - (top + 60 + 79) - (bottom + 30);
+
+      const mappedScrollY =
+        scroll.value + (dragFactor / visibleHeight) * visibleHeight;
+      const closestDropIndex = findClosestOffsetIndex(
+        mappedScrollY,
+        flatlistOffsets,
+      );
+
+      dropIndex.value = closestDropIndex;
+      // These are top and bottom boundaries, beyond which scrolling should happen and drag is stopped
+      if (
+        dragFactor > SECTION_HEADER_HEIGHT + SECTION_HEADER_HEIGHT / 2 &&
+        dragFactor < visibleHeight
+      ) {
+        dragY.value = event.translationY;
+        dragX.value = event.translationX;
+      }
     })
     .onEnd(() => {
+      runOnJS(moveItem)(
+        currentDraggingItem.value,
+        currentDraggingItem.value >= dropIndex.value
+          ? dropIndex.value
+          : dropIndex.value - 1,
+      );
+      dropIndex.value = -1;
       runOnJS(setMoving)(false);
       runOnJS(setDraggingItem)(null);
+      currentDraggingItem.value = -1;
     });
 
-  const draggingItemFixedStyle = useAnimatedStyle(() => {
+  const draggingItemStyle = useAnimatedStyle(() => {
     return {
+      zIndex: 0,
       opacity: interpolate(derivedValue.value, [0, 1], [1, 0.4]),
+    };
+  });
+
+  const derivedPositionValue = useDerivedValue(() => {
+    const isDropIndexSame =
+      index !== currentDraggingItem.value &&
+      dropIndex.value === index &&
+      currentDraggingItem.value !== dropIndex.value - 1;
+
+    if (isDropIndexSame && selection) {
+      runOnJS(selection)();
+    }
+    return isDropIndexSame ? withSpring(1) : withSpring(0);
+  });
+
+  const animatedDropPositionStyle = useAnimatedStyle(() => {
+    return {
+      opacity: interpolate(derivedPositionValue.value, [0, 1], [0, 1]),
     };
   });
 
   return (
     <Animated.View
-      entering={FadeInLeft}
-      exiting={FadeOutRight}
-      style={draggingItemFixedStyle}
+      key={calendarItem.id}
+      layout={Layout.springify().damping(18).stiffness(120)}
+      style={draggingItemStyle}
     >
       <GestureDetector gesture={dragGesture}>
         <Pressable onPress={handlePress}>
           <Animated.View
             style={[
               tailwind.style(
-                "w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
+                "relative w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
                 `h-[${LIST_ITEM_HEIGHT}px]`,
               ),
             ]}
@@ -138,6 +271,20 @@ const CalendarEventItem = ({ calendarItem }: CalendarEventItemProps) => {
             <Text style={tailwind.style("text-sm text-gray-600")}>
               {calendarItem.desc}
             </Text>
+            <Animated.View
+              style={[
+                tailwind.style(
+                  "absolute left-0 right-0 top-[-1px] h-[1px] bg-black z-10",
+                ),
+                animatedDropPositionStyle,
+              ]}
+            >
+              <Animated.View
+                style={tailwind.style(
+                  "absolute -top-1 h-2 w-2 rounded-full bg-black",
+                )}
+              />
+            </Animated.View>
           </Animated.View>
         </Pressable>
       </GestureDetector>
@@ -158,8 +305,8 @@ export const CAgenda = () => {
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
   const hapticSelection = useHaptic();
   const scroll = useSharedValue(0);
-
-  const { draggingItem, dragY, positionY } = useDraggableContext();
+  const dropIndex = useSharedValue(-1);
+  const { draggingItem, dragY, dragX, positionY } = useDraggableContext();
   const { items } = useCalendarState();
 
   // This is the code which triggers the two way linking [Scroll Blocking Required
@@ -264,9 +411,10 @@ export const CAgenda = () => {
     const scrollIndex = transformedDatesList.findIndex(
       value => value.date === currentIndex[0].date,
     );
-
+    scroll.value =
+      currentIndex[0].type === "HeaderItem" ? currentIndex[0].offsetY : 0;
     return scrollIndex;
-  }, [selectedDate.value, transformedDatesList]);
+  }, [scroll, selectedDate.value, transformedDatesList]);
 
   const _onScrollEndDrag = useEvent((event: NativeScrollEvent) => {
     "worklet";
@@ -294,8 +442,8 @@ export const CAgenda = () => {
       top: positionY.value,
       left: 0,
       right: 0,
-      transform: [{ translateY: dragY.value }],
-      backgroundColor: "rgba(255,255,255,1)",
+      transform: [{ translateY: dragY.value }, { translateX: dragX.value }],
+      backgroundColor: "rgba(255,255,255,0.8)",
       zIndex: 99,
       opacity: interpolate(derivedValue.value, [0, 1], [0, 1]),
       paddingHorizontal: 16,
@@ -306,14 +454,14 @@ export const CAgenda = () => {
         [SCREEN_WIDTH, SCREEN_WIDTH - 16 * 2],
       ),
       borderRadius: interpolate(derivedValue.value, [0, 1], [0, 12]),
-      shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.23,
-      shadowRadius: 2.62,
-      elevation: 4,
+      // shadowColor: "#000",
+      // shadowOffset: {
+      //   width: 0,
+      //   height: 2,
+      // },
+      // shadowOpacity: 0.23,
+      // shadowRadius: 2.62,
+      // elevation: 4,
     };
   });
 
@@ -387,6 +535,7 @@ export const CAgenda = () => {
               <CalendarSectionHeader
                 index={index}
                 calendarSection={item as SectionHeaderType}
+                dropIndex={dropIndex}
               />
             );
           }
@@ -394,6 +543,8 @@ export const CAgenda = () => {
             <CalendarEventItem
               index={index}
               calendarItem={item as CalendarEvent}
+              scroll={scroll}
+              dropIndex={dropIndex}
             />
           );
         }}
