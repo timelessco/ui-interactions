@@ -47,17 +47,17 @@ const useCalendarContext = (): CalendarContextType => {
 };
 
 // Useful in finding the Header Item of the moved Item in the Flatlist
-// const findNearestHeaderItem = (
-//   array: (SectionHeaderType | CalendarEvent)[],
-//   index: number,
-// ) => {
-//   for (let i = index - 1; i >= 0; i--) {
-//     const item = array[i];
-//     if (item.type === "HeaderItem") {
-//       return item;
-//     }
-//   }
-// };
+const findNearestHeaderItem = (
+  array: (SectionHeaderType | CalendarEvent)[],
+  index: number,
+) => {
+  for (let i = index - 1; i >= 0; i--) {
+    const item = array[i];
+    if (item.type === "HeaderItem") {
+      return item;
+    }
+  }
+};
 
 const CalendarProvider: React.FC<
   Partial<CalendarContextType & { children: React.ReactNode }>
@@ -72,7 +72,7 @@ const CalendarProvider: React.FC<
     "ADD",
   );
 
-  const { items } = useCalendarItemsState();
+  const { items, updateItem } = useCalendarItemsState();
 
   const { children } = props;
 
@@ -87,7 +87,9 @@ const CalendarProvider: React.FC<
     (dateList: typeof pages.day.data) => {
       let cumulativeOffset = 0;
       const convertedDates = dateList.map((date, index) => {
-        const dateItems = items.filter(item => item.date === date);
+        const dateItems = items
+          .filter(item => item.date === date)
+          .sort((a, b) => a.order - b.order);
         const currentOffset = cumulativeOffset;
         // Update cumulativeOffset to include the current dateItems length
         cumulativeOffset += dateItems.length * LIST_ITEM_HEIGHT;
@@ -113,6 +115,24 @@ const CalendarProvider: React.FC<
     | CalendarEvent
   )[];
 
+  const decrementOrderAfterIndex = (index: number, events: CalendarEvent[]) => {
+    events.map(event => {
+      updateItem(event.id, {
+        ...event,
+        order: event.order > index ? event.order - 1 : event.order,
+      });
+    });
+  };
+
+  const incrementOrderAfterIndex = (index: number, events: CalendarEvent[]) => {
+    events.map(event => {
+      updateItem(event.id, {
+        ...event,
+        order: event.order >= index ? event.order + 1 : event.order,
+      });
+    });
+  };
+
   const moveItem = (fromIndex: number, toIndex: number) => {
     if (
       fromIndex === toIndex ||
@@ -125,8 +145,61 @@ const CalendarProvider: React.FC<
       return;
     }
 
-    const itemToMove = transformedDatesList.splice(fromIndex, 1)[0];
+    //  The Dragging Item
+    const itemToMove = transformedDatesList.splice(
+      fromIndex,
+      1,
+    )[0] as CalendarEvent;
+
+    // The toIndex section data
+    const toIndexSectionHeaderData = findNearestHeaderItem(
+      transformedDatesList,
+      toIndex,
+    ) as SectionHeaderType;
+    // Find new order
+    const newOrder =
+      toIndex -
+      transformedDatesList.findIndex(
+        value => value.date === toIndexSectionHeaderData?.date,
+      );
+
     transformedDatesList.splice(toIndex, 0, itemToMove);
+
+    setTimeout(() => {
+      // The fromIndex section data
+      const fromIndexSectionHeaderData = findNearestHeaderItem(
+        transformedDatesList,
+        fromIndex,
+      ) as SectionHeaderType;
+
+      // The Items under the from section -> sorted based on order
+      const itemsPartOfFromSection = items
+        .filter(value => value.date === fromIndexSectionHeaderData?.date)
+        .sort((a, b) => a.order - b.order);
+
+      const draggingItemIndexInSortedItemsOfSection =
+        itemsPartOfFromSection.findIndex(value => value.id === itemToMove.id);
+
+      // Function to update the order from the dragging position item
+      decrementOrderAfterIndex(
+        draggingItemIndexInSortedItemsOfSection,
+        itemsPartOfFromSection,
+      );
+
+      // The Items under the to section -> sorted based on order
+      const itemsPartOfToSection = items
+        .filter(value => value.date === toIndexSectionHeaderData?.date)
+        .sort((a, b) => a.order - b.order);
+
+      // Now we need to update the order of the dragging item
+      updateItem(itemToMove.id, {
+        ...itemToMove,
+        date: toIndexSectionHeaderData?.date,
+        order: newOrder,
+      });
+
+      incrementOrderAfterIndex(newOrder, itemsPartOfToSection);
+    }, 0.01);
   };
 
   const flatlistOffsets = useDeepCompareMemo(() => {
