@@ -10,12 +10,12 @@ export type SectionHeaderType = {
 
 export type CalendarEvent = {
   id: number;
+  order: number;
   title: string;
   desc: string;
   date: string;
   startTime: string;
   endTime: string;
-  height: number;
   location: string;
   type: "CalendarEvent";
 };

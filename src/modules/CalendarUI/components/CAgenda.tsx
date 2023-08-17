@@ -29,7 +29,7 @@ import {
 import { useCalendarContext } from "../context/CalendarProvider";
 import { useDraggableContext } from "../context/DraggableProvider";
 import { useRefsContext } from "../context/RefsProvider";
-import { useCalendarState } from "../context/useCalendarState";
+import { useCalendarItemsState } from "../context/useCalendarItemsState";
 import {
   CalendarEvent,
   CalendarEventItemProps,
@@ -276,7 +276,7 @@ const CalendarEventItem = ({
               {calendarItem.title}
             </Text>
             <Text style={tailwind.style("text-sm text-gray-600")}>
-              {calendarItem.desc}
+              {calendarItem.desc} - {index} - {calendarItem.order}
             </Text>
             <Animated.View
               style={[
@@ -314,7 +314,7 @@ export const CAgenda = () => {
   const hapticSelection = useHaptic();
   const scroll = useSharedValue(0);
   const { draggingItem, dragY, dragX, positionY } = useDraggableContext();
-  const { items } = useCalendarState();
+  const { items } = useCalendarItemsState();
 
   // This is the code which triggers the two way linking [Scroll Blocking Required
   const manualScroll = (newSelectedDate: string) => {

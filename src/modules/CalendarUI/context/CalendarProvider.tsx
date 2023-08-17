@@ -12,7 +12,7 @@ import {
 import { CalendarEvent, SectionHeaderType } from "../types/calendarTypes";
 import { calculateDates } from "../utils";
 
-import { useCalendarState } from "./useCalendarState";
+import { useCalendarItemsState } from "./useCalendarItemsState";
 
 interface CalendarContextType {
   selectedDate: SharedValue<string>;
@@ -46,6 +46,19 @@ const useCalendarContext = (): CalendarContextType => {
   return context;
 };
 
+// Useful in finding the Header Item of the moved Item in the Flatlist
+// const findNearestHeaderItem = (
+//   array: (SectionHeaderType | CalendarEvent)[],
+//   index: number,
+// ) => {
+//   for (let i = index - 1; i >= 0; i--) {
+//     const item = array[i];
+//     if (item.type === "HeaderItem") {
+//       return item;
+//     }
+//   }
+// };
+
 const CalendarProvider: React.FC<
   Partial<CalendarContextType & { children: React.ReactNode }>
 > = props => {
@@ -59,7 +72,7 @@ const CalendarProvider: React.FC<
     "ADD",
   );
 
-  const { items } = useCalendarState();
+  const { items } = useCalendarItemsState();
 
   const { children } = props;
 

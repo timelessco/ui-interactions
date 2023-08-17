@@ -20,7 +20,7 @@ import tailwind from "twrnc";
 import { AddIcon } from "../../../icons/maps";
 import { useCalendarContext } from "../context/CalendarProvider";
 import { useRefsContext } from "../context/RefsProvider";
-import { useCalendarState } from "../context/useCalendarState";
+import { useCalendarItemsState } from "../context/useCalendarItemsState";
 
 /**
  * "If you pass a string to this function, it will return a string."
@@ -70,7 +70,7 @@ export const AddEventBottomSheet = () => {
 
   const descRef = useRef<TextInput>(null);
 
-  const { addItem, updateItem } = useCalendarState();
+  const { addItem, updateItem } = useCalendarItemsState();
 
   // variables
   const snapPoints = useMemo(() => ["20%"], []);
