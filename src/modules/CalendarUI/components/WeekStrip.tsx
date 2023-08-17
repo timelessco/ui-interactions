@@ -15,6 +15,7 @@ import {
   week,
 } from "../constants";
 import { useCalendarContext } from "../context/CalendarProvider";
+import { useRefsContext } from "../context/RefsProvider";
 import { SectionHeaderType } from "../types/calendarTypes";
 import { calculateDates, previousMultipleOfSeven } from "../utils";
 
@@ -73,7 +74,9 @@ const CalendarDay = (props: any) => {
 };
 
 export const WeekStrip = () => {
-  const { selectedDate, weekListRef: wref } = useCalendarContext();
+  const { selectedDate } = useCalendarContext();
+  const { weekListRef: wref } = useRefsContext();
+
   const pages = calculateDates(
     DEFAULT_PROPS.FIRST_DAY,
     DEFAULT_PROPS.MIN_DATE,

@@ -2,7 +2,6 @@ import React, { useCallback, useRef, useState } from "react";
 import { TextInput } from "react-native";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
 import BottomSheet from "@gorhom/bottom-sheet";
-import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import { useDeepCompareMemo } from "use-deep-compare";
 
@@ -18,8 +17,6 @@ import { useCalendarState } from "./useCalendarState";
 
 interface CalendarContextType {
   selectedDate: SharedValue<string>;
-  agendaListRef: React.RefObject<FlashList<string>>;
-  weekListRef: React.RefObject<FlashList<string>>;
   transformedDatesList: (CalendarEvent | SectionHeaderType)[];
   isManualScrolling: boolean;
   setIsManualScrolling: React.Dispatch<React.SetStateAction<boolean>>;
@@ -54,8 +51,6 @@ const useCalendarContext = (): CalendarContextType => {
 const CalendarProvider: React.FC<
   Partial<CalendarContextType & { children: React.ReactNode }>
 > = props => {
-  const aref = useRef<FlashList<string>>(null);
-  const wref = useRef<FlashList<string>>(null);
   const sheetRef = useRef<BottomSheet>(null);
   const eventTitleTextInputRef = useRef<TextInput>(null);
 
@@ -142,8 +137,6 @@ const CalendarProvider: React.FC<
     <CalendarContext.Provider
       value={{
         selectedDate: today,
-        agendaListRef: aref,
-        weekListRef: wref,
         sheetRef,
         eventTitleTextInputRef,
         transformedDatesList,

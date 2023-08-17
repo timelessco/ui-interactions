@@ -28,6 +28,7 @@ import {
 } from "../constants";
 import { useCalendarContext } from "../context/CalendarProvider";
 import { useDraggableContext } from "../context/DraggableProvider";
+import { useRefsContext } from "../context/RefsProvider";
 import { useCalendarState } from "../context/useCalendarState";
 import {
   CalendarEvent,
@@ -300,12 +301,13 @@ const CalendarEventItem = ({
 export const CAgenda = () => {
   const {
     selectedDate,
-    agendaListRef: aref,
     transformedDatesList,
     isManualScrolling,
     setIsManualScrolling,
     setIsMomentumScrollBegin,
   } = useCalendarContext();
+
+  const { agendaListRef: aref } = useRefsContext();
 
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
   const hapticSelection = useHaptic();
