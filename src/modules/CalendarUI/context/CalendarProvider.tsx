@@ -156,49 +156,69 @@ const CalendarProvider: React.FC<
       transformedDatesList,
       toIndex,
     ) as SectionHeaderType;
+    // The fromIndex section data
+    const fromIndexSectionHeaderData = findNearestHeaderItem(
+      transformedDatesList,
+      fromIndex,
+    ) as SectionHeaderType;
+
+    // The Items under the from section -> sorted based on order
+    const itemsPartOfFromSection = items
+      .filter(value => value.date === fromIndexSectionHeaderData?.date)
+      .sort((a, b) => a.order - b.order);
+
+    const draggingItemIndexInSortedItemsOfSection =
+      itemsPartOfFromSection.findIndex(value => value.id === itemToMove.id);
+
     // Find new order
     const newOrder =
       toIndex -
       transformedDatesList.findIndex(
         value => value.date === toIndexSectionHeaderData?.date,
       );
+    // The Items under the to section -> sorted based on order
+    const itemsPartOfToSection = items
+      .filter(value => value.date === toIndexSectionHeaderData?.date)
+      .sort((a, b) => a.order - b.order);
 
     transformedDatesList.splice(toIndex, 0, itemToMove);
 
     setTimeout(() => {
-      // The fromIndex section data
-      const fromIndexSectionHeaderData = findNearestHeaderItem(
-        transformedDatesList,
-        fromIndex,
-      ) as SectionHeaderType;
+      if (fromIndexSectionHeaderData.date !== toIndexSectionHeaderData.date) {
+        // Function to decrease the order in items before the dragging position item
+        decrementOrderAfterIndex(
+          draggingItemIndexInSortedItemsOfSection,
+          itemsPartOfFromSection,
+        );
 
-      // The Items under the from section -> sorted based on order
-      const itemsPartOfFromSection = items
-        .filter(value => value.date === fromIndexSectionHeaderData?.date)
-        .sort((a, b) => a.order - b.order);
+        // Now we need to update the order of the dragging item
+        updateItem(itemToMove.id, {
+          ...itemToMove,
+          date: toIndexSectionHeaderData?.date,
+          order: newOrder,
+        });
 
-      const draggingItemIndexInSortedItemsOfSection =
-        itemsPartOfFromSection.findIndex(value => value.id === itemToMove.id);
+        // Function to increase the order in items after the dragging position item
+        incrementOrderAfterIndex(newOrder, itemsPartOfToSection);
+      } else {
+        // Reordering from and to index are part of same section
+        const itemsPartOfSection = items
+          .filter(
+            value =>
+              value.date === fromIndexSectionHeaderData?.date &&
+              value.id !== itemToMove.id,
+          )
+          .sort((a, b) => a.order - b.order);
 
-      // Function to update the order from the dragging position item
-      decrementOrderAfterIndex(
-        draggingItemIndexInSortedItemsOfSection,
-        itemsPartOfFromSection,
-      );
+        // Now we need to update the order of the dragging item
+        updateItem(itemToMove.id, {
+          ...itemToMove,
+          date: toIndexSectionHeaderData?.date,
+          order: newOrder,
+        });
 
-      // The Items under the to section -> sorted based on order
-      const itemsPartOfToSection = items
-        .filter(value => value.date === toIndexSectionHeaderData?.date)
-        .sort((a, b) => a.order - b.order);
-
-      // Now we need to update the order of the dragging item
-      updateItem(itemToMove.id, {
-        ...itemToMove,
-        date: toIndexSectionHeaderData?.date,
-        order: newOrder,
-      });
-
-      incrementOrderAfterIndex(newOrder, itemsPartOfToSection);
+        incrementOrderAfterIndex(newOrder, itemsPartOfSection);
+      }
     }, 0.01);
   };
 
