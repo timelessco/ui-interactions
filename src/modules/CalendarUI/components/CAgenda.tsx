@@ -43,9 +43,9 @@ var isToday = require("dayjs/plugin/isToday");
 dayjs.extend(isToday);
 
 const CalendarSectionHeader = React.memo(
-  ({ calendarSection, index, dropIndex }: CalendarSectionItemProps) => {
+  ({ calendarSection, index }: CalendarSectionItemProps) => {
     const selection = useHaptic();
-    const { currentDraggingItem } = useDraggableContext();
+    const { currentDraggingItem, dropIndex } = useDraggableContext();
 
     const derivedPositionValue = useDerivedValue(() => {
       const isDropIndexSame =
@@ -147,7 +147,6 @@ const CalendarEventItem = ({
   calendarItem,
   scroll,
   index,
-  dropIndex,
 }: CalendarEventItemProps) => {
   const {
     sheetRef,
@@ -165,8 +164,14 @@ const CalendarEventItem = ({
     sheetRef?.current?.snapToIndex(0);
   };
   const { top, bottom } = useSafeAreaInsets();
-  const { setDraggingItem, currentDraggingItem, dragY, dragX, positionY } =
-    useDraggableContext();
+  const {
+    setDraggingItem,
+    currentDraggingItem,
+    dragY,
+    dragX,
+    positionY,
+    dropIndex,
+  } = useDraggableContext();
 
   const selection = useHaptic();
 
@@ -252,7 +257,7 @@ const CalendarEventItem = ({
   return (
     <Animated.View
       key={calendarItem.id}
-      layout={Layout.springify().damping(18).stiffness(120)}
+      layout={Layout.springify()}
       style={draggingItemStyle}
     >
       <GestureDetector gesture={dragGesture}>
@@ -305,7 +310,6 @@ export const CAgenda = () => {
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
   const hapticSelection = useHaptic();
   const scroll = useSharedValue(0);
-  const dropIndex = useSharedValue(-1);
   const { draggingItem, dragY, dragX, positionY } = useDraggableContext();
   const { items } = useCalendarState();
 
@@ -535,7 +539,6 @@ export const CAgenda = () => {
               <CalendarSectionHeader
                 index={index}
                 calendarSection={item as SectionHeaderType}
-                dropIndex={dropIndex}
               />
             );
           }
@@ -544,7 +547,6 @@ export const CAgenda = () => {
               index={index}
               calendarItem={item as CalendarEvent}
               scroll={scroll}
-              dropIndex={dropIndex}
             />
           );
         }}

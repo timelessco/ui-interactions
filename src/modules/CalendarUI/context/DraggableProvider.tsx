@@ -10,6 +10,7 @@ interface DraggableContextType {
   dragX: SharedValue<number>;
   positionY: SharedValue<number>;
   currentDraggingItem: SharedValue<number>;
+  dropIndex: SharedValue<number>;
 }
 
 const DraggableContext = React.createContext<DraggableContextType | undefined>(
@@ -37,6 +38,7 @@ const DraggableProvider: React.FC<
   const dragX = useSharedValue(0);
   const positionY = useSharedValue(0);
   const currentDraggingItem = useSharedValue(0);
+  const dropIndex = useSharedValue(0);
 
   return (
     <DraggableContext.Provider
@@ -47,6 +49,7 @@ const DraggableProvider: React.FC<
         dragX,
         positionY,
         currentDraggingItem,
+        dropIndex,
       }}
     >
       {children}
