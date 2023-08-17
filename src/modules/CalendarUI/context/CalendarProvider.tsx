@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 import { TextInput } from "react-native";
 import { SharedValue, useSharedValue } from "react-native-reanimated";
-import BottomSheet from "@gorhom/bottom-sheet";
 import dayjs from "dayjs";
 import { useDeepCompareMemo } from "use-deep-compare";
 
@@ -24,7 +23,6 @@ interface CalendarContextType {
   setIsMomentumScrollBegin: React.Dispatch<React.SetStateAction<boolean>>;
   editItem: CalendarEvent | null;
   setEditItem: React.Dispatch<React.SetStateAction<CalendarEvent | null>>;
-  sheetRef: React.RefObject<any>;
   sheetTriggerAction: "EDIT" | "ADD";
   setSheetTriggerAction: React.Dispatch<React.SetStateAction<"EDIT" | "ADD">>;
   eventTitleTextInputRef: React.RefObject<TextInput>;
@@ -51,7 +49,6 @@ const useCalendarContext = (): CalendarContextType => {
 const CalendarProvider: React.FC<
   Partial<CalendarContextType & { children: React.ReactNode }>
 > = props => {
-  const sheetRef = useRef<BottomSheet>(null);
   const eventTitleTextInputRef = useRef<TextInput>(null);
 
   const today = useSharedValue(dayjs().format("YYYY-MM-DD"));
@@ -137,7 +134,6 @@ const CalendarProvider: React.FC<
     <CalendarContext.Provider
       value={{
         selectedDate: today,
-        sheetRef,
         eventTitleTextInputRef,
         transformedDatesList,
         isManualScrolling,

@@ -1,9 +1,11 @@
 import React, { useRef } from "react";
+import BottomSheet from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 
 interface RefsContextType {
   agendaListRef: React.RefObject<FlashList<string>>;
   weekListRef: React.RefObject<FlashList<string>>;
+  sheetRef: React.RefObject<BottomSheet>;
 }
 
 const RefsContext = React.createContext<RefsContextType | undefined>(undefined);
@@ -24,6 +26,8 @@ const RefsProvider: React.FC<
 > = props => {
   const aref = useRef<FlashList<string>>(null);
   const wref = useRef<FlashList<string>>(null);
+  const sheetRef = useRef<BottomSheet>(null);
+
   const { children } = props;
 
   return (
@@ -31,6 +35,7 @@ const RefsProvider: React.FC<
       value={{
         agendaListRef: aref,
         weekListRef: wref,
+        sheetRef,
       }}
     >
       {children}

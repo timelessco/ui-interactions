@@ -19,6 +19,7 @@ import tailwind from "twrnc";
 
 import { AddIcon } from "../../../icons/maps";
 import { useCalendarContext } from "../context/CalendarProvider";
+import { useRefsContext } from "../context/RefsProvider";
 import { useCalendarState } from "../context/useCalendarState";
 
 /**
@@ -57,12 +58,13 @@ export const AddEventBottomSheet = () => {
   const {
     selectedDate,
     editItem,
-    sheetRef,
     setEditItem,
     eventTitleTextInputRef,
     sheetTriggerAction,
     setSheetTriggerAction,
   } = useCalendarContext();
+  const { sheetRef } = useRefsContext();
+
   const { bottom } = useSafeAreaInsets();
   // const { animatedStyle, handlers } = useScaleAnimation();
 

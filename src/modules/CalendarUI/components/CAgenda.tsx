@@ -150,13 +150,14 @@ const CalendarEventItem = ({
   index,
 }: CalendarEventItemProps) => {
   const {
-    sheetRef,
     setEditItem,
     eventTitleTextInputRef,
     setSheetTriggerAction,
     flatlistOffsets,
     moveItem,
   } = useCalendarContext();
+
+  const { sheetRef } = useRefsContext();
 
   const handlePress = () => {
     setEditItem(calendarItem);
