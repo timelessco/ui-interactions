@@ -2,6 +2,7 @@ import React from "react";
 import { View } from "react-native";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import Animated, {
+  interpolate,
   Layout,
   useAnimatedStyle,
   useSharedValue,
@@ -32,17 +33,23 @@ const ScaleSpringConfig: WithSpringConfig = {
 };
 
 export const AlignInteraction1 = () => {
-  const verticalLine = useSharedValue(20);
-  const horizontalLine = useSharedValue(28);
+  const verticalLine = useSharedValue(0);
+  const horizontalLine = useSharedValue(0);
+
   const scaleAnim = useSharedValue(1);
 
+  // The state for Text Style
   const alignState = useSharedValue(0);
 
   const verticalLineStyle = useAnimatedStyle(() => {
     return {
       transform: [
         {
-          translateX: verticalLine.value,
+          translateX: interpolate(
+            verticalLine.value,
+            [0, 1, 2],
+            [20, 122, 226],
+          ),
         },
       ],
     };
@@ -51,7 +58,11 @@ export const AlignInteraction1 = () => {
     return {
       transform: [
         {
-          translateX: horizontalLine.value,
+          translateX: interpolate(
+            horizontalLine.value,
+            [0, 1, 2],
+            [28, 112, 198],
+          ),
         },
       ],
     };
@@ -78,10 +89,45 @@ export const AlignInteraction1 = () => {
           : "auto",
     };
   });
+
+  const handleOnPressIn = () =>
+    (scaleAnim.value = withSpring(0.97, ScaleSpringConfig, finished => {
+      if (finished) {
+        scaleAnim.value = withDelay(10, withSpring(1));
+      }
+    }));
+
+  const handleOnPressLeftAlignment = () => {
+    alignState.value = 0;
+    verticalLine.value = withSpring(0, VerticalSpringConfig);
+    horizontalLine.value = withDelay(
+      100,
+      withSpring(0, HorizontalSpringConfig),
+    );
+  };
+
+  const handleOnPressCenterAlignment = () => {
+    alignState.value = 1;
+    verticalLine.value = withSpring(1, VerticalSpringConfig);
+    horizontalLine.value = withDelay(
+      100,
+      withSpring(1, HorizontalSpringConfig),
+    );
+  };
+
+  const handleOnPressRightAlignment = () => {
+    alignState.value = 2;
+    verticalLine.value = withSpring(2, VerticalSpringConfig);
+    horizontalLine.value = withDelay(
+      100,
+      withSpring(2, HorizontalSpringConfig),
+    );
+  };
+
   return (
     <View style={tailwind.style("flex-1 bg-white justify-center items-center")}>
       <Animated.Text
-        layout={Layout.delay(1000).springify()}
+        layout={Layout.springify()}
         style={[
           tailwind.style("text-lg text-center px-10 py-4"),
           textAnimatedStyle,
@@ -100,46 +146,20 @@ export const AlignInteraction1 = () => {
         ]}
       >
         <TouchableWithoutFeedback
-          onPressIn={() =>
-            (scaleAnim.value = withSpring(0.97, ScaleSpringConfig, finished => {
-              if (finished) {
-                scaleAnim.value = withDelay(10, withSpring(1));
-              }
-            }))
-          }
-          onPress={() => {
-            alignState.value = 0;
-            verticalLine.value = withSpring(20, VerticalSpringConfig);
-            horizontalLine.value = withDelay(
-              100,
-              withSpring(28, HorizontalSpringConfig),
-            );
-          }}
+          onPressIn={handleOnPressIn}
+          onPress={handleOnPressLeftAlignment}
           style={tailwind.style(
-            "flex flex-row items-center justify-start w-[70px]",
+            "flex flex-row items-center justify-start w-[70px] h-[70px]",
           )}
         >
           <View style={tailwind.style("h-8 w-1 bg-blue-100 rounded-xl")} />
           <View style={tailwind.style("ml-1 h-2 w-6 bg-blue-100 rounded-sm")} />
         </TouchableWithoutFeedback>
         <TouchableWithoutFeedback
-          onPressIn={() =>
-            (scaleAnim.value = withSpring(0.97, ScaleSpringConfig, finished => {
-              if (finished) {
-                scaleAnim.value = withDelay(10, withSpring(1));
-              }
-            }))
-          }
-          onPress={() => {
-            alignState.value = 1;
-            verticalLine.value = withSpring(122, VerticalSpringConfig);
-            horizontalLine.value = withDelay(
-              100,
-              withSpring(112, HorizontalSpringConfig),
-            );
-          }}
+          onPressIn={handleOnPressIn}
+          onPress={handleOnPressCenterAlignment}
           style={tailwind.style(
-            "flex flex-row items-center justify-center w-[70px]",
+            "flex flex-row items-center justify-center w-[70px] h-[70px]",
           )}
         >
           <View style={tailwind.style("h-8 w-1 bg-blue-100 rounded-xl")} />
@@ -148,23 +168,10 @@ export const AlignInteraction1 = () => {
           />
         </TouchableWithoutFeedback>
         <TouchableWithoutFeedback
-          onPressIn={() =>
-            (scaleAnim.value = withSpring(0.97, ScaleSpringConfig, finished => {
-              if (finished) {
-                scaleAnim.value = withDelay(10, withSpring(1));
-              }
-            }))
-          }
-          onPress={() => {
-            alignState.value = 2;
-            verticalLine.value = withSpring(226, VerticalSpringConfig);
-            horizontalLine.value = withDelay(
-              100,
-              withSpring(198, HorizontalSpringConfig),
-            );
-          }}
+          onPressIn={handleOnPressIn}
+          onPress={handleOnPressRightAlignment}
           style={tailwind.style(
-            "flex flex-row items-center justify-end w-[70px]",
+            "flex flex-row items-center justify-end w-[70px] h-[70px]",
           )}
         >
           <View style={tailwind.style("h-2 w-6 bg-blue-100 rounded-sm mr-1")} />
