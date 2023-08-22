@@ -201,23 +201,36 @@ const CalendarProvider: React.FC<
         // Function to increase the order in items after the dragging position item
         incrementOrderAfterIndex(newOrder, itemsPartOfToSection);
       } else {
-        // Reordering from and to index are part of same section
+        // Reordering items, from and to index are part of same section
         const itemsPartOfSection = items
-          .filter(
-            value =>
-              value.date === fromIndexSectionHeaderData?.date &&
-              value.id !== itemToMove.id,
-          )
+          .filter(value => value.date === fromIndexSectionHeaderData?.date)
           .sort((a, b) => a.order - b.order);
 
-        // Now we need to update the order of the dragging item
+        const direction = itemToMove.order < newOrder ? 1 : -1;
+
+        if (direction > 0) {
+          // Top to bottom movement
+          for (let i = itemToMove.order; i < newOrder; i++) {
+            updateItem(itemsPartOfSection[i].id, {
+              ...itemsPartOfSection[i],
+              order: itemsPartOfSection[i].order - 1,
+            });
+          }
+        } else {
+          // Bottom to top movement
+          for (let i = newOrder - 1; i < itemToMove.order - 1; i++) {
+            updateItem(itemsPartOfSection[i].id, {
+              ...itemsPartOfSection[i],
+              order: itemsPartOfSection[i].order + 1,
+            });
+          }
+        }
+
+        // Update the order of the dragging item
         updateItem(itemToMove.id, {
           ...itemToMove,
-          date: toIndexSectionHeaderData?.date,
           order: newOrder,
         });
-
-        incrementOrderAfterIndex(newOrder, itemsPartOfSection);
       }
     }, 0.01);
   };
