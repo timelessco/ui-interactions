@@ -29,7 +29,6 @@ import {
 import { useCalendarContext } from "../context/CalendarProvider";
 import { useDraggableContext } from "../context/DraggableProvider";
 import { useRefsContext } from "../context/RefsProvider";
-import { useCalendarItemsState } from "../context/useCalendarItemsState";
 import {
   CalendarEvent,
   CalendarEventItemProps,
@@ -82,7 +81,7 @@ const CalendarSectionHeader = React.memo(
         >
           {dayjs(calendarSection.date).format("MMM DD")} ・{" "}
           {dayjs(calendarSection.date).isSame(dayjs()) ? "Today" : ""}
-          {dayjs(calendarSection.date).format("dddd")}
+          {dayjs(calendarSection.date).format("dddd")} ・ {index}
         </Text>
         <Animated.View
           style={[
@@ -144,160 +143,158 @@ function findClosestOffsetIndex(scrollY: number, offsets: number[]) {
   return closestIndex;
 }
 
-const CalendarEventItem = ({
-  calendarItem,
-  scroll,
-  index,
-}: CalendarEventItemProps) => {
-  const {
-    setEditItem,
-    eventTitleTextInputRef,
-    setSheetTriggerAction,
-    flatlistOffsets,
-    moveItem,
-  } = useCalendarContext();
+const CalendarEventItem = React.memo(
+  ({ calendarItem, scroll, index }: CalendarEventItemProps) => {
+    const {
+      setEditItem,
+      eventTitleTextInputRef,
+      setSheetTriggerAction,
+      flatlistOffsets,
+      moveItem,
+    } = useCalendarContext();
 
-  const { sheetRef } = useRefsContext();
+    const { sheetRef } = useRefsContext();
 
-  const handlePress = () => {
-    setEditItem(calendarItem);
-    setSheetTriggerAction("EDIT");
-    eventTitleTextInputRef?.current?.focus();
-    sheetRef?.current?.snapToIndex(0);
-  };
-  const { top, bottom } = useSafeAreaInsets();
-  const {
-    setDraggingItem,
-    currentDraggingItem,
-    dragY,
-    dragX,
-    positionY,
-    dropIndex,
-  } = useDraggableContext();
+    const handlePress = () => {
+      setEditItem(calendarItem);
+      setSheetTriggerAction("EDIT");
+      eventTitleTextInputRef?.current?.focus();
+      sheetRef?.current?.snapToIndex(0);
+    };
+    const { top, bottom } = useSafeAreaInsets();
+    const {
+      setDraggingItem,
+      currentDraggingItem,
+      dragY,
+      dragX,
+      positionY,
+      dropIndex,
+    } = useDraggableContext();
 
-  const selection = useHaptic();
+    const selection = useHaptic();
 
-  const [moving, setMoving] = useState(false);
+    const [moving, setMoving] = useState(false);
 
-  const derivedValue = useDerivedValue(() =>
-    moving ? withSpring(1) : withSpring(0),
-  );
+    const derivedValue = useDerivedValue(() =>
+      moving ? withSpring(1) : withSpring(0),
+    );
 
-  const dragGesture = Gesture.Pan()
-    .maxPointers(1)
-    .activateAfterLongPress(350)
-    .onStart(event => {
-      currentDraggingItem.value = index;
-      runOnJS(setMoving)(true);
-      runOnJS(setDraggingItem)(calendarItem);
-      if (selection && !moving) {
-        runOnJS(selection)();
-      }
-      dragY.value = event.translationY;
-      dragX.value = event.translationX;
-      positionY.value = event.absoluteY - (top + 60 + 79) - event.y;
-    })
-    .onUpdate(event => {
-      const dragFactor = event.absoluteY - (top + 60 + 79);
-      const visibleHeight = SCREEN_HEIGHT - (top + 60 + 79) - (bottom + 30);
-
-      const mappedScrollY =
-        scroll.value + (dragFactor / visibleHeight) * visibleHeight;
-      const closestDropIndex = findClosestOffsetIndex(
-        mappedScrollY,
-        flatlistOffsets,
-      );
-
-      dropIndex.value = closestDropIndex;
-      // These are top and bottom boundaries, beyond which scrolling should happen and drag is stopped
-      if (
-        dragFactor > SECTION_HEADER_HEIGHT + SECTION_HEADER_HEIGHT / 2 &&
-        dragFactor < visibleHeight
-      ) {
+    const dragGesture = Gesture.Pan()
+      .maxPointers(1)
+      .activateAfterLongPress(350)
+      .onStart(event => {
+        currentDraggingItem.value = index;
+        runOnJS(setMoving)(true);
+        runOnJS(setDraggingItem)(calendarItem);
+        if (selection && !moving) {
+          runOnJS(selection)();
+        }
         dragY.value = event.translationY;
         dragX.value = event.translationX;
-      }
-    })
-    .onEnd(() => {
-      runOnJS(moveItem)(
-        currentDraggingItem.value,
-        currentDraggingItem.value >= dropIndex.value
-          ? dropIndex.value
-          : dropIndex.value - 1,
-      );
-      dropIndex.value = -1;
-      runOnJS(setMoving)(false);
-      runOnJS(setDraggingItem)(null);
-      currentDraggingItem.value = -1;
+        positionY.value = event.absoluteY - (top + 60 + 79) - event.y;
+      })
+      .onUpdate(event => {
+        const dragFactor = event.absoluteY - (top + 60 + 79);
+        const visibleHeight = SCREEN_HEIGHT - (top + 60 + 79) - (bottom + 30);
+
+        const mappedScrollY =
+          scroll.value + (dragFactor / visibleHeight) * visibleHeight;
+        const closestDropIndex = findClosestOffsetIndex(
+          mappedScrollY,
+          flatlistOffsets,
+        );
+
+        dropIndex.value = closestDropIndex;
+        // These are top and bottom boundaries, beyond which scrolling should happen and drag is stopped
+        if (
+          dragFactor > SECTION_HEADER_HEIGHT + SECTION_HEADER_HEIGHT / 2 &&
+          dragFactor < visibleHeight
+        ) {
+          dragY.value = event.translationY;
+          dragX.value = event.translationX;
+        }
+      })
+      .onEnd(() => {
+        runOnJS(moveItem)(
+          currentDraggingItem.value,
+          currentDraggingItem.value >= dropIndex.value
+            ? dropIndex.value
+            : dropIndex.value - 1,
+        );
+        dropIndex.value = -1;
+        runOnJS(setMoving)(false);
+        runOnJS(setDraggingItem)(null);
+        currentDraggingItem.value = -1;
+      });
+
+    const draggingItemStyle = useAnimatedStyle(() => {
+      return {
+        zIndex: 0,
+        opacity: interpolate(derivedValue.value, [0, 1], [1, 0.4]),
+      };
     });
 
-  const draggingItemStyle = useAnimatedStyle(() => {
-    return {
-      zIndex: 0,
-      opacity: interpolate(derivedValue.value, [0, 1], [1, 0.4]),
-    };
-  });
+    const derivedPositionValue = useDerivedValue(() => {
+      const isDropIndexSame =
+        index !== currentDraggingItem.value &&
+        dropIndex.value === index &&
+        currentDraggingItem.value !== dropIndex.value - 1;
 
-  const derivedPositionValue = useDerivedValue(() => {
-    const isDropIndexSame =
-      index !== currentDraggingItem.value &&
-      dropIndex.value === index &&
-      currentDraggingItem.value !== dropIndex.value - 1;
+      if (isDropIndexSame && selection) {
+        runOnJS(selection)();
+      }
+      return isDropIndexSame ? withSpring(1) : withSpring(0);
+    });
 
-    if (isDropIndexSame && selection) {
-      runOnJS(selection)();
-    }
-    return isDropIndexSame ? withSpring(1) : withSpring(0);
-  });
+    const animatedDropPositionStyle = useAnimatedStyle(() => {
+      return {
+        opacity: interpolate(derivedPositionValue.value, [0, 1], [0, 1]),
+      };
+    });
 
-  const animatedDropPositionStyle = useAnimatedStyle(() => {
-    return {
-      opacity: interpolate(derivedPositionValue.value, [0, 1], [0, 1]),
-    };
-  });
-
-  return (
-    <Animated.View
-      key={calendarItem.id}
-      layout={Layout.springify()}
-      style={draggingItemStyle}
-    >
-      <GestureDetector gesture={dragGesture}>
-        <Pressable onPress={handlePress}>
-          <Animated.View
-            style={[
-              tailwind.style(
-                "relative w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
-                `h-[${LIST_ITEM_HEIGHT}px]`,
-              ),
-            ]}
-          >
-            <Text style={tailwind.style("text-lg font-medium text-black")}>
-              {calendarItem.title}
-            </Text>
-            <Text style={tailwind.style("text-sm text-gray-600")}>
-              {calendarItem.desc} - {index} - {calendarItem.order}
-            </Text>
+    return (
+      <Animated.View
+        key={calendarItem.id}
+        layout={Layout.springify()}
+        style={draggingItemStyle}
+      >
+        <GestureDetector gesture={dragGesture}>
+          <Pressable onPress={handlePress}>
             <Animated.View
               style={[
                 tailwind.style(
-                  "absolute left-0 right-0 top-[-1px] h-[1px] bg-black z-10",
+                  "relative w-full border-b-[1px] border-[#DEDEDE] justify-center ml-4 pr-4",
+                  `h-[${LIST_ITEM_HEIGHT}px]`,
                 ),
-                animatedDropPositionStyle,
               ]}
             >
+              <Text style={tailwind.style("text-lg font-medium text-black")}>
+                {calendarItem.title}
+              </Text>
+              <Text style={tailwind.style("text-sm text-gray-600")}>
+                {calendarItem.desc} - {index} - {calendarItem.order}
+              </Text>
               <Animated.View
-                style={tailwind.style(
-                  "absolute -top-1 h-2 w-2 rounded-full bg-black",
-                )}
-              />
+                style={[
+                  tailwind.style(
+                    "absolute left-0 right-0 top-[-1px] h-[1px] bg-black z-10",
+                  ),
+                  animatedDropPositionStyle,
+                ]}
+              >
+                <Animated.View
+                  style={tailwind.style(
+                    "absolute -top-1 h-2 w-2 rounded-full bg-black",
+                  )}
+                />
+              </Animated.View>
             </Animated.View>
-          </Animated.View>
-        </Pressable>
-      </GestureDetector>
-    </Animated.View>
-  );
-};
+          </Pressable>
+        </GestureDetector>
+      </Animated.View>
+    );
+  },
+);
 
 export const CAgenda = () => {
   const {
@@ -314,7 +311,6 @@ export const CAgenda = () => {
   const hapticSelection = useHaptic();
   const scroll = useSharedValue(0);
   const { draggingItem, dragY, dragX, positionY } = useDraggableContext();
-  const { items } = useCalendarItemsState();
 
   // This is the code which triggers the two way linking [Scroll Blocking Required
   const manualScroll = (newSelectedDate: string) => {
@@ -553,7 +549,6 @@ export const CAgenda = () => {
             />
           );
         }}
-        extraData={items.length}
       />
     </Animated.View>
   );
