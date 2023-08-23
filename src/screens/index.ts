@@ -10,6 +10,7 @@ export * from "./HorizontalDialInteraction";
 export * from "./ImageLightBox";
 export * from "./ImageUpload";
 export * from "./InputPasswordCheck";
+export * from "./IOSGroupAppIcons";
 export * from "./LinkPreviewLookup";
 export * from "./MapsScreen";
 export * from "./MenuInteraction";

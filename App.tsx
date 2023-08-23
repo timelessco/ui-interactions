@@ -33,6 +33,7 @@ import {
   ImageLightBox,
   ImageUpload,
   InputPasswordCheck,
+  IOSGroupAppIcons,
   LinkPreviewLookup,
   MapsScreen,
   MenuInteraction,
@@ -86,6 +87,7 @@ export type UIInteractionParamList = {
   "Gallery Carousel": undefined;
   "Dynamic Grids": undefined;
   "Onboarding Screen": undefined;
+  "iOS Group App Icons Animation": undefined;
 };
 
 type RootStackProps = StackScreenProps<
@@ -135,6 +137,10 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
+  {
+    name: "iOS Group App Icons Animation",
+    component: IOSGroupAppIcons,
+  },
   {
     name: "Onboarding Screen",
     component: OnboardingScreen,
@@ -321,6 +327,10 @@ const App = () => {
             <Stack.Screen name="Maps Screen" component={MapsScreen} />
             <Stack.Screen name="Dynamic Grids" component={DynamicGrids} />
             <Stack.Screen name="Gallery Carousel" component={GalleryCarousel} />
+            <Stack.Screen
+              name="iOS Group App Icons Animation"
+              component={IOSGroupAppIcons}
+            />
             <Stack.Screen
               name="Onboarding Screen"
               component={OnboardingScreen}
