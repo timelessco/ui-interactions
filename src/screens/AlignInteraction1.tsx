@@ -1,6 +1,5 @@
 import React from "react";
-import { View } from "react-native";
-import { TouchableWithoutFeedback } from "react-native-gesture-handler";
+import { Pressable, View } from "react-native";
 import Animated, {
   interpolate,
   Layout,
@@ -145,7 +144,7 @@ export const AlignInteraction1 = () => {
           containerStyle,
         ]}
       >
-        <TouchableWithoutFeedback
+        <Pressable
           onPressIn={handleOnPressIn}
           onPress={handleOnPressLeftAlignment}
           style={tailwind.style(
@@ -154,8 +153,8 @@ export const AlignInteraction1 = () => {
         >
           <View style={tailwind.style("h-8 w-1 bg-blue-100 rounded-xl")} />
           <View style={tailwind.style("ml-1 h-2 w-6 bg-blue-100 rounded-sm")} />
-        </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback
+        </Pressable>
+        <Pressable
           onPressIn={handleOnPressIn}
           onPress={handleOnPressCenterAlignment}
           style={tailwind.style(
@@ -166,8 +165,8 @@ export const AlignInteraction1 = () => {
           <View
             style={tailwind.style("absolute h-2 w-6 bg-blue-100 rounded-sm")}
           />
-        </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback
+        </Pressable>
+        <Pressable
           onPressIn={handleOnPressIn}
           onPress={handleOnPressRightAlignment}
           style={tailwind.style(
@@ -176,7 +175,7 @@ export const AlignInteraction1 = () => {
         >
           <View style={tailwind.style("h-2 w-6 bg-blue-100 rounded-sm mr-1")} />
           <View style={tailwind.style("h-8 w-1 bg-blue-100 rounded-xl")} />
-        </TouchableWithoutFeedback>
+        </Pressable>
         <Animated.View
           style={tailwind.style("absolute flex flex-row items-center left-0")}
         >
