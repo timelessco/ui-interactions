@@ -1,5 +1,10 @@
-import React, { useMemo, useState } from "react";
-import { NativeScrollEvent, Pressable, Text } from "react-native";
+import React, { useState } from "react";
+import {
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  Pressable,
+  Text,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   FadeOut,
@@ -18,17 +23,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import dayjs from "dayjs";
 import tailwind from "twrnc";
+import { useDeepCompareMemo } from "use-deep-compare";
 
 import { useHaptic } from "../../../utils/useHaptic";
 import {
   LIST_ITEM_HEIGHT,
+  PAGE_HEADER,
   SCREEN_HEIGHT,
   SCREEN_WIDTH,
   SECTION_HEADER_HEIGHT,
+  WEEK_STRIP,
 } from "../constants";
+import { useAnimatedValues } from "../context/AnimatedValues";
 import { useCalendarContext } from "../context/CalendarProvider";
 import { useDraggableContext } from "../context/DraggableProvider";
 import { useRefsContext } from "../context/RefsProvider";
+import { useAutoScroll } from "../hooks/useAutoScroll";
+import { useStableCallback } from "../hooks/useStableCallback";
 import {
   CalendarEvent,
   CalendarEventItemProps,
@@ -59,7 +70,7 @@ const CalendarSectionHeader = React.memo(
       return isDropIndexSame ? withSpring(1) : withSpring(0);
     });
 
-    const animatedDropPositionStyle = useAnimatedStyle(() => {
+    const animatedDropIndicatorStyle = useAnimatedStyle(() => {
       return {
         opacity: interpolate(derivedPositionValue.value, [0, 1], [0, 1]),
       };
@@ -67,7 +78,6 @@ const CalendarSectionHeader = React.memo(
 
     return (
       <Animated.View
-        key={calendarSection.date}
         style={tailwind.style(
           "relative w-full border-b-[1px] border-[#DEDEDE] justify-center px-4 bg-white z-0",
           `h-[${SECTION_HEADER_HEIGHT}px]`,
@@ -81,14 +91,15 @@ const CalendarSectionHeader = React.memo(
         >
           {dayjs(calendarSection.date).format("MMM DD")} ・{" "}
           {dayjs(calendarSection.date).isSame(dayjs()) ? "Today" : ""}
-          {dayjs(calendarSection.date).format("dddd")} ・ {index}
+          {dayjs(calendarSection.date).format("dddd")} ・{" "}
+          {calendarSection.offsetY}
         </Text>
         <Animated.View
           style={[
             tailwind.style(
               "absolute left-0 right-0 top-[-1px] h-[1px] bg-black ml-4 z-10",
             ),
-            animatedDropPositionStyle,
+            animatedDropIndicatorStyle,
           ]}
         >
           <Animated.View
@@ -102,15 +113,14 @@ const CalendarSectionHeader = React.memo(
   },
 );
 
+// Custom functions to  find closest offset index in UI Thread
 function customAbs(x: number) {
   "worklet";
-
   return x < 0 ? -x : x;
 }
 
 function customFloor(x: number) {
   "worklet";
-
   return x - (x % 1);
 }
 
@@ -144,7 +154,7 @@ function findClosestOffsetIndex(scrollY: number, offsets: number[]) {
 }
 
 const CalendarEventItem = React.memo(
-  ({ calendarItem, scroll, index }: CalendarEventItemProps) => {
+  ({ calendarItem, index }: CalendarEventItemProps) => {
     const {
       setEditItem,
       eventTitleTextInputRef,
@@ -154,6 +164,7 @@ const CalendarEventItem = React.memo(
     } = useCalendarContext();
 
     const { sheetRef } = useRefsContext();
+    const { scrollOffset, currentHoverOffset } = useAnimatedValues();
 
     const handlePress = () => {
       setEditItem(calendarItem);
@@ -173,6 +184,8 @@ const CalendarEventItem = React.memo(
 
     const selection = useHaptic();
 
+    const startY = useSharedValue(0);
+
     const [moving, setMoving] = useState(false);
 
     const derivedValue = useDerivedValue(() =>
@@ -182,6 +195,10 @@ const CalendarEventItem = React.memo(
     const dragGesture = Gesture.Pan()
       .maxPointers(1)
       .activateAfterLongPress(350)
+      .onBegin(event => {
+        startY.value = event.y;
+        currentHoverOffset.value = event.absoluteY - startY.value;
+      })
       .onStart(event => {
         currentDraggingItem.value = index;
         runOnJS(setMoving)(true);
@@ -191,28 +208,28 @@ const CalendarEventItem = React.memo(
         }
         dragY.value = event.translationY;
         dragX.value = event.translationX;
-        positionY.value = event.absoluteY - (top + 60 + 79) - event.y;
-      })
-      .onUpdate(event => {
-        const dragFactor = event.absoluteY - (top + 60 + 79);
-        const visibleHeight = SCREEN_HEIGHT - (top + 60 + 79) - (bottom + 30);
 
+        positionY.value =
+          event.absoluteY - (top + PAGE_HEADER + WEEK_STRIP) - event.y;
+      })
+      .onChange(event => {
+        const dragFactor = event.absoluteY - (top + PAGE_HEADER + WEEK_STRIP);
+        const visibleHeight =
+          SCREEN_HEIGHT - (top + PAGE_HEADER + WEEK_STRIP) - 2 * bottom;
+        dragY.value = event.translationY;
+        dragX.value = event.translationX;
+
+        currentHoverOffset.value = event.absoluteY - startY.value;
+        // We get the mappedScrollY (the dragging point with respect to scroll)
+        // Finding the nearest drop index when dragging in <View></View>
         const mappedScrollY =
-          scroll.value + (dragFactor / visibleHeight) * visibleHeight;
+          scrollOffset.value + (dragFactor / visibleHeight) * visibleHeight;
         const closestDropIndex = findClosestOffsetIndex(
           mappedScrollY,
           flatlistOffsets,
         );
 
         dropIndex.value = closestDropIndex;
-        // These are top and bottom boundaries, beyond which scrolling should happen and drag is stopped
-        if (
-          dragFactor > SECTION_HEADER_HEIGHT + SECTION_HEADER_HEIGHT / 2 &&
-          dragFactor < visibleHeight
-        ) {
-          dragY.value = event.translationY;
-          dragX.value = event.translationX;
-        }
       })
       .onEnd(() => {
         runOnJS(moveItem)(
@@ -253,11 +270,7 @@ const CalendarEventItem = React.memo(
     });
 
     return (
-      <Animated.View
-        key={calendarItem.id}
-        layout={Layout.springify()}
-        style={draggingItemStyle}
-      >
+      <Animated.View layout={Layout.springify()} style={draggingItemStyle}>
         <GestureDetector gesture={dragGesture}>
           <Pressable onPress={handlePress}>
             <Animated.View
@@ -309,7 +322,13 @@ export const CAgenda = () => {
 
   const [isDateSetOnScroll, setIsDateSetOnScroll] = useState(false);
   const hapticSelection = useHaptic();
-  const scroll = useSharedValue(0);
+  const {
+    scrollOffset,
+    scrollViewSize,
+    containerSize,
+    autoScrolling,
+    setAutoScrolling,
+  } = useAnimatedValues();
   const { draggingItem, dragY, dragX, positionY } = useDraggableContext();
 
   // This is the code which triggers the two way linking [Scroll Blocking Required
@@ -342,19 +361,11 @@ export const CAgenda = () => {
     },
   );
 
-  const handleOnLayout = () => {
-    setTimeout(() => {
-      setIsManualScrolling(false);
-      setIsDateSetOnScroll(false);
-      setIsMomentumScrollBegin(false);
-    }, 300);
-  };
-
   const findClosestScrollIndex = () => {
     const offsets = transformedDatesList.map(
       value => value.type === "HeaderItem" && value.offsetY,
     ) as number[];
-    const nearestValue = findNearestValue(offsets, scroll.value);
+    const nearestValue = findNearestValue(offsets, scrollOffset.value);
     setIsManualScrolling(true);
     const item =
       transformedDatesList[offsets.findIndex(value => value === nearestValue)];
@@ -374,7 +385,7 @@ export const CAgenda = () => {
     const offsets = transformedDatesList.map(
       value => value.type === "HeaderItem" && value.offsetY,
     ) as number[];
-    const nearestValue = findNearestValue(offsets, scroll.value);
+    const nearestValue = findNearestValue(offsets, scrollOffset.value);
     const item =
       transformedDatesList[offsets.findIndex(value => value === nearestValue)];
     selectedDate.value = item.date;
@@ -386,27 +397,36 @@ export const CAgenda = () => {
       runOnJS(setIsManualScrolling)(false);
     },
     onScroll: event => {
+      if (autoScrolling) {
+        return;
+      }
       if (!isManualScrolling) {
         const { contentOffset } = event;
-        scroll.value = contentOffset.y;
+        scrollOffset.value = contentOffset.y;
         runOnJS(changeDateOnScroll)();
         runOnJS(setIsDateSetOnScroll)(true);
       }
     },
 
     onMomentumEnd: event => {
+      if (autoScrolling) {
+        const { contentOffset } = event;
+        scrollOffset.value = contentOffset.y;
+        runOnJS(setAutoScrolling)(false);
+        return;
+      }
       // It is called twice while fixing the bug, need to check
       if (!isManualScrolling) {
         runOnJS(setIsDateSetOnScroll)(false);
         const { contentOffset } = event;
-        scroll.value = contentOffset.y;
+        scrollOffset.value = contentOffset.y;
         runOnJS(findClosestScrollIndex)();
       }
       runOnJS(setIsMomentumScrollBegin)(false);
     },
   });
 
-  const initialScrollIndex = useMemo(() => {
+  const initialScrollIndex = useDeepCompareMemo(() => {
     const currentIndex = transformedDatesList
       .filter(item => item.type === "HeaderItem")
       .filter(item => item.date === selectedDate.value);
@@ -414,17 +434,17 @@ export const CAgenda = () => {
     const scrollIndex = transformedDatesList.findIndex(
       value => value.date === currentIndex[0].date,
     );
-    scroll.value =
+    scrollOffset.value =
       currentIndex[0].type === "HeaderItem" ? currentIndex[0].offsetY : 0;
     return scrollIndex;
-  }, [scroll, selectedDate.value, transformedDatesList]);
+  }, [selectedDate.value]);
 
   const _onScrollEndDrag = useEvent((event: NativeScrollEvent) => {
     "worklet";
     if (event.velocity?.y === 0) {
       runOnJS(setIsDateSetOnScroll)(false);
       const { contentOffset } = event;
-      scroll.value = contentOffset.y;
+      scrollOffset.value = contentOffset.y;
       runOnJS(findClosestScrollIndex)();
     }
   });
@@ -468,6 +488,25 @@ export const CAgenda = () => {
     };
   });
 
+  const onContentSizeChange = useStableCallback((w: number, h: number) => {
+    scrollViewSize.value = h;
+  });
+
+  const onLayout = useStableCallback((event: LayoutChangeEvent) => {
+    setTimeout(() => {
+      setIsManualScrolling(false);
+      setIsDateSetOnScroll(false);
+      setIsMomentumScrollBegin(false);
+    }, 300);
+
+    const {
+      nativeEvent: { layout },
+    } = event;
+    containerSize.value = layout.height;
+  });
+
+  useAutoScroll();
+
   return (
     <Animated.View
       style={[tailwind.style("flex-1 relative", `w-[${SCREEN_WIDTH}px]`)]}
@@ -491,16 +530,18 @@ export const CAgenda = () => {
           </Text>
         </Animated.View>
       ) : null}
+
       <AnimatedFlashList
         // @ts-ignore
         ref={aref}
         // Write case for negative scroll-y and set it to true
         bounces={false}
         onScroll={scrollHandler}
+        onContentSizeChange={onContentSizeChange}
+        onLayout={onLayout}
         onScrollEndDrag={_onScrollEndDrag}
         onMomentumScrollBegin={_onMomentumBegin}
         showsVerticalScrollIndicator={false}
-        onLayout={handleOnLayout}
         data={transformedDatesList}
         initialScrollIndex={initialScrollIndex}
         contentContainerStyle={tailwind.style("pb-10")}
@@ -545,7 +586,6 @@ export const CAgenda = () => {
             <CalendarEventItem
               index={index}
               calendarItem={item as CalendarEvent}
-              scroll={scroll}
             />
           );
         }}

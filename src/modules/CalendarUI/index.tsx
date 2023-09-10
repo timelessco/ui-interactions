@@ -12,6 +12,7 @@ import tailwind from "twrnc";
 
 import { CAgenda } from "./components/CAgenda";
 import { WeekStrip } from "./components/WeekStrip";
+import { AnimatedValuesProvider } from "./context/AnimatedValues";
 import { useCalendarContext } from "./context/CalendarProvider";
 import { DraggableProvider } from "./context/DraggableProvider";
 
@@ -68,7 +69,9 @@ export const CalendarUI = () => {
       </Animated.View>
       <WeekStrip />
       <DraggableProvider>
-        <CAgenda />
+        <AnimatedValuesProvider>
+          <CAgenda />
+        </AnimatedValuesProvider>
       </DraggableProvider>
     </View>
   );

@@ -223,7 +223,7 @@ export const CALENDAR_EVENTS: CalendarEvent[] = [
   },
   {
     id: 21,
-    title: "Meeting 1",
+    title: "Meeting 21",
     desc: "Discuss project updates",
     date: "2023-07-27",
     order: 1,

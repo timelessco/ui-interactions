@@ -65,6 +65,7 @@ const CalendarProvider: React.FC<
   const eventTitleTextInputRef = useRef<TextInput>(null);
 
   const today = useSharedValue(dayjs().format("YYYY-MM-DD"));
+
   const [isManualScrolling, setIsManualScrolling] = useState(true);
   const [isMomentumScrollBegin, setIsMomentumScrollBegin] = useState(true);
   const [editItem, setEditItem] = useState<CalendarEvent | null>(null);

@@ -37,7 +37,7 @@ const DraggableProvider: React.FC<
   const dragY = useSharedValue(0);
   const dragX = useSharedValue(0);
   const positionY = useSharedValue(0);
-  const currentDraggingItem = useSharedValue(0);
+  const currentDraggingItem = useSharedValue(-1);
   const dropIndex = useSharedValue(0);
 
   return (

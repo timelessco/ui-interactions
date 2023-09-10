@@ -45,3 +45,7 @@ export const week = ["S", "M", "T", "W", "T", "F", "S"];
 export const SECTION_HEADER_HEIGHT = 40;
 
 export const LIST_ITEM_HEIGHT = 60;
+
+export const PAGE_HEADER = 60;
+
+export const WEEK_STRIP = 79;
