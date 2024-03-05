@@ -25,7 +25,6 @@ import {
   AllocationSlider,
   AssetAllocation,
   CalendarAgenda,
-  DNDFlatlist,
   DynamicGrids,
   DynamicTabBar,
   EventCreation,
@@ -34,7 +33,6 @@ import {
   ImageLightBox,
   ImageUpload,
   InputPasswordCheck,
-  IOSGroupAppIcons,
   LinkPreviewLookup,
   MapsScreen,
   MenuInteraction,
@@ -139,14 +137,6 @@ type screenType = {
 };
 
 const rootStackScreens: screenType[] = [
-  {
-    name: "DND Flatlist",
-    component: DNDFlatlist,
-  },
-  {
-    name: "iOS Group App Icons Animation",
-    component: IOSGroupAppIcons,
-  },
   {
     name: "Onboarding Screen",
     component: OnboardingScreen,
@@ -334,14 +324,9 @@ const App = () => {
             <Stack.Screen name="Dynamic Grids" component={DynamicGrids} />
             <Stack.Screen name="Gallery Carousel" component={GalleryCarousel} />
             <Stack.Screen
-              name="iOS Group App Icons Animation"
-              component={IOSGroupAppIcons}
-            />
-            <Stack.Screen
               name="Onboarding Screen"
               component={OnboardingScreen}
             />
-            <Stack.Screen name="DND Flatlist" component={DNDFlatlist} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
